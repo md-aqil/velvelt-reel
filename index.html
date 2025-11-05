@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VelvetReel Talent Registration</title>
+ <style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #E91E63;
+    --secondary-color: #9C27B0;
+    --accent-color: #673AB7;
+    --success-color: #4CAF50;
+    --bg-color: #F5F5F7;
+    --card-bg: #FFFFFF;
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --border-color: #E0E0E0;
+    --shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --shadow-hover: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.form-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Progress Sidebar */
+.progress-sidebar {
+    width: 300px;
+    background: linear-gradient(180deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    padding: 30px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.logo h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.logo p {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 40px;
+}
+
+.progress-steps {
+    margin-bottom: 30px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.step.active {
+    background: rgba(255,255,255,0.15);
+    opacity: 1;
+}
+
+.step.completed {
+    opacity: 0.8;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.step.active .step-number {
+    background: white;
+    color: var(--secondary-color);
+}
+
+.step.completed .step-number {
+    background: var(--success-color);
+}
+
+.step-info {
+    flex: 1;
+}
+
+.step-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.step-subtitle {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.progress-bar-container {
+    margin-top: 30px;
+}
+
+.progress-percentage {
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: white;
+    transition: width 0.4s ease;
+    border-radius: 4px;
+}
+
+/* Main Form Area */
+.form-main {
+    flex: 1;
+    padding: 40px 60px;
+    overflow-y: auto;
+}
+
+form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-step {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.form-step.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+h2 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.step-description {
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+/* Profile Photo Section */
+.profile-photo-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.photo-upload {
+    text-align: center;
+}
+
+.photo-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    border: 3px dashed var(--border-color);
+    color: var(--text-secondary);
+    overflow: hidden;
+}
+
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.upload-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+    background: #C2185B;
+    transform: translateY(-2px);
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+/* Form Groups */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.required {
+    color: var(--primary-color);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+select,
+textarea {
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 5px;
+}
+
+.input-with-unit {
+    display: flex;
+    gap: 10px;
+}
+
+.input-with-unit input {
+    flex: 1;
+}
+
+.input-with-unit select {
+    width: 80px;
+}
+
+/* Radio and Checkbox Styles */
+.radio-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.radio-label,
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.3s ease;
+}
+
+.radio-label:hover,
+.checkbox-label:hover {
+    background: var(--bg-color);
+}
+
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+/* Radio Cards */
+.radio-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.radio-card {
+    position: relative;
+    cursor: pointer;
+}
+
+.radio-card input {
+    position: absolute;
+    opacity: 0;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    background: white;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.radio-card input:checked + .card-content {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(156, 39, 176, 0.05));
+}
+
+.card-content svg {
+    color: var(--text-secondary);
+}
+
+.radio-card input:checked + .card-content svg {
+    color: var(--primary-color);
+}
+
+/* Toggle Switch */
+.toggle-group {
+    margin-top: 10px;
+}
+
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    position: relative;
+}
+
+.toggle-switch input {
+    position: absolute;
+    opacity: 0;
+}
+
+.toggle-slider {
+    width: 50px;
+    height: 26px;
+    background: var(--border-color);
+    border-radius: 13px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: all 0.3s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--success-color);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(24px);
+}
+
+.toggle-label {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Notable Works */
+.notable-work-item {
+    background: var(--bg-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.add-work-btn {
+    background: transparent;
+    border: 2px dashed var(--border-color);
+    color: var(--primary-color);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.add-work-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(233, 30, 99, 0.05);
+}
+
+/* Domain Cards */
+.domain-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.domain-card {
+    background: white;
+    padding: 40px 30px;
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    box-shadow: var(--shadow);
+}
+
+.domain-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.domain-card.selected {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(156, 39, 176, 0.05));
+}
+
+.domain-icon {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.domain-card h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.domain-card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Role Selection */
+.role-search {
+    margin-bottom: 30px;
+}
+
+.role-search input {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 16px;
+}
+
+.role-category {
+    margin-bottom: 40px;
+}
+
+.role-category h3 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: var(--secondary-color);
+}
+
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.role-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid var(--border-color);
+}
+
+.role-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+}
+
+.role-card.selected {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(156, 39, 176, 0.05));
+}
+
+.role-card h4 {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.role-card p {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Preview */
+.preview-container {
+    background: var(--bg-color);
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+}
+
+.preview-card {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+}
+
+.social-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+/* Navigation Buttons */
+.form-navigation {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #C2185B;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .progress-sidebar {
+        width: 250px;
+    }
+    
+    .form-main {
+        padding: 30px 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-container {
+        flex-direction: column;
+    }
+    
+    .progress-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    
+    .progress-steps {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+    
+    .step {
+        flex-direction: column;
+        text-align: center;
+        padding: 10px 5px;
+    }
+    
+    .step-subtitle {
+        display: none;
+    }
+    
+    .form-main {
+        padding: 20px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .radio-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .domain-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+ </style>
+</head>
+<body>
+    <div class="form-container">
+        <!-- Progress Sidebar -->
+        <div class="progress-sidebar">
+            <div class="logo">
+                <h2>VelvetReel</h2>
+                <p>Talent Registration</p>
+            </div>
+            <div class="progress-steps">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-info">
+                        <div class="step-title">Profile Basics</div>
+                        <div class="step-subtitle">Personal information</div>
+                    </div>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-info">
+                        <div class="step-title">Experience</div>
+                        <div class="step-subtitle">Your background</div>
+                    </div>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-info">
+                        <div class="step-title">Portfolio</div>
+                        <div class="step-subtitle">Showcase work</div>
+                    </div>
+                </div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-info">
+                        <div class="step-title">Availability</div>
+                        <div class="step-subtitle">Preferences</div>
+                    </div>
+                </div>
+                <div class="step" data-step="5">
+                    <div class="step-number">5</div>
+                    <div class="step-info">
+                        <div class="step-title">Domain</div>
+                        <div class="step-subtitle">Your field</div>
+                    </div>
+                </div>
+                <div class="step" data-step="6">
+                    <div class="step-number">6</div>
+                    <div class="step-info">
+                        <div class="step-title">Role</div>
+                        <div class="step-subtitle">Specialization</div>
+                    </div>
+                </div>
+                <div class="step" data-step="7">
+                    <div class="step-number">7</div>
+                    <div class="step-info">
+                        <div class="step-title">Details</div>
+                        <div class="step-subtitle">Role-specific</div>
+                    </div>
+                </div>
+                <div class="step" data-step="8">
+                    <div class="step-number">8</div>
+                    <div class="step-info">
+                        <div class="step-title">Preview</div>
+                        <div class="step-subtitle">Review & publish</div>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-percentage">0% Complete</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Form Area -->
+        <div class="form-main">
+            <form id="velvetReelForm">
+                
+                <!-- STEP 1: Profile Basics -->
+                <div class="form-step active" data-step="1">
+                    <h2>Profile Basics</h2>
+                    <p class="step-description">Let's start with your essential information</p>
+                    
+                    <div class="profile-photo-section">
+                        <div class="photo-upload">
+                            <div class="photo-preview" id="photoPreview">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    ircle cx="12" cy="7"7" r="4"></circle>
+                                </svg>
+                            </div>
+                            <input type="file" id="profilePhoto" accept="image/*" style="display: none;">
+                            <button type="button" class="upload-btn" onclick="document.getElementById('profilePhoto').click()">Upload Photo</button>
+                            <p class="upload-hint">500x500px, Max 5MB</p>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="fullName">Full Name <span class="required">*</span></label>
+                            <input type="text" id="fullName" name="fullName" required placeholder="Enter your full name">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">City <span class="required">*</span></label>
+                            <input type="text" id="city" name="city" required placeholder="Mumbai">
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country <span class="required">*</span></label>
+                            <select id="country" name="country" required>
+                                <option value="">Select Country</option>
+                                <option value="India">India</option>
+                                <option value="USA">USA</option>
+                                <option value="UK">UK</option>
+                                <option value="UAE">UAE</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Contact Email <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" required placeholder="your.email@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" required placeholder="+91 98765 43210">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ageGroup">Age Group</label>
+                            <select id="ageGroup" name="ageGroup">
+                                <option value="">Select Age Group</option>
+                                <option value="18-25">18-25</option>
+                                <option value="26-35">26-35</option>
+                                <option value="36-45">36-45</option>
+                                <option value="46-55">46-55</option>
+                                <option value="56+">56+</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="Male">
+                                    <span>Male</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="Female">
+                                    <span>Female</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="gender" value="Non-binary">
+                                    <span>Non-binary</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row conditional-fields" id="physicalDetailsSection" style="display: none;">
+                        <div class="form-group">
+                            <label for="height">Height</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="height" name="height" placeholder="170">
+                                <select id="heightUnit" name="heightUnit">
+                                    <option value="cm">cm</option>
+                                    <option value="ft">ft</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="measurements">Measurements</label>
+                            <input type="text" id="measurements" name="measurements" placeholder="34-26-36">
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Languages Known <span class="required">*</span></label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="languages" value="English">
+                                <span>English</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="languages" value="Hindi">
+                                <span>Hindi</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="languages" value="Tamil">
+                                <span>Tamil</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="languages" value="Telugu">
+                                <span>Telugu</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="languages" value="Bengali">
+                                <span>Bengali</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="languages" value="Marathi">
+                                <span>Marathi</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Experience -->
+                <div class="form-step" data-step="2">
+                    <h2>Experience</h2>
+                    <p class="step-description">Tell us about your professional background</p>
+
+                    <div class="form-group full-width">
+                        <label for="yearsActive">How long have you been active in this field? <span class="required">*</span></label>
+                        <select id="yearsActive" name="yearsActive" required>
+                            <option value="">Select Experience</option>
+                            <option value="Less than 1 year">Less than 1 year</option>
+                            <option value="1-2 years">1-2 years</option>
+                            <option value="3-5 years">3-5 years</option>
+                            <option value="5-10 years">5-10 years</option>
+                            <option value="10-15 years">10-15 years</option>
+                            <option value="15+ years">15+ years</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Current Affiliation <span class="required">*</span></label>
+                        <div class="radio-cards">
+                            <label class="radio-card">
+                                <input type="radio" name="affiliation" value="Freelancer" required>
+                                <div class="card-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        ircle cx="12" cy="7" r="="4"></circle>
+                                    </svg>
+                                    <span>Freelancer</span>
+                                </div>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="affiliation" value="Agency" required>
+                                <div class="card-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                    </svg>
+                                    <span>Agency</span>
+                                </div>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="affiliation" value="Brand/Studio" required>
+                                <div class="card-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                    </svg>
+                                    <span>Brand/Studio</span>
+                                </div>
+                            </label>
+                            <label class="radio-card">
+                                <input type="radio" name="affiliation" value="Self-Employed" required>
+                                <div class="card-content">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        ircle cx="12" cy="12"2" r="10"></circle>
+                                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                                    </svg>
+                                    <span>Self-Employed</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="education">Education / Training</label>
+                        <textarea id="education" name="education" rows="4" maxlength="500" placeholder="List institutes, mentors, certifications, or training programs"></textarea>
+                        <div class="char-counter"><span id="educationCount">0</span>/500</div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Portfolio Summary -->
+                <div class="form-step" data-step="3">
+                    <h2>Portfolio Summary</h2>
+                    <p class="step-description">Showcase your unique creative identity</p>
+
+                    <div class="form-group full-width">
+                        <label for="styleDescription">Describe your style or specialization <span class="required">*</span></label>
+                        <textarea id="styleDescription" name="styleDescription" rows="4" maxlength="500" required placeholder="Describe your unique creative approach, aesthetic, or what sets your work apart"></textarea>
+                        <div class="char-counter"><span id="styleCount">0</span>/500</div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="interestedProjects">What kind of projects are you interested in next?</label>
+                        <textarea id="interestedProjects" name="interestedProjects" rows="3" maxlength="300" placeholder="What kind of opportunities or collaborations are you seeking next?"></textarea>
+                        <div class="char-counter"><span id="projectsCount">0</span>/300</div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Notable Works (up to 10)</label>
+                        <div id="notableWorksContainer">
+                            <div class="notable-work-item">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <input type="text" name="workTitle[]" placeholder="Project Title">
+                                    </div>
+                                    <div class="form-group" style="max-width: 150px;">
+                                        <select name="workYear[]">
+                                            <option value="">Year</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2024">2024</option>
+                                            <option value="2023">2023</option>
+                                            <option value="2022">2022</option>
+                                            <option value="2021">2021</option>
+                                            <option value="2020">2020</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <input type="text" name="workRole[]" placeholder="Your Role" style="margin-bottom: 10px;">
+                                <textarea name="workDescription[]" rows="2" maxlength="150" placeholder="Brief Description (150 char)"></textarea>
+                            </div>
+                        </div>
+                        <button type="button" class="add-work-btn" id="addWorkBtn">+ Add Another Work</button>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Availability & Preferences -->
+                <div class="form-step" data-step="4">
+                    <h2>Availability & Preferences</h2>
+                    <p class="step-description">Let us know your work preferences</p>
+
+                    <div class="form-group full-width">
+                        <label>Available For <span class="required">*</span></label>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="availableFor" value="Freelance Projects">
+                                <span>Freelance Projects</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="availableFor" value="Full-time Opportunities">
+                                <span>Full-time Opportunities</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="availableFor" value="Collaborations">
+                                <span>Collaborations</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="availableFor" value="Consulting">
+                                <span>Consulting</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Willing to Travel? <span class="required">*</span></label>
+                        <div class="toggle-group">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="willingToTravel" name="willingToTravel">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Yes, I'm willing to travel</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width" id="preferredLocationsSection" style="display: none;">
+                        <label for="preferredLocations">Preferred Work Locations</label>
+                        <input type="text" id="preferredLocations" name="preferredLocations" placeholder="Mumbai, Delhi, Bangalore">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Open to Brand Collaborations? <span class="required">*</span></label>
+                        <div class="toggle-group">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="brandCollabs" name="brandCollabs">
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Yes, open to brand collaborations</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 5: Domain Selection -->
+                <div class="form-step" data-step="5">
+                    <h2>Choose Your Domain</h2>
+                    <p class="step-description">Select your primary field of work</p>
+
+                    <div class="domain-cards">
+                        <div class="domain-card" data-domain="fashion">
+                            <div class="domain-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                </svg>
+                            </div>
+                            <h3>Fashion & Design</h3>
+                            <p>Designers, Models, Stylists, and Fashion Creatives</p>
+                        </div>
+                        <div class="domain-card" data-domain="film">
+                            <div class="domain-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                </svg>
+                            </div>
+                            <h3>Film & Creative Arts</h3>
+                            <p>Directors, Actors, Crew, and Production Specialists</p>
+                        </div>
+                        <div class="domain-card" data-domain="both">
+                            <div class="domain-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                            </div>
+                            <h3>Both Domains</h3>
+                            <p>Multi-disciplinary Creative Professional</p>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selectedDomain" name="domain" required>
+                </div>
+
+                <!-- STEP 6: Role Selection -->
+                <div class="form-step" data-step="6">
+                    <h2>Select Your Role</h2>
+                    <p class="step-description">Choose your specific specialization</p>
+
+                    <div class="role-search">
+                        <input type="text" id="roleSearch" placeholder="Search roles...">
+                    </div>
+
+                    <div id="roleContainer">
+                        <!-- Fashion Roles -->
+                        <div class="role-category" data-domain="fashion">
+                            <h3>Design & Creative</h3>
+                            <div class="role-grid">
+                                <div class="role-card" data-role="fashion-designer">
+                                    <h4>Fashion Designer</h4>
+                                    <p>Create clothing & collections</p>
+                                </div>
+                                <div class="role-card" data-role="textile-designer">
+                                    <h4>Textile Designer</h4>
+                                    <p>Print & surface design</p>
+                                </div>
+                                <div class="role-card" data-role="accessory-designer">
+                                    <h4>Accessory Designer</h4>
+                                    <p>Bags, shoes, jewelry</p>
+                                </div>
+                                <div class="role-card" data-role="fashion-illustrator">
+                                    <h4>Fashion Illustrator</h4>
+                                    <p>Sketches & visual concepts</p>
+                                </div>
+                            </div>
+
+                            <h3>Modeling & Presentation</h3>
+                            <div class="role-grid">
+                                <div class="role-card" data-role="fashion-model">
+                                    <h4>Fashion Model</h4>
+                                    <p>Runway, print, commercial</p>
+                                </div>
+                                <div class="role-card" data-role="ramp-choreographer">
+                                    <h4>Ramp Choreographer</h4>
+                                    <p>Show direction & staging</p>
+                                </div>
+                            </div>
+
+                            <h3>Styling & Beauty</h3>
+                            <div class="role-grid">
+                                <div class="role-card" data-role="fashion-stylist">
+                                    <h4>Fashion Stylist</h4>
+                                    <p>Editorial & personal styling</p>
+                                </div>
+                                <div class="role-card" data-role="makeup-artist">
+                                    <h4>Makeup Artist</h4>
+                                    <p>Bridal, film, editorial</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Film Roles -->
+                        <div class="role-category" data-domain="film">
+                            <h3>Direction & Creative</h3>
+                            <div class="role-grid">
+                                <div class="role-card" data-role="director">
+                                    <h4>Director</h4>
+                                    <p>Film & creative direction</p>
+                                </div>
+                                <div class="role-card" data-role="storyboard-artist">
+                                    <h4>Storyboard Artist</h4>
+                                    <p>Visual script planning</p>
+                                </div>
+                            </div>
+
+                            <h3>Acting & Performance</h3>
+                            <div class="role-grid">
+                                <div class="role-card" data-role="actor">
+                                    <h4>Actor/Actress</h4>
+                                    <p>Film, TV, theatre</p>
+                                </div>
+                                <div class="role-card" data-role="voice-actor">
+                                    <h4>Voice Actor</h4>
+                                    <p>Dubbing & narration</p>
+                                </div>
+                                <div class="role-card" data-role="dancer">
+                                    <h4>Dancer/Choreographer</h4>
+                                    <p>Performance & teaching</p>
+                                </div>
+                            </div>
+
+                            <h3>Cinematography & Visual</h3>
+                            <div class="role-grid">
+                                <div class="role-card" data-role="dop">
+                                    <h4>DOP/Camera Crew</h4>
+                                    <p>Cinematography & lighting</p>
+                                </div>
+                                <div class="role-card" data-role="editor">
+                                    <h4>Editor/VFX Artist</h4>
+                                    <p>Post-production specialist</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selectedRole" name="role" required>
+                </div>
+
+                <!-- STEP 7: Role-Specific Questions (Dynamic) -->
+                <div class="form-step" data-step="7">
+                    <h2 id="roleSpecificTitle">Role-Specific Details</h2>
+                    <p class="step-description">Tell us more about your specialization</p>
+
+                    <div id="roleSpecificQuestions">
+                        <!-- Questions will be dynamically loaded based on role -->
+                    </div>
+                </div>
+
+                <!-- STEP 8: Preview & Publish -->
+                <div class="form-step" data-step="8">
+                    <h2>Preview & Publish</h2>
+                    <p class="step-description">Review your portfolio before publishing</p>
+
+                    <div class="preview-container">
+                        <div class="preview-card">
+                            <h3>Your Profile Summary</h3>
+                            <div id="previewContent">
+                                <!-- Preview will be generated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <h3>Social Links</h3>
+                        <div class="social-links">
+                            <div class="form-group">
+                                <label for="instagram">Instagram</label>
+                                <input type="text" id="instagram" name="instagram" placeholder="@username">
+                            </div>
+                            <div class="form-group">
+                                <label for="linkedin">LinkedIn</label>
+                                <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/...">
+                            </div>
+                            <div class="form-group">
+                                <label for="website">Personal Website</label>
+                                <input type="url" id="website" name="website" placeholder="https://...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="form-navigation">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">Previous</button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">Next Step</button>
+                    <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">Publish Portfolio</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+<script>
+// Form state management
+let currentStep = 1;
+const totalSteps = 8;
+let formData = {};
+
+// Role-specific question templates
+const roleQuestions = {
+    'fashion-designer': [
+        {
+            type: 'checkbox',
+            label: 'Design Categories',
+            name: 'designCategories',
+            options: ['Menswear', 'Womenswear', 'Kidswear', 'Unisex'],
+            required: true
+        },
+        {
+            type: 'radio',
+            label: 'Market Focus',
+            name: 'marketFocus',
+            options: ['Haute Couture', 'Prêt-à-porter', 'Mass Market', 'Sustainable Fashion'],
+            required: true
+        },
+        {
+            type: 'checkbox',
+            label: 'Work Scope',
+            name: 'workScope',
+            options: ['Concept Design', 'Pattern Making', 'Production Supervision']
+        },
+        {
+            type: 'file',
+            label: 'Upload Lookbook/Portfolio',
+            name: 'portfolio',
+            accept: 'image/*,.pdf',
+            multiple: true
+        },
+        {
+            type: 'textarea',
+            label: 'Brand/Fashion Week Collaborations',
+            name: 'collaborations',
+            maxlength: 300
+        },
+        {
+            type: 'textarea',
+            label: 'Design Identity',
+            name: 'designIdentity',
+            maxlength: 300
+        }
+    ],
+    'fashion-model': [
+        {
+            type: 'checkbox',
+            label: 'Modeling Types',
+            name: 'modelingTypes',
+            options: ['Runway', 'Print/Editorial', 'Commercial', 'Fitness', 'Plus-size'],
+            required: true
+        },
+        {
+            type: 'radio',
+            label: 'Agency Affiliation',
+            name: 'agencyAffiliation',
+            options: ['Independent', 'Represented by Agency', 'Open to Representation']
+        },
+        {
+            type: 'file',
+            label: 'Portfolio Images (3-5 images)',
+            name: 'portfolioImages',
+            accept: 'image/*',
+            multiple: true
+        },
+        {
+            type: 'textarea',
+            label: 'Major Campaigns/Shows',
+            name: 'campaigns',
+            maxlength: 300
+        },
+        {
+            type: 'textarea',
+            label: 'Future Modeling Goals',
+            name: 'futureGoals',
+            maxlength: 250
+        }
+    ],
+    'director': [
+        {
+            type: 'checkbox',
+            label: 'Specialization',
+            name: 'specialization',
+            options: ['Feature Films', 'Short Films', 'Documentaries', 'Web Series', 'Commercials'],
+            required: true
+        },
+        {
+            type: 'radio',
+            label: 'Project Type',
+            name: 'projectType',
+            options: ['Independent Projects', 'Production House Backed', 'Both']
+        },
+        {
+            type: 'text',
+            label: 'Showreel Links (YouTube/Vimeo)',
+            name: 'showreelLinks',
+            placeholder: 'https://youtube.com/...'
+        },
+        {
+            type: 'textarea',
+            label: 'Festivals/Awards',
+            name: 'festivalsAwards',
+            maxlength: 300
+        },
+        {
+            type: 'textarea',
+            label: 'Storytelling Style',
+            name: 'storytellingStyle',
+            maxlength: 300,
+            required: true
+        },
+        {
+            type: 'textarea',
+            label: 'Key Collaborations',
+            name: 'keyCollaborations',
+            maxlength: 200
+        }
+    ],
+    'makeup-artist': [
+        {
+            type: 'checkbox',
+            label: 'Specialization',
+            name: 'specialization',
+            options: ['Bridal', 'Film/TV', 'Editorial/Fashion', 'Runway', 'Special Effects'],
+            required: true
+        },
+        {
+            type: 'checkbox',
+            label: 'Signature Looks',
+            name: 'signatureLooks',
+            options: ['Natural/Minimal', 'Glam/Bold', 'Avant-garde', 'Traditional', 'HD/Airbrush']
+        },
+        {
+            type: 'radio',
+            label: 'Work Setup',
+            name: 'workSetup',
+            options: ['Studio-based', 'Mobile/Travel-based', 'Both']
+        },
+        {
+            type: 'file',
+            label: 'Before/After Portfolio',
+            name: 'portfolio',
+            accept: 'image/*',
+            multiple: true
+        },
+        {
+            type: 'textarea',
+            label: 'Events/Shows/Films',
+            name: 'events',
+            maxlength: 300
+        },
+        {
+            type: 'textarea',
+            label: 'Technique/Philosophy',
+            name: 'philosophy',
+            maxlength: 250
+        }
+    ],
+    'actor': [
+        {
+            type: 'checkbox',
+            label: 'Performance Languages',
+            name: 'languages',
+            options: ['Hindi', 'English', 'Tamil', 'Telugu', 'Bengali', 'Marathi']
+        },
+        {
+            type: 'textarea',
+            label: 'Training Background',
+            name: 'training',
+            maxlength: 300
+        },
+        {
+            type: 'file',
+            label: 'Self-Tape/Monologue',
+            name: 'selftape',
+            accept: 'video/*'
+        },
+        {
+            type: 'textarea',
+            label: 'Acting Credits',
+            name: 'credits',
+            maxlength: 400,
+            required: true
+        },
+        {
+            type: 'radio',
+            label: 'Agency Representation',
+            name: 'agency',
+            options: ['Independent', 'Represented', 'Seeking Representation']
+        },
+        {
+            type: 'textarea',
+            label: 'Desired Roles/Genres',
+            name: 'desiredRoles',
+            maxlength: 250
+        }
+    ]
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeForm();
+    attachEventListeners();
+});
+
+function initializeForm() {
+    showStep(1);
+    updateProgressBar();
+}
+
+function attachEventListeners() {
+    // Navigation buttons
+    document.getElementById('nextBtn').addEventListener('click', nextStep);
+    document.getElementById('prevBtn').addEventListener('click', prevStep);
+    document.getElementById('submitBtn').addEventListener('click', submitForm);
+    
+    // Photo upload
+    document.getElementById('profilePhoto').addEventListener('change', handlePhotoUpload);
+    
+    // Character counters
+    addCharacterCounters();
+    
+    // Travel toggle
+    document.getElementById('willingToTravel').addEventListener('change', function() {
+        document.getElementById('preferredLocationsSection').style.display = 
+            this.checked ? 'block' : 'none';
+    });
+    
+    // Domain selection
+    document.querySelectorAll('.domain-card').forEach(card => {
+        card.addEventListener('click', function() {
+            selectDomain(this.dataset.domain);
+        });
+    });
+    
+    // Role selection
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.addEventListener('click', function() {
+            selectRole(this.dataset.role);
+        });
+    });
+    
+    // Role search
+    document.getElementById('roleSearch').addEventListener('input', filterRoles);
+    
+    // Add work button
+    document.getElementById('addWorkBtn').addEventListener('click', addNotableWork);
+}
+
+function showStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
+    
+    // Show current step
+    const currentStepElement = document.querySelector(`.form-step[data-step="${step}"]`);
+    if (currentStepElement) {
+        currentStepElement.classList.add('active');
+    }
+    
+    // Update sidebar
+    document.querySelectorAll('.progress-sidebar .step').forEach((s, index) => {
+        s.classList.remove('active', 'completed');
+        if (index + 1 === step) {
+            s.classList.add('active');
+        } else if (index + 1 < step) {
+            s.classList.add('completed');
+        }
+    });
+    
+    // Update buttons
+    document.getElementById('prevBtn').style.display = step === 1 ? 'none' : 'inline-block';
+    document.getElementById('nextBtn').style.display = step === totalSteps ? 'none' : 'inline-block';
+    document.getElementById('submitBtn').style.display = step === totalSteps ? 'inline-block' : 'none';
+    
+    currentStep = step;
+    updateProgressBar();
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
+}
+
+function updateProgressBar() {
+    const progress = (currentStep / totalSteps) * 100;
+    document.querySelector('.progress-fill').style.width = progress + '%';
+    document.querySelector('.progress-percentage').textContent = Math.round(progress) + '% Complete';
+}
+
+function nextStep() {
+    if (validateStep(currentStep)) {
+        saveStepData(currentStep);
+        
+        // Handle domain-based role filtering
+        if (currentStep === 5) {
+            const selectedDomain = document.getElementById('selectedDomain').value;
+            filterRolesByDomain(selectedDomain);
+        }
+        
+        // Generate role-specific questions
+        if (currentStep === 6) {
+            const selectedRole = document.getElementById('selectedRole').value;
+            generateRoleQuestions(selectedRole);
+        }
+        
+        // Generate preview
+        if (currentStep === 7) {
+            generatePreview();
+        }
+        
+        showStep(currentStep + 1);
+    }
+}
+
+function prevStep() {
+    showStep(currentStep - 1);
+}
+
+function validateStep(step) {
+    const currentStepElement = document.querySelector(`.form-step[data-step="${step}"]`);
+    const requiredFields = currentStepElement.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            const name = field.name;
+            const checked = currentStepElement.querySelector(`[name="${name}"]:checked`);
+            if (!checked) {
+                isValid = false;
+                field.closest('.form-group').classList.add('error');
+            }
+        } else if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('error');
+        } else {
+            field.classList.remove('error');
+        }
+    });
+    
+    if (!isValid) {
+        alert('Please fill in all required fields before proceeding.');
+    }
+    
+    return isValid;
+}
+
+function saveStepData(step) {
+    const currentStepElement = document.querySelector(`.form-step[data-step="${step}"]`);
+    const inputs = currentStepElement.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        if (input.type === 'checkbox') {
+            if (!formData[input.name]) formData[input.name] = [];
+            if (input.checked && !formData[input.name].includes(input.value)) {
+                formData[input.name].push(input.value);
+            }
+        } else if (input.type === 'radio') {
+            if (input.checked) {
+                formData[input.name] = input.value;
+            }
+        } else {
+            formData[input.name] = input.value;
+        }
+    });
+    
+    // Save to localStorage for auto-save
+    localStorage.setItem('velvetReelFormData', JSON.stringify(formData));
+}
+
+function handlePhotoUpload(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = `<img src="${event.target.result}" alt="Profile Photo">`;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function addCharacterCounters() {
+    const textareas = document.querySelectorAll('textarea[maxlength]');
+    textareas.forEach(textarea => {
+        const counterId = textarea.id + 'Count';
+        const counter = document.getElementById(counterId);
+        if (counter) {
+            textarea.addEventListener('input', function() {
+                counter.textContent = this.value.length;
+            });
+        }
+    });
+}
+
+function selectDomain(domain) {
+    document.querySelectorAll('.domain-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    document.getElementById('selectedDomain').value = domain;
+}
+
+function filterRolesByDomain(domain) {
+    const categories = document.querySelectorAll('.role-category');
+    categories.forEach(category => {
+        const categoryDomain = category.dataset.domain;
+        if (domain === 'both' || categoryDomain === domain) {
+            category.style.display = 'block';
+        } else {
+            category.style.display = 'none';
+        }
+    });
+}
+
+function selectRole(role) {
+    document.querySelectorAll('.role-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    document.getElementById('selectedRole').value = role;
+    document.getElementById('roleSpecificTitle').textContent = 
+        event.currentTarget.querySelector('h4').textContent + ' Details';
+}
+
+function filterRoles(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('.role-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+    });
+}
+
+function addNotableWork() {
+    const container = document.getElementById('notableWorksContainer');
+    const workItems = container.querySelectorAll('.notable-work-item');
+    
+    if (workItems.length >= 10) {
+        alert('Maximum 10 notable works allowed');
+        return;
+    }
+    
+    const newWork = workItems[0].cloneNode(true);
+    newWork.querySelectorAll('input, textarea, select').forEach(input => {
+        input.value = '';
+    });
+    container.appendChild(newWork);
+}
+
+function generateRoleQuestions(role) {
+    const container = document.getElementById('roleSpecificQuestions');
+    container.innerHTML = '';
+    
+    const questions = roleQuestions[role] || [];
+    
+    questions.forEach((q, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'form-group full-width';
+        
+        let inputHTML = '';
+        
+        switch(q.type) {
+            case 'text':
+                inputHTML = `
+                    <label for="rq_${index}">${q.label}${q.required ? ' <span class="required">*</span>' : ''}</label>
+                    <input type="text" id="rq_${index}" name="${q.name}" placeholder="${q.placeholder || ''}" ${q.required ? 'required' : ''}>
+                `;
+                break;
+                
+            case 'textarea':
+                inputHTML = `
+                    <label for="rq_${index}">${q.label}${q.required ? ' <span class="required">*</span>' : ''}</label>
+                    <textarea id="rq_${index}" name="${q.name}" rows="4" maxlength="${q.maxlength || 500}" ${q.required ? 'required' : ''}></textarea>
+                    <div class="char-counter"><span id="rq_${index}_count">0</span>/${q.maxlength || 500}</div>
+                `;
+                break;
+                
+            case 'checkbox':
+                inputHTML = `<label>${q.label}${q.required ? ' <span class="required">*</span>' : ''}</label><div class="checkbox-grid">`;
+                q.options.forEach(opt => {
+                    inputHTML += `
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="${q.name}" value="${opt}" ${q.required ? 'required' : ''}>
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+                inputHTML += '</div>';
+                break;
+                
+            case 'radio':
+                inputHTML = `<label>${q.label}${q.required ? ' <span class="required">*</span>' : ''}</label><div class="radio-group">`;
+                q.options.forEach(opt => {
+                    inputHTML += `
+                        <label class="radio-label">
+                            <input type="radio" name="${q.name}" value="${opt}" ${q.required ? 'required' : ''}>
+                            <span>${opt}</span>
+                        </label>
+                    `;
+                });
+                inputHTML += '</div>';
+                break;
+                
+            case 'file':
+                inputHTML = `
+                    <label for="rq_${index}">${q.label}</label>
+                    <input type="file" id="rq_${index}" name="${q.name}" accept="${q.accept || '*'}" ${q.multiple ? 'multiple' : ''}>
+                `;
+                break;
+        }
+        
+        questionDiv.innerHTML = inputHTML;
+        container.appendChild(questionDiv);
+        
+        // Add character counter for textareas
+        if (q.type === 'textarea') {
+            const textarea = questionDiv.querySelector('textarea');
+            const counter = questionDiv.querySelector(`#rq_${index}_count`);
+            textarea.addEventListener('input', function() {
+                counter.textContent = this.value.length;
+            });
+        }
+    });
+}
+
+function generatePreview() {
+    const previewContent = document.getElementById('previewContent');
+    let html = `
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+            ${document.getElementById('photoPreview').innerHTML}
+            <div>
+                <h3 style="margin: 0;">${formData.fullName || 'Your Name'}</h3>
+                <p style="color: #757575; margin: 5px 0;">${formData.role || 'Your Role'}</p>
+                <p style="color: #757575; margin: 0;">${formData.city || 'City'}, ${formData.country || 'Country'}</p>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>Email:</strong> ${formData.email || 'Not provided'}<br>
+            <strong>Phone:</strong> ${formData.phone || 'Not provided'}
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>Experience:</strong> ${formData.yearsActive || 'Not specified'}<br>
+            <strong>Affiliation:</strong> ${formData.affiliation || 'Not specified'}
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <strong>About:</strong><br>
+            ${formData.styleDescription || 'No description provided'}
+        </div>
+    `;
+    
+    previewContent.innerHTML = html;
+}
+
+function submitForm(e) {
+    e.preventDefault();
+    
+    if (!validateStep(currentStep)) {
+        return;
+    }
+    
+    saveStepData(currentStep);
+    
+    // Here you would normally send data to your server
+    console.log('Form Data:', formData);
+    
+    // Show success message
+    alert('Portfolio published successfully!');
+    
+    // You can integrate with JetForm or your backend here
+    // For example: 
+    // fetch('/api/submit-portfolio', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(formData)
+    // });
+    
+    // Clear localStorage
+    localStorage.removeItem('velvetReelFormData');
+}
+
+// Auto-save every 30 seconds
+setInterval(() => {
+    if (currentStep > 0) {
+        saveStepData(currentStep);
+    }
+}, 30000);
+
+// Load saved data on page load
+window.addEventListener('load', () => {
+    const savedData = localStorage.getItem('velvetReelFormData');
+    if (savedData) {
+        const shouldResume = confirm('Would you like to resume your previous application?');
+        if (shouldResume) {
+            formData = JSON.parse(savedData);
+            // Populate form fields with saved data
+            // Implementation depends on your specific needs
+        }
+    }
+});
+
+</script>
+</body>
+</html>

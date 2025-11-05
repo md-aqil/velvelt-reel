@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Global Functions</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px 15px; margin: 5px; background: #0073aa; color: white; border: none; cursor: pointer; }
+        button:hover { background: #005a87; }
+        .file-upload-area { 
+            border: 2px dashed #ccc; 
+            padding: 20px; 
+            text-align: center; 
+            margin: 20px 0; 
+            background: #f9f9f9;
+        }
+        .file-upload-preview { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            margin-top: 10px; 
+        }
+        .file-preview-item { 
+            width: 100px; 
+            text-align: center; 
+        }
+        .file-preview-item img { 
+            width: 100px; 
+            height: 100px; 
+            object-fit: cover; 
+        }
+        .global-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            color: white;
+            z-index: 9999;
+        }
+        .global-notification.success { background: #4CAF50; }
+        .global-notification.error { background: #f44336; }
+        .global-notification.warning { background: #ff9800; }
+        .global-notification.info { background: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>Test Global Functions</h1>
+    
+    <div>
+        <button onclick="testNotification('success')">Test Success Notification</button>
+        <button onclick="testNotification('error')">Test Error Notification</button>
+        <button onclick="testNotification('warning')">Test Warning Notification</button>
+        <button onclick="testNotification('info')">Test Info Notification</button>
+    </div>
+    
+    <div class="file-upload-area">
+        <p>Test File Upload (Drag & Drop or Click)</p>
+        <input type="file" multiple>
+        <div class="file-upload-preview"></div>
+    </div>
+    
+    <form data-confirm="Are you sure you want to submit this form?">
+        <button type="submit">Test Form Confirmation</button>
+    </form>
+    
+    <button data-modal-trigger="test-modal">Open Modal</button>
+    
+    <div class="modal" id="test-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px;">
+            <h3>Test Modal</h3>
+            <p>This is a test modal.</p>
+            <button data-modal-close>Close</button>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <button onclick="testAjaxFunction()">Test AJAX Function</button>
+    </div>
+    
+    <script src="global.js"></script>
+    <script>
+        // Test functions
+        function testNotification(type) {
+            if (typeof showNotification === 'function') {
+                showNotification(`This is a ${type} notification test!`, type);
+            } else {
+                console.log('showNotification function not available');
+            }
+        }
+        
+        function testAjaxFunction() {
+            if (typeof ajaxRequest === 'function') {
+                console.log('ajaxRequest function is available');
+                // In a real scenario, you would call it like:
+                // ajaxRequest('/some-endpoint', { action: 'test' })
+                //     .then(response => console.log('Response:', response))
+                //     .catch(error => console.error('Error:', error));
+            } else {
+                console.log('ajaxRequest function not available');
+            }
+        }
+        
+        // Initialize global scripts manually for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page loaded');
+            
+            // Test if functions exist
+            console.log('initializeGlobalScripts:', typeof initializeGlobalScripts);
+            console.log('showNotification:', typeof showNotification);
+            console.log('ajaxRequest:', typeof ajaxRequest);
+            
+            // Try to initialize global scripts
+            if (typeof initializeGlobalScripts === 'function') {
+                try {
+                    initializeGlobalScripts();
+                    console.log('Global scripts initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing global scripts:', error);
+                }
+            }
+        });
+        
+        // Add modal close functionality for testing
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('[data-modal-close]')) {
+                const modal = e.target.closest('.modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

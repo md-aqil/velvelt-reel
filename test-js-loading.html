@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test JS Loading</title>
+</head>
+<body>
+    <h1>Test JavaScript Loading</h1>
+    <p>Check the browser console to see if global.js and talent--submission.js are loading correctly.</p>
+    
+    <!-- Test form to simulate talent submission page -->
+    <form id="velvetReelForm">
+        <div class="progress-sidebar">
+            <div class="step active" data-step="1">Step 1</div>
+            <div class="step" data-step="2">Step 2</div>
+        </div>
+        <div class="form-step active" data-step="1">
+            <h2>Step 1</h2>
+            <input type="text" id="fullName" required placeholder="Full Name">
+        </div>
+        <div class="form-step" data-step="2">
+            <h2>Step 2</h2>
+            <input type="email" id="email" required placeholder="Email">
+        </div>
+        <button type="button" id="prevBtn" style="display: none;">Previous</button>
+        <button type="button" id="nextBtn">Next</button>
+        <button type="submit" id="submitBtn" style="display: none;">Submit</button>
+    </form>
+    
+    <script src="global.js"></script>
+    <script src="talent--submission.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page loaded');
+            
+            // Test global.js functions
+            if (typeof showNotification === 'function') {
+                console.log('✓ showNotification function is available');
+                //showNotification('Test notification from global.js', 'success');
+            } else {
+                console.log('✗ showNotification function is NOT available');
+            }
+            
+            if (typeof ajaxRequest === 'function') {
+                console.log('✓ ajaxRequest function is available');
+            } else {
+                console.log('✗ ajaxRequest function is NOT available');
+            }
+        });
+    </script>
+</body>
+</html>

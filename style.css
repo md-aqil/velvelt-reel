@@ -1,0 +1,550 @@
+/* 
+Theme Name: Hello Elementor Child
+Theme URI: https://github.com/elementor/hello-theme-child/
+Description: Hello Elementor Child is a child theme of Hello Elementor, created by Elementor team
+Author: Elementor Team
+Author URI: https://elementor.com/
+Template: hello-elementor
+Version: 2.0.0
+Text Domain: hello-elementor-child
+License: GNU General Public License v3 or later.
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
+Tags: flexible-header, custom-colors, custom-menu, custom-logo, editor-style, featured-images, rtl-language-support, threaded-comments, translation-ready
+*/
+
+/* Add your custom styles here */
+
+/*--------------------------------------------------------------
+## Talent Archive Page
+--------------------------------------------------------------*/
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+body {
+      /* font-family: "Montserrat", sans-serif; */
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.spacer-top {
+    padding-top: 100px;
+}
+.post-type-archive-talent {
+    background-color: #000;
+    color: #eee;
+}
+.post-type-archive-talent .site-main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+.post-type-archive-talent .page-header .entry-title {
+    color: #fff;
+}
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.page-header .entry-title {
+    font-family: 'Poppins', 'Inter', sans-serif;
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.page-header .header-user-name {
+    color: #b2122d; /* Use a theme color */
+}
+
+.page-header .page-description {
+    font-size: 18px;
+    color: #aaa;
+}
+
+.btn-create-portfolio {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 28px;
+    background-color: #b2122d;
+    color: #fff;
+    border: 2px solid #b2122d;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-create-portfolio:hover {
+    background-color: transparent;
+    color: #b2122d;
+}
+
+.talent-archive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
+}
+
+.talent-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.talent-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(178, 18, 45, 0.2);
+}
+
+.talent-card-header {
+    margin-bottom: 15px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 12px;
+    background-color: #e8f5e9; /* Light green */
+    color: #4CAF50; /* Green */
+}
+
+.status-badge.pending {
+    background-color: #fff8e1; /* Light yellow */
+    color: #ffb300; /* Yellow */
+}
+
+.talent-card-body {
+    margin-bottom: 20px;
+}
+
+.talent-role {
+    font-family: 'Poppins', 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    color: #ffffff;
+}
+
+.talent-name {
+    font-size: 16px;
+    color: #aaaaaa;
+    margin: 0;
+}
+
+.talent-card-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+    display: block; /* Changed from flex */
+    text-align: right; /* Align buttons to the right */
+}
+
+.talent-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: left;
+}
+
+.stat-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #aaaaaa;
+}
+.talent-card-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.view-button {
+    background: transparent;
+    border: 2px solid #555;
+    color: #eee;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.view-button:hover {
+    background: #b2122d;
+    color: #ffffff;
+    border-color: #b2122d;
+}
+
+.view-button.edit-button {
+    background-color: #444;
+    border-color: #444;
+    color: #eee;
+}
+
+.archive-pagination {
+    margin-top: 40px;
+    text-align: center;
+}
+
+/*--------------------------------------------------------------
+## Single Talent Page
+--------------------------------------------------------------*/
+.single-talent, .single-talent .site-main {
+    background-color: #000;
+    color: #eee;
+}
+.talent-single-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    font-family: 'Inter', 'Satoshi', 'Poppins', sans-serif;
+}
+.single-talent .entry-title { color: #fff; }
+.talent-profile-container {
+    background: #1a1a1a;
+    padding: 40px;
+    border-radius: 16px;
+    margin-top: 50px;
+}
+
+/* Header Card */
+.talent-header-card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    align-items: center;
+    margin-bottom: 50px;
+}
+
+.talent-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 16px;
+    overflow: hidden; 
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.talent-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.talent-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b0b0b0;
+}
+
+.talent-info {
+    flex: 1;
+}
+
+.talent-name {
+    font-size: 42px;
+    font-weight: 700;
+    margin: 0 0 5px 0;
+    line-height: 1.2;
+}
+
+.talent-role-subtitle {
+    font-size: 20px;
+    font-weight: 400;
+    color: #aaa;
+    margin: 0 0 20px 0;
+}
+
+.talent-tags {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.tag-pill {
+    display: inline-block;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 20px;
+    background-color: #333;
+    color: #eee;
+}
+
+.talent-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.talent-website {
+    font-size: 15px;
+    color: #b2122d;
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.talent-social-link {
+    font-size: 15px;
+    color: #aaa;
+    text-decoration: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.talent-website:hover, .talent-social-link:hover {
+    text-decoration: underline;
+}
+
+/* Biography & Details */
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #eee;
+    margin-bottom: 20px;
+}
+
+.biography-content {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #ccc;
+    max-width: 75ch; /* Optimal reading width */
+}
+
+.soft-divider {
+    border: 0;
+    height: 1px;
+    background-color: #333;
+    margin: 50px 0;
+}
+
+.talent-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 60px;
+}
+
+.details-section {
+    margin-bottom: 40px;
+}
+
+.details-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 15px;
+    color: #ccc;
+}
+
+.details-list li {
+    margin-bottom: 10px;
+}
+
+.details-list li strong {
+    color: #fff;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.education-text, .seeking-projects-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #ccc;
+}
+
+.text-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.text-chip {
+    background-color: #2c2c2c;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #ddd;
+}
+
+.experience-section .years-active {
+    font-size: 15px;
+    color: #ccc;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+}
+
+
+.experience-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.experience-item {
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333;
+}
+.experience-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.experience-role {
+    display: block;
+    font-weight: 600;
+    color: #fff;
+}
+.experience-company {
+    display: block;
+    color: #aaa;
+    margin: 2px 0;
+}
+.experience-duration {
+    font-size: 13px;
+    color: #888;
+}
+
+/* Portfolio Gallery */
+.portfolio-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.portfolio-image {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.portfolio-image:hover {
+    transform: scale(1.03);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.portfolio-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Responsive Stacking */
+@media (max-width: 768px) {
+    .talent-details-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .talent-header-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    .talent-tags {
+        justify-content: center;
+    }
+}
+
+/*--------------------------------------------------------------
+## Custom File Upload Input
+--------------------------------------------------------------*/
+.file-upload-area {
+    position: relative;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    background-color: #f9f9f9;
+}
+
+.file-upload-area:hover {
+    border-color: #b2122d;
+    background-color: #fff5f7;
+}
+
+.file-upload-area input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-upload-instructions svg {
+    color: #b2122d;
+    margin-bottom: 10px;
+}
+
+.file-upload-instructions p {
+    margin: 0;
+    font-size: 16px;
+    color: #555;
+}
+
+.file-upload-hint {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+}
+
+.file-upload-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+    justify-content: center;
+}
+
+.file-preview-item {
+    width: 100px;
+    text-align: center;
+}
+
+.file-preview-item img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.file-preview-item .file-preview-name {
+    font-size: 12px;
+    color: #555;
+    margin-top: 5px;
+    display: block;
+    word-break: break-all;
+}
