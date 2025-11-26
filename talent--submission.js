@@ -6,6 +6,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    // Test if talentData is available
+    if (typeof talentData !== 'undefined') {
+        console.log('talentData is available:', talentData);
+    } else {
+        console.error('talentData is not defined. This may cause the Save and Next button to not work.');
+    }
+    
     // --- FORM STATE & CONSTANTS ---
     let currentStep = 1;
     const totalSteps = document.querySelectorAll('.progress-sidebar .step').length;
@@ -106,8 +113,98 @@ document.addEventListener('DOMContentLoaded', function() {
         return isValid;
     };
 
+    // --- SAVE & CONTINUE FUNCTIONALITY ---
+    const saveProgress = () => {
+        // Check if talentData is properly defined
+        if (typeof talentData === 'undefined') {
+            console.error('talentData is undefined');
+            return;
+        }
+        
+        if (!talentData.ajaxurl || !talentData.nonce) {
+            console.error('talentData is missing required properties:', talentData);
+            return;
+        }
+
+        // Serialize form data
+        const formData = new FormData(form);
+
+        // Convert FormData to URLSearchParams for proper serialization
+        const params = new URLSearchParams();
+
+        // Add action and nonce
+        params.append('action', 'save_talent_progress');
+        params.append('nonce', talentData.nonce);
+
+        // Add current step
+        params.append('current_step', currentStep);
+
+        // Add post_id if it exists
+        const postIdInput = form.querySelector('input[name="post_id"]');
+        if (postIdInput && postIdInput.value) {
+            params.append('post_id', postIdInput.value);
+        }
+
+        // Serialize all form fields into form_data parameter
+        const formDataString = new URLSearchParams(formData).toString();
+        params.append('form_data', formDataString);
+
+        console.log('Sending AJAX request with params:', [...params]);
+        
+        fetch(talentData.ajaxurl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString()
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.data && data.data.post_id) {
+                    // Update post_id field if it's a new draft
+                    let postIdInput = form.querySelector('input[name="post_id"]');
+                    if (!postIdInput) {
+                        postIdInput = document.createElement('input');
+                        postIdInput.type = 'hidden';
+                        postIdInput.name = 'post_id';
+                        form.appendChild(postIdInput);
+                    }
+                    postIdInput.value = data.data.post_id;
+                    console.log('Progress saved successfully, Post ID:', data.data.post_id);
+
+                    // Show a subtle notification if the global function is available
+                    if (typeof showNotification === 'function') {
+                        showNotification('Progress saved', 'success');
+                    }
+                } else {
+                    console.error('Error saving progress:', data.data || data.message || 'Unknown error');
+                    // Show error notification
+                    if (typeof showNotification === 'function') {
+                        showNotification('Error saving progress: ' + (data.data || data.message || 'Unknown error'), 'error');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error saving progress:', error);
+                // Show error notification
+                if (typeof showNotification === 'function') {
+                    showNotification('Error saving progress: ' + error.message, 'error');
+                }
+            });
+    };
+
     nextBtn.addEventListener('click', () => {
+        console.log('Save and Next button clicked');
         if (validateStep(currentStep)) {
+            console.log('Step validation passed, saving progress');
+            // Auto-save progress
+            saveProgress();
+
             if (currentStep < totalSteps) {
                 if (currentStep === 5) { // After Domain selection
                     const selectedDomain = document.getElementById('selectedDomain').value;
@@ -119,6 +216,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 showStep(currentStep + 1);
             }
+        } else {
+            console.log('Step validation failed');
         }
     });
 
