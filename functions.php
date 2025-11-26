@@ -2306,7 +2306,17 @@ function enqueue_talent_form_assets()
     error_log('Checking page template: ' . (is_page_template('template-talent-edit.php') ? 'YES' : 'NO') . ' for talent edit');
     error_log('Current page template: ' . (get_page_template_slug() ?: 'none'));
     
-    if (is_page_template('template-talent-submission.php') || is_page_template('template-talent-edit.php')) {
+    // Additional checks
+    error_log('is_page(): ' . (is_page() ? 'YES' : 'NO'));
+    error_log('get_queried_object_id(): ' . get_queried_object_id());
+    
+    // Try a different approach to identify the page
+    $is_talent_submission_page = is_page_template('template-talent-submission.php') || 
+                                (is_page() && get_page_template_slug() === 'template-talent-submission.php');
+    
+    error_log('is_talent_submission_page: ' . ($is_talent_submission_page ? 'YES' : 'NO'));
+    
+    if ($is_talent_submission_page || is_page_template('template-talent-edit.php')) {
         // Enqueue the form CSS
         wp_enqueue_style(
             'talent-form-style',
