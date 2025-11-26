@@ -2325,7 +2325,7 @@ function enqueue_talent_form_assets()
     wp_enqueue_script(
         'talent-submission-js',
         get_stylesheet_directory_uri() . '/talent--submission.js',
-        array('jquery', 'theme-global-js'),
+        array('jquery'),
         HELLO_ELEMENTOR_CHILD_VERSION,
         true
     );
