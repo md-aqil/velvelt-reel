@@ -2301,115 +2301,81 @@ add_filter('woocommerce_logout_default_redirect_url', 'custom_woocommerce_logout
  */
 function enqueue_talent_form_assets()
 {
-    // Check if we're on the talent submission or edit page
-    error_log('Checking page template: ' . (is_page_template('template-talent-submission.php') ? 'YES' : 'NO') . ' for talent submission');
-    error_log('Checking page template: ' . (is_page_template('template-talent-edit.php') ? 'YES' : 'NO') . ' for talent edit');
-    error_log('Current page template: ' . (get_page_template_slug() ?: 'none'));
+    // Always enqueue for testing
+    error_log('enqueue_talent_form_assets called');
     
-    // Additional checks
-    error_log('is_page(): ' . (is_page() ? 'YES' : 'NO'));
-    error_log('get_queried_object_id(): ' . get_queried_object_id());
-    
-    // Try a different approach to identify the page
-    $is_talent_submission_page = is_page_template('template-talent-submission.php') || 
-                                (is_page() && get_page_template_slug() === 'template-talent-submission.php');
-    
-    error_log('is_talent_submission_page: ' . ($is_talent_submission_page ? 'YES' : 'NO'));
-    
-    if ($is_talent_submission_page || is_page_template('template-talent-edit.php')) {
-        // Enqueue the form CSS
-        wp_enqueue_style(
-            'talent-form-style',
-            get_stylesheet_directory_uri() . '/form-style.css',
-            array(),
-            HELLO_ELEMENTOR_CHILD_VERSION
-        );
+    // Enqueue the form CSS
+    wp_enqueue_style(
+        'talent-form-style',
+        get_stylesheet_directory_uri() . '/form-style.css',
+        array(),
+        HELLO_ELEMENTOR_CHILD_VERSION
+    );
 
-        // Enqueue the global JS file
-        wp_enqueue_script(
-            'theme-global-js',
-            get_stylesheet_directory_uri() . '/global.js',
-            array(),
-            HELLO_ELEMENTOR_CHILD_VERSION,
-            true
-        );
+    // Enqueue the global JS file
+    wp_enqueue_script(
+        'theme-global-js',
+        get_stylesheet_directory_uri() . '/global.js',
+        array(),
+        HELLO_ELEMENTOR_CHILD_VERSION,
+        true
+    );
 
-        // Enqueue the talent submission JS file
-        wp_enqueue_script(
-            'talent-submission-js',
-            get_stylesheet_directory_uri() . '/talent--submission.js',
-            array('jquery', 'theme-global-js'),
-            HELLO_ELEMENTOR_CHILD_VERSION,
-            true
-        );
+    // Enqueue the talent submission JS file
+    wp_enqueue_script(
+        'talent-submission-js',
+        get_stylesheet_directory_uri() . '/talent--submission.js',
+        array('jquery', 'theme-global-js'),
+        HELLO_ELEMENTOR_CHILD_VERSION,
+        true
+    );
 
-        // Localize script with draft data and AJAX info
-        $draft_post = get_user_draft_profile();
-        $draft_data = [];
+    // Localize script with draft data and AJAX info
+    $draft_post = get_user_draft_profile();
+    $draft_data = [];
 
-        if ($draft_post) {
-            $draft_data = [
-                'post_id' => $draft_post->ID,
-                'fullName' => $draft_post->post_title,
-                'styleDescription' => $draft_post->post_content,
-                // Meta fields
-                'state' => get_post_meta($draft_post->ID, '_talent_state', true),
-                'country' => get_post_meta($draft_post->ID, '_talent_country', true),
-                'email' => get_post_meta($draft_post->ID, '_talent_email', true),
-                'phone' => get_post_meta($draft_post->ID, '_talent_phone', true),
-                'ageGroup' => get_post_meta($draft_post->ID, '_talent_age_group', true),
-                'gender' => get_post_meta($draft_post->ID, '_talent_gender', true),
-                'height' => get_post_meta($draft_post->ID, '_talent_height', true),
-                'heightUnit' => get_post_meta($draft_post->ID, '_talent_height_unit', true),
-                'measurements' => get_post_meta($draft_post->ID, '_talent_measurements', true),
-                'yearsActive' => get_post_meta($draft_post->ID, '_talent_years_active', true),
-                'affiliation' => get_post_meta($draft_post->ID, '_talent_affiliation', true),
-                'education' => get_post_meta($draft_post->ID, '_talent_education', true),
-                'interestedProjects' => get_post_meta($draft_post->ID, '_talent_interested_projects', true),
-                'willingToTravel' => get_post_meta($draft_post->ID, '_talent_willing_to_travel', true),
-                'preferredLocations' => get_post_meta($draft_post->ID, '_talent_preferred_locations', true),
-                'brandCollabs' => get_post_meta($draft_post->ID, '_talent_brand_collabs', true),
-                'domain' => get_post_meta($draft_post->ID, '_talent_domain', true),
-                'role' => get_post_meta($draft_post->ID, '_talent_role', true),
-                'instagram' => get_post_meta($draft_post->ID, '_talent_instagram', true),
-                'linkedin' => get_post_meta($draft_post->ID, '_talent_linkedin', true),
-                'tiktok' => get_post_meta($draft_post->ID, '_talent_tiktok', true),
-                'website' => get_post_meta($draft_post->ID, '_talent_website', true),
-                // Arrays
-                'languages' => get_post_meta($draft_post->ID, '_talent_languages', true),
-                'availableFor' => get_post_meta($draft_post->ID, '_talent_available_for', true),
-                'designCategories' => get_post_meta($draft_post->ID, '_talent_designCategories', true),
-                'notableWorks' => get_post_meta($draft_post->ID, '_talent_notable_works', true),
-            ];
-        }
-
-        error_log('Localizing talentData script');
-        wp_localize_script('talent-submission-js', 'talentData', [
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('talent_submission_nonce'),
-            'draft' => $draft_data
-        ]);
-        error_log('Finished localizing talentData script');
+    if ($draft_post) {
+        $draft_data = [
+            'post_id' => $draft_post->ID,
+            'fullName' => $draft_post->post_title,
+            'styleDescription' => $draft_post->post_content,
+            // Meta fields
+            'state' => get_post_meta($draft_post->ID, '_talent_state', true),
+            'country' => get_post_meta($draft_post->ID, '_talent_country', true),
+            'email' => get_post_meta($draft_post->ID, '_talent_email', true),
+            'phone' => get_post_meta($draft_post->ID, '_talent_phone', true),
+            'ageGroup' => get_post_meta($draft_post->ID, '_talent_age_group', true),
+            'gender' => get_post_meta($draft_post->ID, '_talent_gender', true),
+            'height' => get_post_meta($draft_post->ID, '_talent_height', true),
+            'heightUnit' => get_post_meta($draft_post->ID, '_talent_height_unit', true),
+            'measurements' => get_post_meta($draft_post->ID, '_talent_measurements', true),
+            'yearsActive' => get_post_meta($draft_post->ID, '_talent_years_active', true),
+            'affiliation' => get_post_meta($draft_post->ID, '_talent_affiliation', true),
+            'education' => get_post_meta($draft_post->ID, '_talent_education', true),
+            'interestedProjects' => get_post_meta($draft_post->ID, '_talent_interested_projects', true),
+            'willingToTravel' => get_post_meta($draft_post->ID, '_talent_willing_to_travel', true),
+            'preferredLocations' => get_post_meta($draft_post->ID, '_talent_preferred_locations', true),
+            'brandCollabs' => get_post_meta($draft_post->ID, '_talent_brand_collabs', true),
+            'domain' => get_post_meta($draft_post->ID, '_talent_domain', true),
+            'role' => get_post_meta($draft_post->ID, '_talent_role', true),
+            'instagram' => get_post_meta($draft_post->ID, '_talent_instagram', true),
+            'linkedin' => get_post_meta($draft_post->ID, '_talent_linkedin', true),
+            'tiktok' => get_post_meta($draft_post->ID, '_talent_tiktok', true),
+            'website' => get_post_meta($draft_post->ID, '_talent_website', true),
+            // Arrays
+            'languages' => get_post_meta($draft_post->ID, '_talent_languages', true),
+            'availableFor' => get_post_meta($draft_post->ID, '_talent_available_for', true),
+            'designCategories' => get_post_meta($draft_post->ID, '_talent_designCategories', true),
+            'notableWorks' => get_post_meta($draft_post->ID, '_talent_notable_works', true),
+        ];
     }
 
-    // Check if we're on a single talent page
-    if (is_singular('talent')) {
-        // Enqueue the global JS file for portfolio gallery functionality
-        wp_enqueue_script(
-            'theme-global-js',
-            get_stylesheet_directory_uri() . '/global.js',
-            array(),
-            HELLO_ELEMENTOR_CHILD_VERSION,
-            true
-        );
-
-        // Enqueue the global CSS file for styling
-        wp_enqueue_style(
-            'theme-global-css',
-            get_stylesheet_directory_uri() . '/global.css',
-            array(),
-            HELLO_ELEMENTOR_CHILD_VERSION
-        );
-    }
+    error_log('Localizing talentData script');
+    wp_localize_script('talent-submission-js', 'talentData', [
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('talent_submission_nonce'),
+        'draft' => $draft_data
+    ]);
+    error_log('Finished localizing talentData script');
 }
 add_action('wp_enqueue_scripts', 'enqueue_talent_form_assets');
