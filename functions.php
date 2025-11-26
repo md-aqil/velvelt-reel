@@ -2302,6 +2302,10 @@ add_filter('woocommerce_logout_default_redirect_url', 'custom_woocommerce_logout
 function enqueue_talent_form_assets()
 {
     // Check if we're on the talent submission or edit page
+    error_log('Checking page template: ' . (is_page_template('template-talent-submission.php') ? 'YES' : 'NO') . ' for talent submission');
+    error_log('Checking page template: ' . (is_page_template('template-talent-edit.php') ? 'YES' : 'NO') . ' for talent edit');
+    error_log('Current page template: ' . (get_page_template_slug() ?: 'none'));
+    
     if (is_page_template('template-talent-submission.php') || is_page_template('template-talent-edit.php')) {
         // Enqueue the form CSS
         wp_enqueue_style(
@@ -2369,11 +2373,13 @@ function enqueue_talent_form_assets()
             ];
         }
 
+        error_log('Localizing talentData script');
         wp_localize_script('talent-submission-js', 'talentData', [
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('talent_submission_nonce'),
             'draft' => $draft_data
         ]);
+        error_log('Finished localizing talentData script');
     }
 
     // Check if we're on a single talent page
