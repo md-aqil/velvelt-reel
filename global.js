@@ -39,11 +39,27 @@ function initializeGlobalScripts() {
     }
     
     try {
+        // Initialize express interest button
+        initExpressInterest();
+    } catch (error) {
+        console.error('Error initializing express interest:', error);
+    }
+    
+    try {
         // Initialize any other global components
         initGlobalComponents();
     } catch (error) {
         console.error('Error initializing global components:', error);
     }
+    
+    try {
+        // Fix Simple Membership registration form
+        initSimpleMembershipForm();
+    } catch (error) {
+        console.error('Error initializing simple membership form:', error);
+    }
+    
+
 }
 
 /**
@@ -96,6 +112,17 @@ function handleFilePreview(fileInput, previewContainer) {
                             `;
                         };
                         reader.readAsDataURL(file);
+                    } else if (file.type.startsWith('video/')) {
+                        // For videos, show a video icon and filename
+                        previewItem.innerHTML = `
+                            <div class="video-preview-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                </svg>
+                            </div>
+                            <span class="file-preview-name">${file.name}</span>
+                        `;
                     } else {
                         previewItem.innerHTML = `<span class="file-preview-name">${file.name}</span>`;
                     }
@@ -140,6 +167,16 @@ function initFormEnhancements() {
         forms.forEach(function(form) {
             try {
                 form.addEventListener('submit', function() {
+                    // Skip Simple Membership registration forms - they have their own handling
+                    if (form.classList.contains('swpm-registration-form')) {
+                        return;
+                    }
+
+                    // Skip Contact Form 7 forms - they have their own AJAX handling
+                    if (form.classList.contains('wpcf7-form')) {
+                        return;
+                    }
+
                     const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
                     if (submitButton) {
                         submitButton.disabled = true;
@@ -178,11 +215,155 @@ function initMobileMenuToggle() {
 }
 
 /**
+ * Initialize Express Interest button functionality
+ */
+function initExpressInterest() {
+    try {
+        const expressInterestBtns = document.querySelectorAll('.express-interest-btn');
+        
+        if (expressInterestBtns.length === 0) {
+            return;
+        }
+        
+        expressInterestBtns.forEach(function(btn) {
+            // Skip if button is disabled (already interested)
+            if (btn.disabled) {
+                return;
+            }
+            
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const advertisementId = btn.getAttribute('data-advertisement-id');
+                
+                if (!advertisementId) {
+                    showExpressInterestMessage(btn, 'Invalid advertisement ID', 'error');
+                    return;
+                }
+                
+                // Show loading state
+                btn.disabled = true;
+                const originalText = btn.textContent;
+                btn.textContent = 'Sending...';
+                
+                // Get the AJAX URL
+                const ajaxUrl = window.wpApiSettings ? window.wpApiSettings.root : '/wp-admin/admin-ajax.php';
+                const nonce = window.wpApiSettings ? window.wpApiSettings.nonce : '';
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('action', 'express_advertisement_interest');
+                formData.append('advertisement_id', advertisementId);
+                formData.append('nonce', nonce);
+                
+                fetch(ajaxUrl, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.success) {
+                        btn.classList.add('interested');
+                        btn.textContent = '✓ Interest Expressed';
+                        showExpressInterestMessage(btn, data.data.message, 'success');
+                        
+                        // Update interests count if present
+                        const wrapper = btn.closest('.express-interest-wrapper');
+                        if (wrapper && data.data.interests_count) {
+                            const countSpan = wrapper.querySelector('.interests-count');
+                            if (countSpan) {
+                                const count = data.data.interests_count;
+                                countSpan.textContent = count + ' ' + (count === 1 ? 'person has' : 'people have') + ' expressed interest';
+                            } else {
+                                const newCountSpan = document.createElement('span');
+                                newCountSpan.className = 'interests-count';
+                                newCountSpan.textContent = data.data.interests_count + ' ' + (data.data.interests_count === 1 ? 'person has' : 'people have') + ' expressed interest';
+                                wrapper.appendChild(newCountSpan);
+                            }
+                        }
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = originalText;
+                        showExpressInterestMessage(btn, data.data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Express Interest Error:', error);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    showExpressInterestMessage(btn, 'Network error. Please try again.', 'error');
+                });
+            });
+        });
+    } catch (error) {
+        console.error('Error initializing express interest:', error);
+    }
+}
+
+/**
+ * Show message for express interest action
+ * @param {HTMLElement} btn - The button element
+ * @param {string} message - The message to display
+ * @param {string} type - The message type (success or error)
+ */
+function showExpressInterestMessage(btn, message, type) {
+    try {
+        // Remove any existing messages
+        const existingMessage = document.querySelector('.express-interest-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Create message element with SVG icon
+        const messageEl = document.createElement('div');
+        messageEl.className = 'express-interest-message ' + type;
+        
+        let iconSvg = '';
+        if (type === 'success') {
+            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+        } else {
+            iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+        }
+        
+        messageEl.innerHTML = iconSvg + '<span>' + message + '</span>';
+        
+        // Find the express-interest-section and insert the message there
+        const section = btn.closest('.express-interest-section');
+        if (section) {
+            section.appendChild(messageEl);
+        } else {
+            // Fallback: insert after the wrapper
+            const wrapper = btn.closest('.express-interest-wrapper');
+            if (wrapper) {
+                wrapper.parentElement.insertBefore(messageEl, wrapper.nextSibling);
+            } else {
+                btn.parentElement.insertBefore(messageEl, btn.nextSibling);
+            }
+        }
+        
+        // Auto remove after 5 seconds
+        setTimeout(function() {
+            if (messageEl.parentElement) {
+                messageEl.remove();
+            }
+        }, 5000);
+    } catch (error) {
+        console.error('Error showing express interest message:', error);
+    }
+}
+
+/**
  * Initialize global components
  */
 function initGlobalComponents() {
     try {
         // Add any other global component initializations here
+        
+        // Initialize image protection
+        initImageProtection();
         
         // Example: Initialize tooltips
         initTooltips();
@@ -196,7 +377,165 @@ function initGlobalComponents() {
     } catch (error) {
         console.error('Error initializing modals:', error);
     }
+    
+    try {
+        // Initialize portfolio gallery
+        initPortfolioGallery();
+    } catch (error) {
+        console.error('Error initializing portfolio gallery:', error);
+    }
 }
+
+/**
+ * Initialize image protection to prevent downloading
+ */
+function initImageProtection() {
+    try {
+        // Disable right-click on images
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Disable drag-and-drop for images
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Disable image selection
+        document.addEventListener('selectstart', function(e) {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Disable keyboard shortcuts that might affect images
+        document.addEventListener('keydown', function(e) {
+            // Disable F12 (Developer Tools), Ctrl+Shift+I (Inspect), Ctrl+U (View Source)
+            if (
+                e.keyCode === 123 || // F12
+                (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+                (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+                (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
+                (e.ctrlKey && e.keyCode === 83) // Ctrl+S
+            ) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Additional protection: Prevent copying images
+        document.addEventListener('copy', function(e) {
+            const selection = window.getSelection();
+            if (selection) {
+                const range = selection.getRangeAt(0);
+                if (range) {
+                    const img = range.startContainer.parentElement.querySelector('img');
+                    if (img) {
+                        e.preventDefault();
+                    }
+                }
+            }
+        });
+
+        // Enhanced protection: Add protection attributes to all images on the page
+        function protectAllImages() {
+            const allImages = document.querySelectorAll('img');
+            allImages.forEach(img => {
+                img.setAttribute('oncontextmenu', 'return false;');
+                img.setAttribute('ondragstart', 'return false;');
+                img.setAttribute('onselectstart', 'return false;');
+                img.style.userSelect = 'none';
+                img.style.webkitUserSelect = 'none';
+                img.style.mozUserSelect = 'none';
+                img.style.msUserSelect = 'none';
+                img.style.webkitTouchCallout = 'none';
+                img.style.webkitUserDrag = 'none';
+                
+                // Add event listeners to prevent saving via right-click context menu
+                img.addEventListener('mousedown', function(e) {
+                    if (e.button === 2) { // Right mouse button
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+            });
+        }
+
+        // Run initially
+        protectAllImages();
+
+        // Run again after a short delay to catch any images that loaded later
+        setTimeout(protectAllImages, 1000);
+
+        // Watch for new images added to the page dynamically
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) { // Element node
+                            if (node.tagName === 'IMG') {
+                                // Newly added image
+                                node.setAttribute('oncontextmenu', 'return false;');
+                                node.setAttribute('ondragstart', 'return false;');
+                                node.setAttribute('onselectstart', 'return false;');
+                                node.style.userSelect = 'none';
+                                node.style.webkitUserSelect = 'none';
+                                node.style.mozUserSelect = 'none';
+                                node.style.msUserSelect = 'none';
+                                node.style.webkitTouchCallout = 'none';
+                                node.style.webkitUserDrag = 'none';
+                                
+                                node.addEventListener('mousedown', function(e) {
+                                    if (e.button === 2) { // Right mouse button
+                                        e.preventDefault();
+                                        return false;
+                                    }
+                                });
+                            } else {
+                                // Check if the added node contains images
+                                const images = node.querySelectorAll('img');
+                                images.forEach(img => {
+                                    img.setAttribute('oncontextmenu', 'return false;');
+                                    img.setAttribute('ondragstart', 'return false;');
+                                    img.setAttribute('onselectstart', 'return false;');
+                                    img.style.userSelect = 'none';
+                                    img.style.webkitUserSelect = 'none';
+                                    img.style.mozUserSelect = 'none';
+                                    img.style.msUserSelect = 'none';
+                                    img.style.webkitTouchCallout = 'none';
+                                    img.style.webkitUserDrag = 'none';
+                                    
+                                    img.addEventListener('mousedown', function(e) {
+                                        if (e.button === 2) { // Right mouse button
+                                            e.preventDefault();
+                                            return false;
+                                        }
+                                    });
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        // Start observing
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    } catch (error) {
+        console.error('Error initializing image protection:', error);
+    }
+}
+
 
 /**
  * Initialize tooltips
@@ -262,6 +601,319 @@ function initModals() {
 }
 
 /**
+ * Initialize portfolio gallery
+ */
+function initPortfolioGallery() {
+    try {
+        // Check if we're on a single talent page
+        if (!document.querySelector('.talent-single-page')) {
+            return;
+        }
+        
+        const portfolioItems = document.querySelectorAll('.portfolio-item');
+        const modal = document.getElementById('portfolio-modal');
+        const modalImage = document.getElementById('portfolio-modal-image');
+        const modalVideo = document.getElementById('portfolio-modal-video');
+        const modalIframe = document.getElementById('portfolio-modal-iframe');
+        const modalClose = document.querySelector('.portfolio-modal-close');
+        const modalPrev = document.querySelector('.portfolio-modal-prev');
+        const modalNext = document.querySelector('.portfolio-modal-next');
+        const modalCurrent = document.getElementById('portfolio-modal-current');
+        const modalTotal = document.getElementById('portfolio-modal-total');
+        
+        // Debug logging
+        console.log('Initializing portfolio gallery');
+        console.log('Portfolio items found:', portfolioItems.length);
+        console.log('Modal elements:', { modal, modalImage, modalVideo, modalIframe, modalClose, modalPrev, modalNext });
+        
+        if (!modal || !modalImage || !modalVideo || !modalIframe || !modalClose || !modalPrev || !modalNext) {
+            console.log('Some modal elements are missing, skipping initialization');
+            return;
+        }
+        
+        let currentIndex = 0;
+        const items = Array.from(portfolioItems);
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        // Set total items count
+        modalTotal.textContent = items.length;
+        
+        // Hide navigation if there's only one item
+        if (items.length <= 1) {
+            modalPrev.style.display = 'none';
+            modalNext.style.display = 'none';
+        }
+        
+        // Open modal when clicking on a portfolio item
+        items.forEach((item, index) => {
+            item.addEventListener('click', function() {
+                console.log('Portfolio item clicked, index:', index);
+                currentIndex = index;
+                openModal();
+            });
+        });
+        
+        // Close modal when clicking on the close button
+        modalClose.addEventListener('click', closeModal);
+        
+        // Close modal when clicking outside the content
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Navigation
+        modalPrev.addEventListener('click', showPrevItem);
+        modalNext.addEventListener('click', showNextItem);
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (modal.classList.contains('active')) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                } else if (e.key === 'ArrowLeft') {
+                    showPrevItem();
+                } else if (e.key === 'ArrowRight') {
+                    showNextItem();
+                }
+            }
+        });
+        
+        // Touch swipe support for mobile
+        modal.addEventListener('touchstart', function(e) {
+            if (e.target === modalImage || (modalVideo && modalVideo.contains(e.target))) {
+                touchStartX = e.changedTouches[0].screenX;
+            }
+        }, false);
+        
+        modal.addEventListener('touchend', function(e) {
+            if (e.target === modalImage || (modalVideo && modalVideo.contains(e.target))) {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }
+        }, false);
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            
+            if (touchStartX - touchEndX > swipeThreshold) {
+                // Swipe left - next item
+                showNextItem();
+            } else if (touchEndX - touchStartX > swipeThreshold) {
+                // Swipe right - previous item
+                showPrevItem();
+            }
+        }
+        
+        function openModal() {
+            console.log('Opening modal with item index:', currentIndex);
+            const currentItem = items[currentIndex];
+            const itemType = currentItem.getAttribute('data-type');
+            
+            console.log('Item type:', itemType);
+            console.log('Current item:', currentItem);
+            
+            if (itemType === 'video') {
+                // Show video - check for attachment URL first
+                const videoUrl = currentItem.getAttribute('data-video-url');
+                
+                console.log('Video URL from data attribute:', videoUrl);
+                
+                if (videoUrl) {
+                    // This is a WordPress video attachment - use the full URL
+                    console.log('Playing video attachment');
+                    
+                    // Create HTML5 video element for WordPress attachments
+                    modalImage.style.display = 'none';
+                    modalVideo.style.display = 'flex';
+                    
+                    // Remove old content and create fresh video element
+                    modalVideo.innerHTML = '';
+                    const videoElement = document.createElement('video');
+                    videoElement.controls = true;
+                    videoElement.autoplay = true;
+                    videoElement.style.cssText = 'width: 100vh; height:80vh; object-fit: contain;';
+                    
+                    const sourceElement = document.createElement('source');
+                    sourceElement.src = videoUrl;
+                    sourceElement.type = 'video/mp4';
+                    
+                    videoElement.appendChild(sourceElement);
+                    modalVideo.appendChild(videoElement);
+                    
+                    modalVideo.style.zIndex = '10002';
+                    modalVideo.style.visibility = 'visible';
+                    
+                    // Force reload the video
+                    videoElement.load();
+                } else {
+                    // Fallback to YouTube/Vimeo
+                    const videoId = currentItem.getAttribute('data-video-id');
+                    const platform = currentItem.getAttribute('data-platform');
+                    
+                    console.log('No video URL, checking for YouTube/Vimeo');
+                    console.log('Video ID:', videoId);
+                    console.log('Platform:', platform);
+                    
+                    if (platform === 'youtube') {
+                        videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1`;
+                    } else if (platform === 'vimeo') {
+                        videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
+                    } else {
+                        // Fallback for unknown platforms - try to use the video ID directly
+                        if (videoId) {
+                            // Assume it's a Vimeo video if we have an ID but no platform
+                            videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
+                        }
+                    }
+                    
+                    if (videoUrl) {
+                        modalIframe.src = videoUrl;
+                        modalImage.style.display = 'none';
+                        modalVideo.style.display = 'flex';
+                        modalVideo.style.zIndex = '10002';
+                        modalVideo.style.visibility = 'visible';
+                    } else {
+                        console.log('No valid video URL could be constructed');
+                    }
+                }
+            } else {
+                // Show image
+                modalImage.src = currentItem.querySelector('img').src;
+                modalImage.style.display = 'block';
+                modalVideo.style.display = 'none';
+                modalIframe.src = '';
+            }
+            
+            modalCurrent.textContent = currentIndex + 1;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            
+            // Show/hide navigation based on item count
+            if (items.length > 1) {
+                modalPrev.style.display = 'flex';
+                modalNext.style.display = 'flex';
+            } else {
+                modalPrev.style.display = 'none';
+                modalNext.style.display = 'none';
+            }
+        }
+        
+        function closeModal() {
+            console.log('Closing modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+            // Reset video when closing modal
+            modalIframe.src = '';
+            // Also clear HTML5 video if present
+            if (modalVideo) {
+                modalVideo.innerHTML = '<iframe id="portfolio-modal-iframe" src="" frameborder="0" allow="autoplay; fullscreen; encrypted-media; accelerometer; gyroscope; picture-in-picture" allowfullscreen loading="eager"></iframe>';
+            }
+        }
+        
+        function showPrevItem() {
+            console.log('Showing previous item');
+            currentIndex = (currentIndex - 1 + items.length) % items.length;
+            updateModalItem();
+        }
+        
+        function showNextItem() {
+            console.log('Showing next item');
+            currentIndex = (currentIndex + 1) % items.length;
+            updateModalItem();
+        }
+        
+        function updateModalItem() {
+            console.log('Updating modal item to index:', currentIndex);
+            const currentItem = items[currentIndex];
+            const itemType = currentItem.getAttribute('data-type');
+            
+            console.log('Item type:', itemType);
+            console.log('Current item:', currentItem);
+            
+            if (itemType === 'video') {
+                // Show video - check for attachment URL first
+                const videoUrl = currentItem.getAttribute('data-video-url');
+                
+                console.log('Video URL from data attribute:', videoUrl);
+                
+                if (videoUrl) {
+                    // This is a WordPress video attachment - use the full URL
+                    console.log('Playing video attachment');
+                    
+                    // Create HTML5 video element for WordPress attachments
+                    modalImage.style.display = 'none';
+                    modalVideo.style.display = 'flex';
+                    
+                    // Remove old content and create fresh video element
+                    modalVideo.innerHTML = '';
+                    const videoElement = document.createElement('video');
+                    videoElement.controls = true;
+                    videoElement.autoplay = true;
+                    videoElement.style.cssText = 'width: 100%; height: 100%; max-height: 80vh; object-fit: contain;';
+                    
+                    const sourceElement = document.createElement('source');
+                    sourceElement.src = videoUrl;
+                    sourceElement.type = 'video/mp4';
+                    
+                    videoElement.appendChild(sourceElement);
+                    modalVideo.appendChild(videoElement);
+                    
+                    modalVideo.style.zIndex = '10002';
+                    modalVideo.style.visibility = 'visible';
+                    
+                    // Force reload the video
+                    videoElement.load();
+                } else {
+                    // Fallback to YouTube/Vimeo
+                    const videoId = currentItem.getAttribute('data-video-id');
+                    const platform = currentItem.getAttribute('data-platform');
+                    
+                    console.log('No video URL, checking for YouTube/Vimeo');
+                    console.log('Video ID:', videoId);
+                    console.log('Platform:', platform);
+                    
+                    if (platform === 'youtube') {
+                        videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1`;
+                    } else if (platform === 'vimeo') {
+                        videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
+                    } else {
+                        // Fallback for unknown platforms - try to use the video ID directly
+                        if (videoId) {
+                            // Assume it's a Vimeo video if we have an ID but no platform
+                            videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
+                        }
+                    }
+                    
+                    if (videoUrl) {
+                        modalIframe.src = videoUrl;
+                        modalImage.style.display = 'none';
+                        modalVideo.style.display = 'flex';
+                        modalVideo.style.zIndex = '10002';
+                        modalVideo.style.visibility = 'visible';
+                    } else {
+                        console.log('No valid video URL could be constructed');
+                    }
+                }
+            } else {
+                // Show image
+                modalImage.src = currentItem.querySelector('img').src;
+                modalImage.style.display = 'block';
+                modalVideo.style.display = 'none';
+                modalIframe.src = '';
+            }
+            
+            modalCurrent.textContent = currentIndex + 1;
+        }
+        
+    } catch (error) {
+        console.error('Error initializing portfolio gallery:', error);
+    }
+}
+
+/**
  * Utility function to show a notification
  * @param {string} message - The message to display
  * @param {string} type - The type of notification (success, error, warning, info)
@@ -274,7 +926,13 @@ function showNotification(message, type = 'info') {
             existingNotification.remove();
         }
         
-        // Create notification element
+        // For success messages, show a popup with View Portfolios button
+        if (type === 'success') {
+            showSuccessPopup(message);
+            return;
+        }
+        
+        // Create notification element for non-success types
         const notification = document.createElement('div');
         notification.className = `global-notification ${type}`;
         notification.innerHTML = `
@@ -305,6 +963,56 @@ function showNotification(message, type = 'info') {
         }, 5000);
     } catch (error) {
         console.error('Error showing notification:', error);
+    }
+}
+
+/**
+ * Utility function to show a success popup with View Portfolios button
+ * @param {string} message - The message to display
+ */
+function showSuccessPopup(message) {
+    try {
+        // Remove any existing popups
+        const existingPopup = document.querySelector('.success-popup-overlay');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+        
+        // Create popup element using the existing success popup style
+        const popup = document.createElement('div');
+        popup.className = 'success-popup-overlay';
+        
+        popup.innerHTML = `
+            <div class="success-popup">
+                <div class="success-card">
+                    <div class="success-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <h2 class="success-title">Thank You!</h2>
+                    <p class="success-message">${message}</p>
+                    <a href="/talent/" class="btn btn-primary">View Portfolios</a>
+                </div>
+            </div>
+        `;
+        
+        // Add to document
+        document.body.appendChild(popup);
+        
+        // Close when clicking outside the popup
+        popup.addEventListener('click', function(e) {
+            if (e.target === popup) {
+                if (popup.parentNode) {
+                    popup.remove();
+                }
+            }
+        });
+        
+        // No auto removal - user must click View Portfolios or outside to close
+    } catch (error) {
+        console.error('Error showing success popup:', error);
     }
 }
 
@@ -345,5 +1053,346 @@ function ajaxRequest(url, data = {}, method = 'POST') {
     } catch (error) {
         console.error('Error in ajaxRequest function:', error);
         throw error;
+    }
+}
+
+/**
+ * Initialize Simple Membership Form enhancements
+ */
+function initSimpleMembershipForm() {
+    try {
+        // Fix terms and privacy policy links
+        const termsRow = document.querySelector('.swpm-terms-row a');
+        if (termsRow) {
+            termsRow.href = '/terms-and-conditions/';
+            termsRow.target = '_blank';
+        }
+
+        const ppRow = document.querySelector('.swpm-pp-row a');
+        if (ppRow) {
+            ppRow.href = '/privacy-policy/';
+            ppRow.target = '_blank';
+        }
+
+        // Add login link after the submit button
+        const submitSection = document.querySelector('.swpm-registration-submit-section');
+        if (submitSection && !document.querySelector('.swpm-login-link-row')) {
+            const loginRow = document.createElement('div');
+            loginRow.className = 'swpm-login-link-row';
+            loginRow.innerHTML = '<p>Already A Member? <a href="/membership-login/">Login</a></p>';
+            submitSection.appendChild(loginRow);
+        }
+        
+        // Remove the swpm-form-username-input-wrap class from username field
+        // This class is being added by the plugin but we don't want it
+        const usernameInput = document.querySelector('input[name="username"], input#username');
+        if (usernameInput) {
+            usernameInput.closest('.swpm-form-username-input-wrap')?.classList.remove('swpm-form-username-input-wrap');
+            // Also remove from parent element
+            const parentWrap = usernameInput.closest('[class*="swpm-form-"]');
+            if (parentWrap && parentWrap.classList.contains('swpm-form-username-input-wrap')) {
+                parentWrap.classList.remove('swpm-form-username-input-wrap');
+            }
+        }
+        
+        // Use MutationObserver to remove swpm-form-username-input-wrap class when it gets added
+        const usernameField = document.querySelector('.swpm-form-username-input-wrap');
+        if (usernameField) {
+            usernameField.classList.remove('swpm-form-username-input-wrap');
+        }
+        
+        // Also watch for the class being added later
+        const usernameObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    if (target.classList.contains('swpm-form-username-input-wrap')) {
+                        target.classList.remove('swpm-form-username-input-wrap');
+                    }
+                }
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1 && node.classList && node.classList.contains('swpm-form-username-input-wrap')) {
+                            node.classList.remove('swpm-form-username-input-wrap');
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Start observing the body for class changes
+        const bodyForObserver = document.querySelector('body');
+        if (bodyForObserver) {
+            usernameObserver.observe(bodyForObserver, { 
+                childList: true, 
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['class']
+            });
+        }
+        
+        // Enhanced registration form handling with proper validation before submission
+        const registrationForm = document.querySelector('form.swpm-registration-form');
+        if (registrationForm) {
+            // Create preloader element
+            const preloader = document.createElement('div');
+            preloader.className = 'swpm-form-preloader';
+            preloader.innerHTML = `
+                <div class="swpm-preloader-spinner"></div>
+                <span class="swpm-preloader-text">Processing...</span>
+            `;
+            preloader.style.cssText = 'display: none; align-items: center; justify-content: center; gap: 10px; padding: 10px; color: #666;';
+            
+            // Add spinner CSS if not already added
+            if (!document.getElementById('swpm-preloader-styles')) {
+                const style = document.createElement('style');
+                style.id = 'swpm-preloader-styles';
+                style.textContent = `
+                    .swpm-preloader-spinner {
+                        width: 20px;
+                        height: 20px;
+                        border: 2px solid #f3f3f3;
+                        border-top: 2px solid #b2122d;
+                        border-radius: 50%;
+                        animation: swpm-spin 0.8s linear infinite;
+                    }
+                    @keyframes swpm-spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    .swpm-submit-btn-loading {
+                        position: relative !important;
+                        color: transparent !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            const submitButton = registrationForm.querySelector('.swpm-submit, .swpm-registration-submit-button');
+            
+            // Store original button text
+            if (submitButton && !submitButton.getAttribute('data-original-text')) {
+                submitButton.setAttribute('data-original-text', submitButton.value || submitButton.textContent || 'Register');
+            }
+            
+            // Override form submit to check for required fields first
+            registrationForm.addEventListener('submit', function(e) {
+                // Check all required fields in the form (including dynamically shown ones)
+                const requiredFields = registrationForm.querySelectorAll('[required]:not([disabled])');
+                let allFilled = true;
+                let firstMissingField = null;
+                let phoneValid = true;
+                
+                for (let field of requiredFields) {
+                    // Skip hidden fields that aren't visible to the user
+                    if (field.offsetParent === null) {
+                        continue;
+                    }
+                    
+                    if (!field.value || field.value.trim() === '') {
+                        allFilled = false;
+                        if (!firstMissingField) {
+                            firstMissingField = field;
+                        }
+                        // Add error indication to the field
+                        field.style.borderColor = '#e74c3c';
+                    } else {
+                        // If this is a phone field, validate its format
+                        if (field.type === 'tel' && field.value) {
+                            // Simple phone validation - check if it has at least 7 digits
+                            const phoneRegex = /[\d\-\+\(\)\s]{7,}/;
+                            if (!phoneRegex.test(field.value)) {
+                                phoneValid = false;
+                                field.style.borderColor = '#e74c3c';
+                                if (!firstMissingField) {
+                                    firstMissingField = field;
+                                }
+                            } else {
+                                // Remove error indication if field is valid
+                                field.style.borderColor = '';
+                            }
+                        } else {
+                            // Remove error indication if field is filled
+                            field.style.borderColor = '';
+                        }
+                    }
+                }
+                
+                // Check if "I agree to the Terms and Conditions" checkbox is required and checked
+                const agreementCheckbox = registrationForm.querySelector('input[type="checkbox"][name*="agreement" i], input[type="checkbox"][name*="terms" i], input[type="checkbox"][name*="policy" i]');
+                if (agreementCheckbox && agreementCheckbox.hasAttribute('required') && !agreementCheckbox.checked) {
+                    allFilled = false;
+                    agreementCheckbox.style.borderColor = '#e74c3c';
+                } else if (agreementCheckbox) {
+                    agreementCheckbox.style.borderColor = '';
+                }
+                
+                if (!allFilled || !phoneValid) {
+                    e.preventDefault(); // Stop form submission
+                    
+                    // Focus on the first missing or invalid field
+                    if (firstMissingField) {
+                        firstMissingField.focus();
+                        
+                        // Scroll to the field if needed
+                        firstMissingField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    
+                    // Show appropriate error message
+                    if (!phoneValid) {
+                        if (typeof showNotification === 'function') {
+                            showNotification('Please enter a valid phone number.', 'error');
+                        } else {
+                            alert('Please enter a valid phone number.');
+                        }
+                    } else {
+                        if (typeof showNotification === 'function') {
+                            showNotification('Please fill in all required fields.', 'error');
+                        } else {
+                            alert('Please fill in all required fields.');
+                        }
+                    }
+                    
+                    // Don't show preloader or disable button since form didn't submit
+                    return false;
+                }
+                
+                // If all required fields are filled and valid, proceed with submission
+                if (submitButton) {
+                    // Add loading class for visual feedback
+                    submitButton.classList.add('swpm-submit-btn-loading');
+                    
+                    // Store original value before changing
+                    const originalText = submitButton.getAttribute('data-original-text') || 'Register';
+                    submitButton.setAttribute('data-original-value', originalText);
+                    
+                    // Show preloader in the form
+                    const formParent = submitButton.closest('.swpm-registration-form') || submitButton.parentElement;
+                    if (formParent) {
+                        // Insert preloader after the submit button
+                        submitButton.insertAdjacentElement('afterend', preloader);
+                        preloader.style.display = 'flex';
+                    }
+                    
+                    // Allow form to submit normally - the page will navigate away
+                    // The button state will be reset when the page reloads (in case of errors)
+                }
+            });
+            
+            // Add event listener for account type changes to handle conditional fields
+            const accountTypeSelect = registrationForm.querySelector('#account_type');
+            if (accountTypeSelect) {
+                accountTypeSelect.addEventListener('change', function() {
+                    // Small delay to allow any conditional fields to render
+                    setTimeout(() => {
+                        // Re-validate the form when account type changes
+                        const requiredFields = registrationForm.querySelectorAll('[required]:not([disabled])');
+                        let allFilled = true;
+                        
+                        for (let field of requiredFields) {
+                            // Skip hidden fields that aren't visible to the user
+                            if (field.offsetParent === null) {
+                                continue;
+                            }
+                            
+                            if (!field.value || field.value.trim() === '') {
+                                allFilled = false;
+                                field.style.borderColor = '#e74c3c';
+                            } else {
+                                // Remove error indication if field is filled
+                                field.style.borderColor = '';
+                            }
+                        }
+                        
+                        // Ensure button is always enabled - never disabled
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.classList.remove('swpm-submit-btn-loading');
+                            
+                            // Restore original text
+                            const originalText = submitButton.getAttribute('data-original-text') || 'Register';
+                            submitButton.value = originalText;
+                            if (submitButton.tagName.toLowerCase() !== 'input') {
+                                submitButton.textContent = originalText;
+                            }
+                            
+                            // Hide preloader if it exists
+                            if (preloader) {
+                                preloader.style.display = 'none';
+                            }
+                        }
+                    }, 300); // 300ms delay to allow conditional fields to appear
+                });
+            }
+            
+        // Use MutationObserver to ensure the submit button is never disabled
+        // The plugin might try to disable it, so we need to constantly watch and re-enable it
+        if (submitButton) {
+            // First, ensure it's not disabled
+            submitButton.disabled = false;
+            
+            // Use MutationObserver to watch for the disabled attribute
+            const buttonObserver = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'disabled') {
+                        const target = mutation.target;
+                        // If button becomes disabled, immediately re-enable it
+                        if (target.disabled) {
+                            target.disabled = false;
+                            target.removeAttribute('disabled');
+                        }
+                    }
+                });
+            });
+            
+            buttonObserver.observe(submitButton, {
+                attributes: true,
+                attributeFilter: ['disabled']
+            });
+            
+            // Also use setInterval as a fallback to constantly ensure button is enabled
+            const buttonCheckInterval = setInterval(function() {
+                if (submitButton && submitButton.disabled) {
+                    submitButton.disabled = false;
+                    submitButton.removeAttribute('disabled');
+                }
+            }, 100);
+            
+            // Stop the interval when the form is submitted (page will reload)
+            registrationForm.addEventListener('submit', function() {
+                // Just before submit, ensure button is enabled
+                submitButton.disabled = false;
+                submitButton.removeAttribute('disabled');
+                
+                // Clear the interval after submission
+                clearInterval(buttonCheckInterval);
+                buttonObserver.disconnect();
+            });
+        }
+            
+            // Listen for form validation errors - re-enable button if there are errors after submission
+            // This handles the case where the server sends back validation errors
+            if (submitButton) {
+                // Check if the page loaded with errors (indicates server-side validation failed)
+                const errorElements = registrationForm.querySelectorAll('.swpm-errors, .error, .chaitu-error-messages');
+                if (errorElements.length > 0) {
+                    // Re-enable the button if there are server-side errors
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('swpm-submit-btn-loading');
+                    
+                    // Restore original text
+                    const originalText = submitButton.getAttribute('data-original-text') || 'Register';
+                    submitButton.value = originalText;
+                    if (submitButton.tagName.toLowerCase() !== 'input') {
+                        submitButton.textContent = originalText;
+                    }
+                    
+                    // Hide preloader if it exists
+                    preloader.style.display = 'none';
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error in initSimpleMembershipForm function:', error);
     }
 }

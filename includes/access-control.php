@@ -1,0 +1,405 @@
+<?php
+/**
+ * Access control and restrictions
+ *
+ * @package HelloElementorChild
+ */
+
+// Exit if accessed directly.
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Define membership plan constants
+ */
+define('FREE_PLAN_LEVEL', 4);  // Level 4 is for free membership with portfolio access
+define('PORTFOLIO_PLAN_LEVEL', 2);  // Level 2 is for portfolio access
+define('PORTFOLIO_PLAN_LEVEL_UPGRADE', 3);  // Level 3 is also for portfolio access
+define('ADVERTISEMENT_PLAN_LEVEL', 5);  // Level 5 is for advertisement access
+
+define('SIX_MONTH_PLAN_LEVEL', 2);  // Level 6 is for 6-month plan
+
+define('ONE_YEAR_PLAN_LEVEL', 3);  // Level 7 is for 1-year plan
+
+/**
+ * Check if user has a specific membership plan
+ * This function handles the multiple membership plans system
+ */
+function has_membership_plan($plan_level) {
+    if (!is_user_logged_in()) {
+        return false;
+    }
+
+    // Get current user
+    $user_id = get_current_user_id();
+    
+    // Check if Simple Membership functions exist
+    if (class_exists('SwpmMemberUtils')) {
+        if (!SwpmMemberUtils::is_member_logged_in()) {
+            return false;
+        }
+        
+        // Get the user's current membership level
+        $current_level = SwpmMemberUtils::get_logged_in_members_level();
+        
+        // Check for multiple plans using user meta
+        $user_plans = get_user_meta($user_id, 'membership_plans', true);
+        if (!$user_plans) {
+            $user_plans = array();
+        }
+        
+        // Always ensure current level is tracked
+        if ($current_level && 
+            ($current_level == ADVERTISEMENT_PLAN_LEVEL || 
+             $current_level == PORTFOLIO_PLAN_LEVEL || 
+             $current_level == PORTFOLIO_PLAN_LEVEL_UPGRADE) && 
+            !in_array($current_level, $user_plans)) {
+            // Add current level to user's plans
+            $user_plans[] = $current_level;
+            update_user_meta($user_id, 'membership_plans', $user_plans);
+        }
+        
+        // If checking for advertisement plan
+        if ($plan_level == ADVERTISEMENT_PLAN_LEVEL) {
+            // Check if advertisement plan is in the user's plans
+            // Also check if current level is the ad plan
+            return in_array(ADVERTISEMENT_PLAN_LEVEL, $user_plans) || $current_level == ADVERTISEMENT_PLAN_LEVEL;
+        }
+        
+        // If checking for portfolio plan
+        if ($plan_level == PORTFOLIO_PLAN_LEVEL || $plan_level == PORTFOLIO_PLAN_LEVEL_UPGRADE) {
+            // Check if portfolio plan is in the user's plans
+            // Also check if current level is a portfolio plan
+            // FREE_PLAN_LEVEL (level 4) grants free portfolio access
+            return in_array(PORTFOLIO_PLAN_LEVEL, $user_plans) || 
+                   in_array(PORTFOLIO_PLAN_LEVEL_UPGRADE, $user_plans) ||
+                   in_array(FREE_PLAN_LEVEL, $user_plans) ||
+                   $current_level == PORTFOLIO_PLAN_LEVEL || 
+                   $current_level == PORTFOLIO_PLAN_LEVEL_UPGRADE ||
+                   $current_level == FREE_PLAN_LEVEL;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Migrate user's current level to the plans system if not already tracked
+ * This helps with backward compatibility for existing users
+ */
+function migrate_user_current_level_to_plans() {
+    if (!is_user_logged_in()) {
+        return;
+    }
+    
+    $user_id = get_current_user_id();
+    
+    // Check if Simple Membership functions exist
+    if (class_exists('SwpmMemberUtils') && SwpmMemberUtils::is_member_logged_in()) {
+        $current_level = SwpmMemberUtils::get_logged_in_members_level();
+        
+        if ($current_level) {
+            // Get existing plans
+            $user_plans = get_user_meta($user_id, 'membership_plans', true);
+            if (!$user_plans) {
+                $user_plans = array();
+            }
+            
+            // Add current level to plans if it's one of our special levels and not already there
+            if (($current_level == ADVERTISEMENT_PLAN_LEVEL || 
+                 $current_level == PORTFOLIO_PLAN_LEVEL || 
+                 $current_level == PORTFOLIO_PLAN_LEVEL_UPGRADE ||
+                 $current_level == FREE_PLAN_LEVEL) && 
+                !in_array($current_level, $user_plans)) {
+                $user_plans[] = $current_level;
+                update_user_meta($user_id, 'membership_plans', $user_plans);
+            }
+        }
+    }
+}
+
+/**
+ * Ensure user's current level is properly tracked in the multiple plans system
+ * This function should be called when checking access to ensure backward compatibility
+ */
+function ensure_user_plan_tracking() {
+    if (!is_user_logged_in()) {
+        return;
+    }
+    
+    $user_id = get_current_user_id();
+    
+    // Check if Simple Membership functions exist
+    if (class_exists('SwpmMemberUtils') && SwpmMemberUtils::is_member_logged_in()) {
+        $current_level = SwpmMemberUtils::get_logged_in_members_level();
+        
+        if ($current_level) {
+            // Get existing plans
+            $user_plans = get_user_meta($user_id, 'membership_plans', true);
+            if (!$user_plans) {
+                $user_plans = array();
+            }
+            
+            // Add current level to plans if it's one of our special levels and not already there
+            if (($current_level == ADVERTISEMENT_PLAN_LEVEL || 
+                 $current_level == PORTFOLIO_PLAN_LEVEL || 
+                 $current_level == PORTFOLIO_PLAN_LEVEL_UPGRADE ||
+                 $current_level == FREE_PLAN_LEVEL) && 
+                !in_array($current_level, $user_plans)) {
+                $user_plans[] = $current_level;
+                update_user_meta($user_id, 'membership_plans', $user_plans);
+            }
+        }
+    }
+}
+
+/**
+ * Add a membership plan to user
+ */
+function add_membership_plan($user_id, $plan_level) {
+    $user_plans = get_user_meta($user_id, 'membership_plans', true);
+    if (!$user_plans) {
+        $user_plans = array();
+    }
+    
+    // Add the plan if not already present
+    if (!in_array($plan_level, $user_plans)) {
+        $user_plans[] = $plan_level;
+        update_user_meta($user_id, 'membership_plans', $user_plans);
+    }
+}
+
+/**
+ * Remove a membership plan from user
+ */
+function remove_membership_plan($user_id, $plan_level) {
+    $user_plans = get_user_meta($user_id, 'membership_plans', true);
+    if (!$user_plans) {
+        $user_plans = array();
+    }
+    
+    // Remove the plan if present
+    $key = array_search($plan_level, $user_plans);
+    if ($key !== false) {
+        unset($user_plans[$key]);
+        // Re-index array
+        $user_plans = array_values($user_plans);
+        update_user_meta($user_id, 'membership_plans', $user_plans);
+    }
+}
+
+/**
+ * Handle membership level changes and maintain multiple plans
+ */
+function handle_membership_level_change($user_id = null, $old_level = null, $new_level = null) {
+    // Check if all required parameters are provided
+    if (!isset($user_id) || !isset($old_level) || !isset($new_level)) {
+        // If not all parameters are provided, try to get them from current user context
+        if (is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            
+            // Get current level
+            if (class_exists('SwpmMemberUtils') && SwpmMemberUtils::is_member_logged_in()) {
+                $new_level = SwpmMemberUtils::get_logged_in_members_level();
+            }
+            
+            // We can't get old level without proper hook parameters, so we'll need to track it differently
+            // For now, we'll just return to avoid further issues
+            return;
+        }
+        return;
+    }
+    
+    // If user had a portfolio plan (level 2 or 3) and is upgrading to ad plan (level 5)
+    if (($old_level == PORTFOLIO_PLAN_LEVEL || $old_level == PORTFOLIO_PLAN_LEVEL_UPGRADE) && 
+        $new_level == ADVERTISEMENT_PLAN_LEVEL) {
+        // Preserve the portfolio plan by adding it to the user's plans
+        add_membership_plan($user_id, $old_level);
+        return;
+    }
+    
+    // If user had an ad plan (level 5) and is changing to portfolio plan (level 2 or 3)
+    if ($old_level == ADVERTISEMENT_PLAN_LEVEL && 
+        ($new_level == PORTFOLIO_PLAN_LEVEL || $new_level == PORTFOLIO_PLAN_LEVEL_UPGRADE)) {
+        // Preserve the ad plan by adding it to the user's plans
+        add_membership_plan($user_id, ADVERTISEMENT_PLAN_LEVEL);
+        return;
+    }
+    
+    // If user is moving between same-type plans (e.g., level 2 to level 3, both portfolio plans)
+    if (($old_level == PORTFOLIO_PLAN_LEVEL && $new_level == PORTFOLIO_PLAN_LEVEL_UPGRADE) ||
+        ($old_level == PORTFOLIO_PLAN_LEVEL_UPGRADE && $new_level == PORTFOLIO_PLAN_LEVEL)) {
+        // No need to preserve anything, just let the level change
+        return;
+    }
+    
+    // If user is upgrading from portfolio to ad plan, preserve both
+    if (($old_level == PORTFOLIO_PLAN_LEVEL || $old_level == PORTFOLIO_PLAN_LEVEL_UPGRADE) &&
+        $new_level == ADVERTISEMENT_PLAN_LEVEL) {
+        add_membership_plan($user_id, $old_level);
+    }
+}
+
+// Note: The swpm_membership_level_changed hook may not be available in all versions
+// We rely primarily on ensure_user_plan_tracking() and migrate_user_current_level_to_plans()
+// when access is checked, which is more reliable for tracking multiple plans
+
+/**
+ * Initialize user's membership plans on login to ensure multiple plans are tracked properly
+ */
+function initialize_user_membership_plans($user_login, $user) {
+    if (!$user || !$user->ID) {
+        return;
+    }
+    
+    $user_id = $user->ID;
+    
+    // Check if Simple Membership functions exist
+    if (class_exists('SwpmMemberUtils')) {
+        // Get the user's current membership level
+        $current_level = SwpmMemberUtils::get_logged_in_members_level();
+        
+        if ($current_level) {
+            // Get existing plans
+            $user_plans = get_user_meta($user_id, 'membership_plans', true);
+            if (!$user_plans) {
+                $user_plans = array();
+            }
+            
+            // Add the current level to plans if it's not already there
+            // This helps maintain backward compatibility for users who already have plans
+            if (!in_array($current_level, $user_plans)) {
+                if ($current_level == ADVERTISEMENT_PLAN_LEVEL || 
+                    $current_level == PORTFOLIO_PLAN_LEVEL || 
+                    $current_level == PORTFOLIO_PLAN_LEVEL_UPGRADE ||
+                    $current_level == FREE_PLAN_LEVEL) {
+                    $user_plans[] = $current_level;
+                    update_user_meta($user_id, 'membership_plans', $user_plans);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Hook into WordPress login to initialize membership plans
+ */
+add_action('wp_login', 'initialize_user_membership_plans', 10, 2);
+
+/**
+ * Update user's plan list when their membership level changes
+ * This is a more comprehensive approach to track all plan changes
+ */
+function update_user_plans_on_level_change($user_id = null, $old_level = null, $new_level = null) {
+    // Check if all required parameters are provided
+    if (!isset($user_id) || !isset($old_level) || !isset($new_level)) {
+        // If not all parameters are provided, try to get them from current user context
+        if (is_user_logged_in()) {
+            $user_id = get_current_user_id();
+            
+            // Get current level
+            if (class_exists('SwpmMemberUtils') && SwpmMemberUtils::is_member_logged_in()) {
+                $new_level = SwpmMemberUtils::get_logged_in_members_level();
+            }
+            
+            // We can't get old level without proper hook parameters, so we'll need to track it differently
+            // For now, we'll just return to avoid further issues
+            return;
+        }
+        return;
+    }
+    
+    // Get current plans
+    $user_plans = get_user_meta($user_id, 'membership_plans', true);
+    if (!$user_plans) {
+        $user_plans = array();
+    }
+    
+    // Remove old level if it was stored separately (not the current level)
+    $current_actual_level = get_user_meta($user_id, 'swpm_level', true); // Get current level from SWPM
+    if (!$current_actual_level) {
+        // Fallback to SWPM function if available
+        if (class_exists('SwpmMemberUtils')) {
+            $current_actual_level = SwpmMemberUtils::get_logged_in_members_level();
+        }
+    }
+    
+    // Only remove old level if it's different from the current actual level
+    if ($old_level != $current_actual_level) {
+        $key = array_search($old_level, $user_plans);
+        if ($key !== false) {
+            unset($user_plans[$key]);
+            $user_plans = array_values($user_plans); // Re-index
+        }
+    }
+    
+    // Add new level if it's one of our special levels
+    if ($new_level == ADVERTISEMENT_PLAN_LEVEL || 
+        $new_level == PORTFOLIO_PLAN_LEVEL || 
+        $new_level == PORTFOLIO_PLAN_LEVEL_UPGRADE ||
+        $new_level == FREE_PLAN_LEVEL) {
+        if (!in_array($new_level, $user_plans)) {
+            $user_plans[] = $new_level;
+        }
+    }
+    
+    update_user_meta($user_id, 'membership_plans', $user_plans);
+}
+
+// Alternative hook for membership level changes
+// Commented out to avoid potential hook issues - relying on access-time functions is more reliable
+// add_action('swpm_after_account_update', 'update_user_plans_on_level_change', 10, 3);
+
+/**
+ * Restrict access to classified ad posting plan product page
+ */
+function restrict_classified_ad_posting_plan_access() {
+    // Check if we're on the specific product page by URL path
+    // This approach works regardless of domain/base URL changes
+    if (strpos($_SERVER['REQUEST_URI'], '/product/classified-ad-posting-plan') === 0) {
+        // Check if user is not logged in
+        if (!is_user_logged_in()) {
+            // Redirect to login page (works with any domain)
+            wp_redirect(home_url('/sign-up/'));
+            exit;
+        }
+    }
+}
+add_action('template_redirect', 'restrict_classified_ad_posting_plan_access');
+
+/**
+ * Redirect default WordPress lost password page to custom forgot password page
+ */
+function redirect_lost_password_page() {
+    // Check if we're on the default lost password page
+    global $wp;
+
+    // Check for both WooCommerce and WordPress default lost password URLs
+    if (
+        isset($wp->request) && (
+            strpos($wp->request, 'my-account/lost-password') !== false ||
+            strpos($wp->request, 'wp-login.php?action=lostpassword') !== false ||
+            (isset($_GET['action']) && $_GET['action'] === 'lostpassword')
+        )
+    ) {
+        // Redirect to custom forgot password page
+        wp_redirect(home_url('/forgot-password/'));
+        exit;
+    }
+}
+add_action('template_redirect', 'redirect_lost_password_page', 5);
+
+// Also hook into the login URL filter to change the lost password URL
+function custom_lostpassword_url($lostpassword_url) {
+    return home_url('/forgot-password/');
+}
+add_filter('lostpassword_url', 'custom_lostpassword_url', 10, 1);
+
+/**
+ * Redirect users to sign-in page after WooCommerce logout
+ */
+function custom_woocommerce_logout_redirect($redirect_url) {
+    return home_url('/sign-in/');
+}
+add_filter('woocommerce_logout_default_redirect_url', 'custom_woocommerce_logout_redirect');

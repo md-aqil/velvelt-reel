@@ -1,5 +1,4 @@
 <?php
-ob_start();
 /**
  * Theme functions and definitions.
  *
@@ -17,2043 +16,1040 @@ if (!defined('ABSPATH')) {
 
 define('HELLO_ELEMENTOR_CHILD_VERSION', '2.0.0');
 
+// Load the Plugin Update Checker library
+require_once get_stylesheet_directory() . '/plugin-update-checker-master/plugin-update-checker.php';
+
+// Initialize the updater
+$myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+    'https://github.com/md-aqil/velvelt-reel', // The URL of your GitHub repository
+    __FILE__, // Full path to the main theme file or functions.php
+    'hello-elementor-child' // Your theme slug
+);
+
+// Set which branch to use for updates (defaults to master/main)
+$myUpdateChecker->setBranch('main');
+
 /**
- * Load child theme scripts & styles.
- *
- * @return void
+ * Suppress Elementor v2 editor script dependency warnings
+ * These are known issues with Elementor Pro and don't affect functionality
  */
-function hello_elementor_child_scripts_styles()
-{
-
-    wp_enqueue_style(
-        'hello-elementor-child-style',
-        get_stylesheet_directory_uri() . '/style.css',
-        [
-            'hello-elementor-theme-style',
-        ],
-        HELLO_ELEMENTOR_CHILD_VERSION
-    );
-
-    // Enqueue global CSS file
-    wp_enqueue_style(
-        'theme-global-css',
-        get_stylesheet_directory_uri() . '/global.css',
-        [],
-        HELLO_ELEMENTOR_CHILD_VERSION
-    );
-
+function suppress_elementor_v2_warnings() {
+    remove_action('admin_notices', 'wp_admin_notice_doing_it_wrong');
 }
-add_action('wp_enqueue_scripts', 'hello_elementor_child_scripts_styles', 20);
+add_action('admin_init', 'suppress_elementor_v2_warnings', 999);
 
-function custom_enqueue_scripts()
-{
-    // Enqueue the global JS file
-    wp_enqueue_script(
-        'theme-global-js', // Handle name
-        get_stylesheet_directory_uri() . '/global.js', // File path
-        array(), // Dependencies (optional)
-        HELLO_ELEMENTOR_CHILD_VERSION, // Version number
-        true // Load in footer (true = before </body>)
-    );
-
-    // Enqueue your custom JS file
-    wp_enqueue_script(
-        'talent-submission-js', // Handle name
-        get_stylesheet_directory_uri() . '/talent--submission.js', // File path
-        array('jquery', 'theme-global-js'), // Dependencies - now includes global.js
-        HELLO_ELEMENTOR_CHILD_VERSION, // Version number
-        true // Load in footer (true = before </body>)
-    );
-
-    // Debug: Log enqueued scripts
-    if (defined('WP_DEBUG') && WP_DEBUG) {
-        global $wp_scripts;
-        error_log('Enqueued scripts: ' . print_r($wp_scripts->queue, true));
+/**
+ * Add custom CSS to hide page header on membership-login page
+ */
+function hide_membership_login_header() {
+    if (is_page('membership-login')) {
+        echo '<style>.page-header { display: none !important; }</style>';
     }
 }
-add_action('wp_enqueue_scripts', 'custom_enqueue_scripts');
+add_action('wp_head', 'hide_membership_login_header');
 
-
-function create_userinformation_table()
-{
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'userinformation';
-    $charset_collate = $wpdb->get_charset_collate();
-
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    $sql = "CREATE TABLE $table_name (
-        id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-        user_id BIGINT(20) UNSIGNED NOT NULL,
-        dob DATE NOT NULL,
-        address TEXT NOT NULL,
-        region VARCHAR(100) NOT NULL,
-        phone VARCHAR(20) NOT NULL,
-        PRIMARY KEY (id),
-        FOREIGN KEY (user_id) REFERENCES {$wpdb->prefix}users(ID) ON DELETE CASCADE
-    ) $charset_collate;";
-    dbDelta($sql);
+/**
+ * Flush rewrite rules on theme activation
+ */
+function hello_elementor_child_flush_rewrite_rules() {
+    // Always flush rewrite rules on theme activation
+    flush_rewrite_rules();
+    update_option('hello_elementor_child_flushed_rewrite_rules', true);
 }
-add_action('after_switch_theme', 'create_userinformation_table');
-
-function velvetreel_signup_form_shortcode()
-{
-    ob_start();
-
-    // Include the signup processing script
-    include_once get_template_directory() . '/sign-up.php';
-
-    return ob_get_clean();
-}
-add_shortcode('velvetreel_signup', 'velvetreel_signup_form_shortcode');
-
-add_action('after_setup_theme', function () {
-    if (is_user_logged_in() && !is_admin()) {
-        show_admin_bar(true);
-    }
-});
-
-
-
-
-add_action('wp_ajax_upload_profile_image', 'handle_profile_image_ajax');
-function handle_profile_image_ajax()
-{
-    // Kill any prior output (safely)
-    if (ob_get_length())
-        ob_end_clean();
-
-    header('Content-Type: application/json; charset=utf-8');
-
-    // Authenticate
-    if (!is_user_logged_in()) {
-        echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-        wp_die();
-    }
-
-    if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'profile_image_nonce')) {
-        echo json_encode(['success' => false, 'message' => 'Invalid nonce.']);
-        wp_die();
-    }
-
-    // Required WordPress includes
-    require_once ABSPATH . 'wp-admin/includes/file.php';
-    require_once ABSPATH . 'wp-admin/includes/media.php';
-    require_once ABSPATH . 'wp-admin/includes/image.php';
-
-    // Check file exists
-    if (empty($_FILES['profile_image'])) {
-        echo json_encode(['success' => false, 'message' => 'No file uploaded.']);
-        wp_die();
-    }
-
-    $upload_id = media_handle_upload('profile_image', 0);
-
-    if (is_wp_error($upload_id)) {
-        echo json_encode(['success' => false, 'message' => $upload_id->get_error_message()]);
-        wp_die();
-    }
-
-    $url = wp_get_attachment_url($upload_id);
-
-    if (!$url) {
-        echo json_encode(['success' => false, 'message' => 'Failed to get image URL.']);
-        wp_die();
-    }
-
-    update_user_meta(get_current_user_id(), 'profile_picture', esc_url_raw($url));
-
-    echo json_encode(['success' => true, 'url' => esc_url($url)]);
-    wp_die();
-}
-
-//sadi
-
-
-
-
-function rifat_elementor_profile_picture_menu()
-{
-    if (!is_user_logged_in()) {
-        // Return a login link for logged-out users instead of an empty string
-        // This provides a better user experience
-        $login_url = home_url('/sign-in/');
-        return '<a href="' . esc_url($login_url) . '" class="login-menu-link">Login</a>';
-    }
-
-    $user_id = get_current_user_id();
-    $profile_picture = get_user_meta($user_id, 'profile_picture', true);
-
-    if (!$profile_picture) {
-        $profile_picture = 'http://www.thevelvetreel.com/wp-content/uploads/2025/08/20171206_01-scaled.jpg';
-    }
-
-    $profile_url = home_url('/my-profile');
-    $logout_url = wp_logout_url(home_url());
-
-    ob_start(); ?>
-    <div class="rifat-profile-wrapper">
-
-        <a href="<?= esc_url($profile_url); ?>" class="profile-link">
-            <img src="<?= !empty($profile_picture)
-                ? esc_url($profile_picture)
-                : esc_url(home_url('/wp-content/uploads/2025/08/20171206_01-scaled.jpg')); ?>" alt="Profile"
-                class="rifat-profile-img">
-
-        </a>
-        <div class="rifat-logout">
-            <a class="logout-text" href="<?= esc_url($logout_url); ?>">🔓 Logout</a>
-        </div>
-    </div>
-
-
-
-    <style>
-        .rifat-profile-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        .rifat-profile-img {
-            width: 50px !important;
-            height: 50px !important;
-            border-radius: 50% !important;
-            object-fit: cover !important;
-            display: block !important;
-        }
-
-
-
-        .rifat-profile-wrapper:hover .rifat-profile-img {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-        }
-
-        .logout-text {
-            color: white;
-        }
-
-        .rifat-logout {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            align-items: center;
-            padding: 16px 16px;
-            border-radius: 8px;
-            z-index: 999;
-            display: none;
-            white-space: nowrap;
-        }
-
-        .rifat-profile-wrapper:hover .rifat-logout {
-            display: block;
-            color: white;
-        }
-
-        .rifat-logout a {
-
-            font-weight: 600;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: white;
-        }
-
-        .login-menu-link {
-            display: inline-block;
-            padding: 8px 15px;
-            background-color: #b2122d;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .login-menu-link:hover {
-            background-color: #8a0e22;
-        }
-    </style>
-    <?php
-    return ob_get_clean();
-}
-add_shortcode('user_profile_menu', 'rifat_elementor_profile_picture_menu');
+add_action('after_switch_theme', 'hello_elementor_child_flush_rewrite_rules');
 
 
 
 /**
- * Register a custom post type called "Talent".
- *
- * @see get_post_type_labels() for label keys.
+ * Load all modular functionality files
  */
-function create_talent_cpt()
-{
-    $labels = array(
-        'name' => _x('Talents', 'Post type general name', 'hello-elementor-child'),
-        'singular_name' => _x('Talent', 'Post type singular name', 'hello-elementor-child'),
-        'menu_name' => _x('Talents', 'Admin Menu text', 'hello-elementor-child'),
-        'name_admin_bar' => _x('Talent', 'Add New on Toolbar', 'hello-elementor-child'),
-        'add_new' => __('Add New', 'hello-elementor-child'),
-        'add_new_item' => __('Add New Talent', 'hello-elementor-child'),
-        'new_item' => __('New Talent', 'hello-elementor-child'),
-        'edit_item' => __('Edit Talent', 'hello-elementor-child'),
-        'view_item' => __('View Talent', 'hello-elementor-child'),
-        'all_items' => __('All Talents', 'hello-elementor-child'),
-        'search_items' => __('Search Talents', 'hello-elementor-child'),
-        'parent_item_colon' => __('Parent Talents:', 'hello-elementor-child'),
-        'not_found' => __('No talents found.', 'hello-elementor-child'),
-        'not_found_in_trash' => __('No talents found in Trash.', 'hello-elementor-child'),
-        'featured_image' => _x('Talent Profile Image', 'Overrides the “Featured Image” phrase for this post type. Added in 4.3', 'hello-elementor-child'),
-        'set_featured_image' => _x('Set profile image', 'Overrides the “Set featured image” phrase for this post type. Added in 4.3', 'hello-elementor-child'),
-        'remove_featured_image' => _x('Remove profile image', 'Overrides the “Remove featured image” phrase for this post type. Added in 4.3', 'hello-elementor-child'),
-        'use_featured_image' => _x('Use as profile image', 'Overrides the “Use as featured image” phrase for this post type. Added in 4.3', 'hello-elementor-child'),
-        'archives' => _x('Talent archives', 'The post type archive label used in nav menus. Default “Post Archives”. Added in 4.4', 'hello-elementor-child'),
-        'insert_into_item' => _x('Insert into talent', 'Overrides the “Insert into post”/”Insert into page” phrase (used when inserting media into a post). Added in 4.4', 'hello-elementor-child'),
-        'uploaded_to_this_item' => _x('Uploaded to this talent', 'Overrides the “Uploaded to this post”/”Uploaded to this page” phrase (used when viewing media attached to a post). Added in 4.4', 'hello-elementor-child'),
-        'filter_items_list' => _x('Filter talents list', 'Screen reader text for the filter links heading on the post type listing screen. Default “Filter posts list”/”Filter pages list”. Added in 4.4', 'hello-elementor-child'),
-        'items_list_navigation' => _x('Talents list navigation', 'Screen reader text for the pagination heading on the post type listing screen. Default “Posts list navigation”/”Pages list navigation”. Added in 4.4', 'hello-elementor-child'),
-        'items_list' => _x('Talents list', 'Screen reader text for the items list heading on the post type listing screen. Default “Posts list”/”Pages list”. Added in 4.4', 'hello-elementor-child'),
-    );
 
-    $args = array(
-        'labels' => $labels,
-        'public' => true,
-        'publicly_queryable' => true,
-        'show_ui' => true,
-        'show_in_nav_menus' => true,
-        'show_in_menu' => true,
-        'query_var' => true,
-        'rewrite' => array('slug' => 'talent'),
-        'capability_type' => 'post',
-        'has_archive' => true,
-        'hierarchical' => false,
-        'menu_position' => 5,
-        'supports' => array('title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments', 'custom-fields'),
-        'menu_icon' => 'dashicons-groups',
-    );
+// Theme setup and basic configurations
+require_once get_stylesheet_directory() . '/includes/theme-setup.php';
 
-    register_post_type('talent', $args);
-}
-add_action('init', 'create_talent_cpt');
+// Script and style enqueuing
+require_once get_stylesheet_directory() . '/includes/scripts-styles.php';
+
+// Custom post types and taxonomies
+require_once get_stylesheet_directory() . '/includes/custom-post-types.php';
+
+// Custom meta fields registration
+require_once get_stylesheet_directory() . '/includes/meta-fields.php';
+
+// Elementor integration
+require_once get_stylesheet_directory() . '/includes/elementor-integration.php';
+
+// Talent submission and update forms
+require_once get_stylesheet_directory() . '/includes/talent-forms.php';
+
+// Admin meta boxes for talent posts
+require_once get_stylesheet_directory() . '/includes/talent-meta-boxes.php';
+
+// Admin meta boxes for advertisement posts
+require_once get_stylesheet_directory() . '/includes/advertisement-meta-boxes.php';
+
+// All shortcodes
+require_once get_stylesheet_directory() . '/includes/shortcodes.php';
+
+// User management functionality
+require_once get_stylesheet_directory() . '/includes/user-management.php';
+
+// Access control and restrictions
+require_once get_stylesheet_directory() . '/includes/access-control.php';
+
+// AJAX request handlers
+require_once get_stylesheet_directory() . '/includes/ajax-handlers.php';
+
+// Third-party event integration
+require_once get_stylesheet_directory() . '/includes/event-integration.php';
+
+// Draft views functionality
+require_once get_stylesheet_directory() . '/includes/draft-views.php';
+
+// Role fields loader functionality
+require_once get_stylesheet_directory() . '/includes/role-fields-consistent.php';
+
+
+
+
 
 /**
- * Create a custom taxonomy for the "Talent" post type.
+ * Create Advertisement Submission page on theme activation
  */
-function create_talent_taxonomy()
-{
-    $labels = array(
-        'name' => _x('Talent Types', 'taxonomy general name', 'hello-elementor-child'),
-        'singular_name' => _x('Talent Type', 'taxonomy singular name', 'hello-elementor-child'),
-        'search_items' => __('Search Talent Types', 'hello-elementor-child'),
-        'all_items' => __('All Talent Types', 'hello-elementor-child'),
-        'parent_item' => __('Parent Talent Type', 'hello-elementor-child'),
-        'parent_item_colon' => __('Parent Talent Type:', 'hello-elementor-child'),
-        'edit_item' => __('Edit Talent Type', 'hello-elementor-child'),
-        'update_item' => __('Update Talent Type', 'hello-elementor-child'),
-        'add_new_item' => __('Add New Talent Type', 'hello-elementor-child'),
-        'new_item_name' => __('New Talent Type Name', 'hello-elementor-child'),
-        'menu_name' => __('Talent Types', 'hello-elementor-child'),
-    );
-
-    $args = array(
-        'hierarchical' => true, // Like categories
-        'labels' => $labels,
-        'show_ui' => true,
-        'show_admin_column' => true,
-        'query_var' => true,
-        'rewrite' => array('slug' => 'talent-type'),
-    );
-
-    register_taxonomy('talent_type', array('talent'), $args);
-}
-add_action('init', 'create_talent_taxonomy');
-
-/**
- * Create a custom taxonomy for "Talent Tagging".
- */
-function create_talent_tagging_taxonomy()
-{
-    $labels = array(
-        'name' => _x('Talent Tags', 'taxonomy general name', 'hello-elementor-child'),
-        'singular_name' => _x('Talent Tag', 'taxonomy singular name', 'hello-elementor-child'),
-        'search_items' => __('Search Talent Tags', 'hello-elementor-child'),
-        'all_items' => __('All Talent Tags', 'hello-elementor-child'),
-        'parent_item' => __('Parent Talent Tag', 'hello-elementor-child'),
-        'parent_item_colon' => __('Parent Talent Tag:', 'hello-elementor-child'),
-        'edit_item' => __('Edit Talent Tag', 'hello-elementor-child'),
-        'update_item' => __('Update Talent Tag', 'hello-elementor-child'),
-        'add_new_item' => __('Add New Talent Tag', 'hello-elementor-child'),
-        'new_item_name' => __('New Talent Tag Name', 'hello-elementor-child'),
-        'menu_name' => __('Talent Tags', 'hello-elementor-child'),
-    );
-
-    $args = array(
-        'hierarchical' => false, // Like tags
-        'labels' => $labels,
-        'show_ui' => true,
-        'show_admin_column' => true,
-        'query_var' => true,
-        'rewrite' => array('slug' => 'talent-tagging'),
-    );
-
-    register_taxonomy('talent_tagging', array('talent'), $args);
-}
-add_action('init', 'create_talent_tagging_taxonomy');
-
-/**
- * Create a custom taxonomy for "Talent State".
- */
-function create_talent_state_taxonomy()
-{
-    $labels = array(
-        'name' => _x('Talent States', 'taxonomy general name', 'hello-elementor-child'),
-        'singular_name' => _x('Talent State', 'taxonomy singular name', 'hello-elementor-child'),
-        'search_items' => __('Search Talent States', 'hello-elementor-child'),
-        'all_items' => __('All Talent States', 'hello-elementor-child'),
-        'parent_item' => __('Parent Talent State', 'hello-elementor-child'),
-        'parent_item_colon' => __('Parent Talent State:', 'hello-elementor-child'),
-        'edit_item' => __('Edit Talent State', 'hello-elementor-child'),
-        'update_item' => __('Update Talent State', 'hello-elementor-child'),
-        'add_new_item' => __('Add New Talent State', 'hello-elementor-child'),
-        'new_item_name' => __('New Talent State Name', 'hello-elementor-child'),
-        'menu_name' => __('Talent States', 'hello-elementor-child'),
-    );
-
-    $args = array(
-        'hierarchical' => false, // Like tags
-        'labels' => $labels,
-        'show_ui' => true,
-        'show_admin_column' => true,
-        'query_var' => true,
-        'rewrite' => array('slug' => 'talent-state'),
-    );
-
-    register_taxonomy('talent_state', array('talent'), $args);
-}
-add_action('init', 'create_talent_state_taxonomy');
-
-/**
- * Create a custom taxonomy for "Talent Country".
- */
-function create_talent_country_taxonomy()
-{
-    $labels = array(
-        'name' => _x('Talent Countries', 'taxonomy general name', 'hello-elementor-child'),
-        'singular_name' => _x('Talent Country', 'taxonomy singular name', 'hello-elementor-child'),
-        'search_items' => __('Search Talent Countries', 'hello-elementor-child'),
-        'all_items' => __('All Talent Countries', 'hello-elementor-child'),
-        'parent_item' => __('Parent Talent Country', 'hello-elementor-child'),
-        'parent_item_colon' => __('Parent Talent Country:', 'hello-elementor-child'),
-        'edit_item' => __('Edit Talent Country', 'hello-elementor-child'),
-        'update_item' => __('Update Talent Country', 'hello-elementor-child'),
-        'add_new_item' => __('Add New Talent Country', 'hello-elementor-child'),
-        'new_item_name' => __('New Talent Country Name', 'hello-elementor-child'),
-        'menu_name' => __('Talent Countries', 'hello-elementor-child'),
-    );
-
-    $args = array(
-        'hierarchical' => false, // Like tags
-        'labels' => $labels,
-        'show_ui' => true,
-        'show_admin_column' => true,
-        'query_var' => true,
-        'rewrite' => array('slug' => 'talent-country'),
-    );
-
-    register_taxonomy('talent_country', array('talent'), $args);
-}
-add_action('init', 'create_talent_country_taxonomy');
-
-/**
- * Add taxonomy support to the 'talent' CPT.
- */
-function add_talent_taxonomy_support($args, $post_type)
-{
-    if ('talent' === $post_type) {
-        $args['taxonomies'] = array('talent_type', 'talent_tagging');
-    }
-    return $args;
-}
-add_filter('register_post_type_args', 'add_talent_taxonomy_support', 10, 2);
-
-/**
- * Register custom meta fields for the "Talent" post type to make them available to the REST API and Elementor.
- */
-function register_talent_meta_fields()
-{
-    $meta_fields = [
-        '_talent_state' => 'string',
-        '_talent_country' => 'string',
-        '_talent_email' => 'string',
-        '_talent_phone' => 'string',
-        '_talent_age_group' => 'string',
-        '_talent_gender' => 'string',
-        '_talent_height' => 'string',
-        '_talent_height_unit' => 'string',
-        '_talent_measurements' => 'string',
-        '_talent_years_active' => 'string',
-        '_talent_affiliation' => 'string',
-        '_talent_education' => 'string',
-        '_talent_interested_projects' => 'string',
-        '_talent_willing_to_travel' => 'string',
-        '_talent_preferred_locations' => 'string',
-        '_talent_brand_collabs' => 'string',
-        '_talent_domain' => 'string',
-        '_talent_role' => 'string',
-        '_talent_instagram' => 'string',
-        '_talent_linkedin' => 'string',
-        '_talent_website' => 'string',
-        '_talent_profile_clicks' => 'integer',
-    ];
-
-    foreach ($meta_fields as $meta_key => $type) {
-        register_post_meta('talent', $meta_key, [
-            'show_in_rest' => true,
-            'single' => true,
-            'type' => $type,
-            'auth_callback' => function () {
-                return current_user_can('edit_posts');
-            }
-        ]);
-    }
-
-    // Register array-based meta fields
-    $array_meta_fields = [
-        '_talent_languages',
-        '_talent_available_for',
-        '_talent_notable_works',
-        '_talent_designCategories',
-        '_talent_portfolio',
-    ];
-
-    foreach ($array_meta_fields as $meta_key) {
-        register_post_meta('talent', $meta_key, [
-            'show_in_rest' => true,
-            'single' => true,
-            'type' => 'array',
-            'auth_callback' => function () {
-                return current_user_can('edit_posts');
-            }
-        ]);
-    }
-}
-add_action('init', 'register_talent_meta_fields');
-
-/**
- * Add custom talent fields to Elementor's dynamic tags dropdown.
- * This makes it easier to select custom fields without typing the key manually.
- */
-function add_talent_custom_fields_to_elementor($controls_stack)
-{
-    // Only add these to the 'talent' post type archives or single pages in the editor
-    if (('talent' !== get_post_type() && 'talent' !== $controls_stack->get_name())) {
-        return;
-    }
-
-    $talent_fields = [
-        '_talent_state' => 'State',
-        '_talent_country' => 'Country',
-        '_talent_email' => 'Email',
-        '_talent_phone' => 'Phone',
-        '_talent_age_group' => 'Age Group',
-        '_talent_gender' => 'Gender',
-        '_talent_height' => 'Height',
-        '_talent_height_unit' => 'Height Unit',
-        '_talent_measurements' => 'Measurements',
-        '_talent_years_active' => 'Years Active',
-        '_talent_affiliation' => 'Affiliation',
-        '_talent_education' => 'Education',
-        '_talent_interested_projects' => 'Interested Projects',
-        '_talent_willing_to_travel' => 'Willing to Travel',
-        '_talent_preferred_locations' => 'Preferred Locations',
-        '_talent_brand_collabs' => 'Brand Collabs',
-        '_talent_domain' => 'Domain',
-        '_talent_role' => 'Role',
-        'Social Links' => [
-            '_talent_instagram' => 'Instagram',
-            '_talent_linkedin' => 'LinkedIn',
-            '_talent_tiktok' => 'TikTok',
-            '_talent_website' => 'Website',
-        ],
-        '_talent_profile_clicks' => 'Profile Clicks',
-    ];
-
-    $control = $controls_stack->get_controls('key');
-
-    if (!empty($control['options'])) {
-        $control['options'] = array_merge($control['options'], $talent_fields);
-        $controls_stack->update_control('key', $control);
-    }
-}
-add_action('elementor/dynamic_tags/post_custom_field/before_render', 'add_talent_custom_fields_to_elementor');
-
-/**
- * Handle the front-end talent submission form.
- */
-function handle_talent_submission()
-{
-    // Check if our form is submitted
-    if ('POST' !== $_SERVER['REQUEST_METHOD'] || !isset($_POST['action']) || 'submit_talent_profile' !== $_POST['action']) {
-        return;
-    }
-
-    // Verify nonce
-    if (!isset($_POST['talent_submission_nonce']) || !wp_verify_nonce($_POST['talent_submission_nonce'], 'talent_submission')) {
-        wp_die('Security check failed.');
-    }
-
-    // Sanitize and prepare post data
-    $full_name = sanitize_text_field($_POST['fullName']);
-    $style_description = wp_kses_post($_POST['styleDescription']);
-
-    $talent_post = array(
-        'post_title' => $full_name,
-        'post_content' => $style_description,
-        'post_status' => 'pending', // Set to 'publish' to auto-publish, 'pending' for review
-        'post_type' => 'talent',
-    );
-
-    // Insert the post into the database
-    $post_id = wp_insert_post($talent_post);
-
-    if (is_wp_error($post_id)) {
-        wp_die('Error creating talent profile: ' . $post_id->get_error_message());
-    }
-
-    // --- Handle File Upload (Profile Photo) ---
-    if (!empty($_FILES['profilePhoto']['name'])) {
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-
-        $attachment_id = media_handle_upload('profilePhoto', $post_id);
-
-        if (!is_wp_error($attachment_id)) {
-            set_post_thumbnail($post_id, $attachment_id);
-        }
-    }
-
-    // --- Save Custom Fields (Meta Data) ---
-    $meta_fields = [
-        '_talent_state' => 'city',  // Form uses 'city' as field name for state
-        '_talent_country' => 'country',
-        '_talent_email' => 'email',
-        '_talent_phone' => 'phone',
-        '_talent_age_group' => 'ageGroup',
-        '_talent_gender' => 'gender',
-        '_talent_height' => 'height',
-        '_talent_height_unit' => 'heightUnit',
-        '_talent_measurements' => 'measurements',
-        '_talent_years_active' => 'yearsActive',
-        '_talent_affiliation' => 'affiliation',
-        '_talent_education' => 'education',
-        '_talent_interested_projects' => 'interestedProjects',
-        '_talent_willing_to_travel' => 'willingToTravel',
-        '_talent_preferred_locations' => 'preferredLocations',
-        '_talent_brand_collabs' => 'brandCollabs',
-        '_talent_domain' => 'domain',
-        '_talent_role' => 'role',
-        '_talent_instagram' => 'instagram',
-        '_talent_linkedin' => 'linkedin',
-        '_talent_tiktok' => 'tiktok',
-        '_talent_website' => 'website',
-    ];
-
-    foreach ($meta_fields as $meta_key => $post_key) {
-        if (isset($_POST[$post_key])) {
-            $value = sanitize_text_field($_POST[$post_key]);
-            update_post_meta($post_id, $meta_key, $value);
-        }
-    }
-
-    // Handle languages field (comma-separated string)
-    if (isset($_POST['languages'])) {
-        if (is_array($_POST['languages'])) {
-            // If it's already an array (from JS processing)
-            $languages = array_map('sanitize_text_field', $_POST['languages']);
-        } else {
-            // If it's a comma-separated string
-            $languages = array_map('trim', explode(',', sanitize_text_field($_POST['languages'])));
-        }
-        update_post_meta($post_id, '_talent_languages', $languages);
-    }
-    if (isset($_POST['availableFor']) && is_array($_POST['availableFor'])) {
-        $available_for = array_map('sanitize_text_field', $_POST['availableFor']);
-        update_post_meta($post_id, '_talent_available_for', $available_for);
-    }
-
-    // --- Set Taxonomy Term for Talent Type ---
-    if (isset($_POST['role'])) {
-        $role_slug = sanitize_title($_POST['role']);
-        if (!empty($role_slug)) {
-            // Create a user-friendly name from the slug
-            $role_name = ucwords(str_replace('-', ' ', $role_slug));
-            // This will create the term if it doesn't exist, and assign it.
-            wp_set_object_terms($post_id, $role_name, 'talent_type');
-        }
-    }
-
-    // --- Set Taxonomy Term for Talent State ---
-    if (isset($_POST['state'])) {
-        $state = sanitize_text_field($_POST['state']);
-        if (!empty($state)) {
-            wp_set_object_terms($post_id, $state, 'talent_state');
-        }
-    }
-
-    // --- Set Taxonomy Term for Talent Country ---
-    if (isset($_POST['country'])) {
-        $country = sanitize_text_field($_POST['country']);
-        if (!empty($country)) {
-            wp_set_object_terms($post_id, $country, 'talent_country');
-        }
-    }
-
-
-    // Handle repeatable fields (Notable Works)
-    if (isset($_POST['workTitle']) && is_array($_POST['workTitle'])) {
-        $notable_works = [];
-        $work_titles = $_POST['workTitle'];
-        // $work_years = $_POST['workYear']; // This field is no longer in use
-        $work_start_dates = $_POST['workStartDate'] ?? [];
-        $work_end_dates = $_POST['workEndDate'] ?? [];
-        $work_present = $_POST['workPresent'] ?? [];
-        $work_roles = $_POST['workRole'];
-        $work_descriptions = $_POST['workDescription'];
-
-        for ($i = 0; $i < count($work_titles); $i++) {
-            if (!empty($work_titles[$i])) {
-                $notable_works[] = [
-                    'title' => sanitize_text_field($work_titles[$i]),
-                    'role' => sanitize_text_field($work_roles[$i]),
-                    'startDate' => sanitize_text_field($work_start_dates[$i]),
-                    'endDate' => isset($work_present[$i]) && $work_present[$i] === 'on' ? '' : sanitize_text_field($work_end_dates[$i]),
-                    'present' => isset($work_present[$i]) && $work_present[$i] === 'on' ? 'on' : 'off',
-                    'description' => sanitize_textarea_field($work_descriptions[$i]),
-                ];
-            }
-        }
-        update_post_meta($post_id, '_talent_notable_works', $notable_works);
-    }
-
-    // --- Handle Role-Specific Fields & Portfolio Gallery ---
-    // This part needs to be expanded for each role.
-
-    // Example for Fashion Designer
-    if (isset($_POST['designCategories']) && is_array($_POST['designCategories'])) {
-        $design_categories = array_map('sanitize_text_field', $_POST['designCategories']);
-        update_post_meta($post_id, '_talent_designCategories', $design_categories);
-    }
-
-    // Handle Portfolio Gallery Upload (for roles that have it)
-    // Check for all possible portfolio input names
-    $portfolio_files = null;
-    if (!empty($_FILES['portfolio']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio'];
-    } elseif (!empty($_FILES['portfolio-textile']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-textile'];
-    } elseif (!empty($_FILES['portfolio-accessory']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-accessory'];
-    } elseif (!empty($_FILES['portfolio-illustrator']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-illustrator'];
-    } elseif (!empty($_FILES['portfolio-model']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-model'];
-    } elseif (!empty($_FILES['portfolio-choreographer']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-choreographer'];
-    } elseif (!empty($_FILES['portfolio-stylist']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-stylist'];
-    } elseif (!empty($_FILES['portfolio-makeup']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-makeup'];
-    } elseif (!empty($_FILES['portfolio-director']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-director'];
-    } elseif (!empty($_FILES['portfolio-storyboard']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-storyboard'];
-    } elseif (!empty($_FILES['portfolio-actor']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-actor'];
-    } elseif (!empty($_FILES['portfolio-voice']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-voice'];
-    } elseif (!empty($_FILES['portfolio-dancer']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-dancer'];
-    } elseif (!empty($_FILES['portfolio-dop']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-dop'];
-    } elseif (!empty($_FILES['portfolio-assistant-director']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-assistant-director'];
-    } elseif (!empty($_FILES['portfolio-screenwriter']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-screenwriter'];
-    } elseif (!empty($_FILES['portfolio-editor']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-editor'];
-    }
-
-    if ($portfolio_files) {
-        require_once(ABSPATH . 'wp-admin/includes/image.php');
-        require_once(ABSPATH . 'wp-admin/includes/file.php');
-        require_once(ABSPATH . 'wp-admin/includes/media.php');
-
-        $attachment_ids = [];
-
-        foreach ($portfolio_files['name'] as $key => $value) {
-            if ($portfolio_files['name'][$key]) {
-                // Create a temporary file array for media_handle_upload
-                $_FILES['single_portfolio_image'] = [
-                    'name' => $portfolio_files['name'][$key],
-                    'type' => $portfolio_files['type'][$key],
-                    'tmp_name' => $portfolio_files['tmp_name'][$key],
-                    'error' => $portfolio_files['error'][$key],
-                    'size' => $portfolio_files['size'][$key]
-                ];
-                $attachment_id = media_handle_upload('single_portfolio_image', $post_id);
-                if (!is_wp_error($attachment_id)) {
-                    $attachment_ids[] = $attachment_id;
-                }
-            }
-        }
-        update_post_meta($post_id, '_talent_portfolio', $attachment_ids);
-    }
-
-    // --- Redirect after submission ---
-    // You can create a "Thank You" page and redirect there.
-    $redirect_url = add_query_arg('success', 'true', get_permalink()); // Redirect back to the form page with a success message
-    wp_redirect($redirect_url);
-    exit;
-}
-add_action('template_redirect', 'handle_talent_submission');
-
-/**
- * Handle the front-end talent profile update form.
- */
-
-/**
- * Handle the front-end talent profile update form.
- */
-function handle_talent_update()
-{
-    // Check if our update form is submitted
-    if ('POST' !== $_SERVER['REQUEST_METHOD'] || !isset($_POST['action']) || 'update_talent_profile' !== $_POST['action']) {
-        return;
-    }
-
-    // Verify nonce
-    if (!isset($_POST['talent_update_nonce']) || !wp_verify_nonce($_POST['talent_update_nonce'], 'talent_update')) {
-        wp_die('Security check failed.');
-    }
-
-    // Check user is logged in and is the author of the post
-    $post_id = (int) $_POST['post_id'];
-    if (!is_user_logged_in() || get_post_field('post_author', $post_id) != get_current_user_id()) {
-        wp_die('You do not have permission to edit this profile.');
-    }
-
-    // Sanitize and prepare post data
-    $full_name = sanitize_text_field($_POST['fullName']);
-    $style_description = wp_kses_post($_POST['styleDescription']);
-
-    $talent_post_update = array(
-        'ID' => $post_id,
-        'post_title' => $full_name,
-        'post_content' => $style_description,
-        'post_status' => 'pending', // Set back to pending for re-approval
-    );
-
-    // Update the post in the database
-    $result = wp_update_post($talent_post_update);
-
-    // Check if post update was successful
-    if (is_wp_error($result)) {
-        error_log('Talent profile update failed: ' . $result->get_error_message());
-        // Continue with the rest of the update instead of dying
-    }
-
-    // --- Handle File Upload (Profile Photo) ---
-    if (!empty($_FILES['profilePhoto']['name'])) {
-        // Ensure required functions are available
-        if (!function_exists('media_handle_upload')) {
-            require_once(ABSPATH . 'wp-admin/includes/image.php');
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
-            require_once(ABSPATH . 'wp-admin/includes/media.php');
-        }
-
-        // Delete old thumbnail if it exists
-        if (has_post_thumbnail($post_id)) {
-            delete_post_thumbnail($post_id);
-        }
-
-        $attachment_id = media_handle_upload('profilePhoto', $post_id);
-
-        if (is_wp_error($attachment_id)) {
-            error_log('Profile photo upload failed: ' . $attachment_id->get_error_message());
-            // Don't die here, just continue with the rest of the update
-        } else {
-            set_post_thumbnail($post_id, $attachment_id);
-        }
-    }
-
-    // --- Save Custom Fields (Meta Data) ---
-    $meta_fields = [
-        '_talent_state' => 'state',
-        '_talent_country' => 'country',
-        '_talent_email' => 'email',
-        '_talent_phone' => 'phone',
-        '_talent_age_group' => 'ageGroup',
-        '_talent_gender' => 'gender',
-        '_talent_height' => 'height',
-        '_talent_height_unit' => 'heightUnit',
-        '_talent_measurements' => 'measurements',
-        '_talent_years_active' => 'yearsActive',
-        '_talent_affiliation' => 'affiliation',
-        '_talent_education' => 'education',
-        '_talent_interested_projects' => 'interestedProjects',
-        '_talent_willing_to_travel' => 'willingToTravel',
-        '_talent_preferred_locations' => 'preferredLocations',
-        '_talent_brand_collabs' => 'brandCollabs',
-        '_talent_domain' => 'domain',
-        '_talent_role' => 'role',
-        '_talent_instagram' => 'instagram',
-        '_talent_linkedin' => 'linkedin',
-        '_talent_tiktok' => 'tiktok',
-        '_talent_website' => 'website',
-    ];
-
-    foreach ($meta_fields as $meta_key => $post_key) {
-        if (isset($_POST[$post_key])) {
-            update_post_meta($post_id, $meta_key, sanitize_text_field($_POST[$post_key]));
-        }
-    }
-
-    // Handle languages field (comma-separated string)
-    if (isset($_POST['languages'])) {
-        if (is_array($_POST['languages'])) {
-            // If it's already an array (from JS processing)
-            $languages = array_map('sanitize_text_field', $_POST['languages']);
-        } else {
-            // If it's a comma-separated string
-            $languages = array_map('trim', explode(',', sanitize_text_field($_POST['languages'])));
-        }
-        update_post_meta($post_id, '_talent_languages', $languages);
-    }
-
-    if (isset($_POST['availableFor']) && is_array($_POST['availableFor'])) {
-        update_post_meta($post_id, '_talent_available_for', array_map('sanitize_text_field', $_POST['availableFor']));
-    }
-
-    if (isset($_POST['workTitle']) && is_array($_POST['workTitle'])) {
-        // --- Set Taxonomy Term for Talent Type on Update ---
-        if (isset($_POST['role'])) {
-            $role_slug = sanitize_title($_POST['role']);
-            if (!empty($role_slug)) {
-                // Create a user-friendly name from the slug
-                $role_name = ucwords(str_replace('-', ' ', $role_slug));
-                // This will create the term if it doesn't exist, and assign it.
-                // The `false` for the third parameter replaces existing terms in this taxonomy.
-                wp_set_object_terms($post_id, $role_name, 'talent_type', false);
-            }
-        }
-
-        $notable_works = [];
-        for ($i = 0; $i < count($_POST['workTitle']); $i++) {
-            if (!empty($_POST['workTitle'][$i])) {
-                $is_present = isset($_POST['workPresent']) && is_array($_POST['workPresent']) && isset($_POST['workPresent'][$i]) && $_POST['workPresent'][$i] === 'on';
-                $notable_works[] = [
-                    'title' => sanitize_text_field($_POST['workTitle'][$i]),
-                    'role' => sanitize_text_field($_POST['workRole'][$i]),
-                    'startDate' => sanitize_text_field($_POST['workStartDate'][$i]),
-                    'endDate' => $is_present ? '' : sanitize_text_field($_POST['workEndDate'][$i]),
-                    'present' => $is_present ? 'on' : 'off',
-                    'description' => sanitize_textarea_field($_POST['workDescription'][$i]),
-                ];
-            }
-        }
-        update_post_meta($post_id, '_talent_notable_works', $notable_works);
-    }
-
-    // --- Handle Role-Specific Fields & Portfolio Gallery Update ---
-    if (isset($_POST['designCategories']) && is_array($_POST['designCategories'])) {
-        $design_categories = array_map('sanitize_text_field', $_POST['designCategories']);
-        update_post_meta($post_id, '_talent_designCategories', $design_categories);
-    }
-
-    // Handle Portfolio Gallery Upload (for roles that have it)
-    // This will ADD to existing images. For a replacement logic, you'd first delete old attachments.
-    // Check for all possible portfolio input names
-    $portfolio_files = null;
-    if (!empty($_FILES['portfolio']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio'];
-    } elseif (!empty($_FILES['portfolio-textile']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-textile'];
-    } elseif (!empty($_FILES['portfolio-accessory']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-accessory'];
-    } elseif (!empty($_FILES['portfolio-illustrator']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-illustrator'];
-    } elseif (!empty($_FILES['portfolio-model']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-model'];
-    } elseif (!empty($_FILES['portfolio-choreographer']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-choreographer'];
-    } elseif (!empty($_FILES['portfolio-stylist']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-stylist'];
-    } elseif (!empty($_FILES['portfolio-makeup']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-makeup'];
-    } elseif (!empty($_FILES['portfolio-director']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-director'];
-    } elseif (!empty($_FILES['portfolio-storyboard']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-storyboard'];
-    } elseif (!empty($_FILES['portfolio-actor']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-actor'];
-    } elseif (!empty($_FILES['portfolio-voice']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-voice'];
-    } elseif (!empty($_FILES['portfolio-dancer']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-dancer'];
-    } elseif (!empty($_FILES['portfolio-dop']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-dop'];
-    } elseif (!empty($_FILES['portfolio-assistant-director']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-assistant-director'];
-    } elseif (!empty($_FILES['portfolio-screenwriter']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-screenwriter'];
-    } elseif (!empty($_FILES['portfolio-editor']['name'][0])) {
-        $portfolio_files = $_FILES['portfolio-editor'];
-    }
-
-    if ($portfolio_files) {
-        // Ensure required functions are available
-        if (!function_exists('media_handle_upload')) {
-            require_once(ABSPATH . 'wp-admin/includes/image.php');
-            require_once(ABSPATH . 'wp-admin/includes/file.php');
-            require_once(ABSPATH . 'wp-admin/includes/media.php');
-        }
-
-        $new_attachment_ids = get_post_meta($post_id, '_talent_portfolio', true) ?: [];
-        if (!is_array($new_attachment_ids))
-            $new_attachment_ids = [];
-
-        foreach ($portfolio_files['name'] as $key => $value) {
-            if ($portfolio_files['name'][$key]) {
-                $_FILES['single_portfolio_image'] = [
-                    'name' => $portfolio_files['name'][$key],
-                    'type' => $portfolio_files['type'][$key],
-                    'tmp_name' => $portfolio_files['tmp_name'][$key],
-                    'error' => $portfolio_files['error'][$key],
-                    'size' => $portfolio_files['size'][$key]
-                ];
-                $attachment_id = media_handle_upload('single_portfolio_image', $post_id);
-                if (!is_wp_error($attachment_id)) {
-                    $new_attachment_ids[] = $attachment_id;
-                } else {
-                    error_log('Portfolio image upload failed: ' . $attachment_id->get_error_message());
-                }
-            }
-        }
-        update_post_meta($post_id, '_talent_portfolio', $new_attachment_ids);
-    }
-
-    // --- Redirect after update ---
-    $redirect_url = add_query_arg('updated', 'true', get_permalink());
-    wp_redirect($redirect_url);
-    exit;
-}
-
-add_action('template_redirect', 'handle_talent_update');
-
-/**
- * Adds a meta box to the "Talent" post type editor.
- */
-function talent_add_meta_boxes()
-{
-    add_meta_box(
-        'talent_details_meta_box',          // ID
-        'Talent Details',                   // Title
-        'talent_details_meta_box_callback', // Callback function
-        'talent',                           // Post type
-        'normal',                           // Context
-        'high'                              // Priority
-    );
-}
-add_action('add_meta_boxes', 'talent_add_meta_boxes');
-
-/**
- * Enqueue media scripts for portfolio gallery
- */
-function talent_admin_scripts($hook)
-{
-    global $post;
-
-    if ($hook == 'post-new.php' || $hook == 'post.php') {
-        if ('talent' === $post->post_type) {
-            wp_enqueue_media();
+function create_advertisement_submission_page() {
+    // Check if page already exists
+    $page_exists = get_page_by_path('submit-advertisement');
+    
+    if (!$page_exists) {
+        // Create the page
+        $page_data = array(
+            'post_title'    => 'Submit Advertisement',
+            'post_name'     => 'submit-advertisement',
+            'post_content'  => '',
+            'post_status'   => 'publish',
+            'post_type'     => 'page',
+            'page_template' => 'template-advertisement-submission.php'
+        );
+        
+        $page_id = wp_insert_post($page_data);
+        
+        if ($page_id && !is_wp_error($page_id)) {
+            // Set the page template
+            update_post_meta($page_id, '_wp_page_template', 'template-advertisement-submission.php');
         }
     }
 }
-add_action('admin_enqueue_scripts', 'talent_admin_scripts');
-
+add_action('after_switch_theme', 'create_advertisement_submission_page');
 
 
 /**
- * Callback function to render the talent details meta box content.
- *
- * @param WP_Post $post The post object.
+ * Create Classified Pricing page on theme activation
  */
-function talent_details_meta_box_callback($post)
-{
-    // Add a nonce field so we can check for it later.
-    wp_nonce_field('talent_save_meta_box_data', 'talent_meta_box_nonce');
+function create_classified_pricing_page() {
+    // Check if page already exists
+    $page_exists = get_page_by_path('classified');
+    
+    if (!$page_exists) {
+        // Create the page
+        $page_data = array(
+            'post_title'    => 'Classified Pricing',
+            'post_name'     => 'classified',
+            'post_content'  => '',
+            'post_status'   => 'publish',
+            'post_type'     => 'page',
+            'page_template' => 'page-classified.php'
+        );
+        
+        $page_id = wp_insert_post($page_data);
+        
+        if ($page_id && !is_wp_error($page_id)) {
+            // Set the page template
+            update_post_meta($page_id, '_wp_page_template', 'page-classified.php');
+        }
+    }
+}
+add_action('after_switch_theme', 'create_classified_pricing_page');
 
-    // --- Define all fields ---
-    $fields = [
-        'Profile Basics' => [
-            '_talent_email' => 'Contact Email',
-            '_talent_phone' => 'Phone Number',
-            '_talent_state' => 'State',
-            '_talent_country' => 'Country',
-            '_talent_age_group' => 'Age Group',
-            '_talent_gender' => 'Gender',
-            '_talent_height' => 'Height',
-            '_talent_height_unit' => 'Height Unit',
-            '_talent_measurements' => 'Measurements',
-            '_talent_languages' => 'Languages Known',
-        ],
-        'Experience & Portfolio' => [
-            '_talent_years_active' => 'Years Active',
-            '_talent_affiliation' => 'Affiliation',
-            '_talent_education' => 'Education / Training',
-            '_talent_ied_projects' => 'Interested Projects',
-            '_talent_notable_works' => 'Notable Works',
-        ],
-        'Availability & Preferences' => [
-            '_talent_available_for' => 'Available For',
-            '_talent_willing_to_travel' => 'Willing to Travel',
-            '_talent_preferred_locations' => 'Preferred Locations',
-            '_talent_brand_collabs' => 'Open to Brand Collaborations',
-        ],
-        'Domain & Role' => [
-            '_talent_domain' => 'Domain',
-            '_talent_role' => 'Role',
-        ],
-        'Social Links' => [
-            '_talent_instagram' => 'Instagram',
-            '_talent_linkedin' => 'LinkedIn',
-            '_talent_tiktok' => 'TikTok',
-            '_talent_website' => 'Website',
-        ],
-        'Portfolio' => [
-            '_talent_portfolio' => 'Portfolio Gallery',
-        ],
-    ];
 
-    echo '<style>
-        .talent-meta-box-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; color: #333; }
-        .talent-meta-box-field { margin-bottom: 15px; background: #f9f9f9; padding: 10px; border-left: 3px solid #b2122d; }
-        .talent-meta-box-field.full-width { grid-column: 1 / -1; }
-        .talent-meta-box-field label { font-weight: bold; display: block; margin-bottom: 5px; }
-        .talent-meta-box-field .value { font-size: 14px; padding: 8px; background: #fff; border: 1px solid #ddd; border-radius: 4px; }
-        .talent-meta-box-field pre { white-space: pre-wrap; word-wrap: break-word; background: #fff; padding: 10px; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; }
-        .talent-meta-box h3 { border-bottom: 2px solid #b2122d; padding-bottom: 10px; margin-top: 30px; margin-bottom: 20px; }
-        .talent-meta-box h3:first-of-type { margin-top: 0; }
-        .portfolio-image-preview { max-width: 150px; height: auto; margin: 5px; display: inline-block; }
-        .portfolio-images-container { display: flex; flex-wrap: wrap; }
-    </style>';
+/**
+ * Flush rewrite rules after theme activation to ensure custom URLs work
+ */
+function classified_page_flush_rewrite_rules() {
+    create_classified_pricing_page();
+    create_advertisement_submission_page();
+    flush_rewrite_rules();
+}
+add_action('after_switch_theme', 'classified_page_flush_rewrite_rules');
 
-    echo '<div class="talent-meta-box">';
 
-    foreach ($fields as $section_title => $section_fields) {
-        echo '<h3>' . esc_html($section_title) . '</h3>';
-        echo '<div class="talent-meta-box-grid">';
+/**
+ * Add rewrite rules for classified-create URL
+ */
+function add_classified_create_rewrite_rule() {
+    add_rewrite_rule(
+        '^classified-create/?$',
+        'index.php?pagename=classified',
+        'top'
+    );
+}
+add_action('init', 'add_classified_create_rewrite_rule');
 
-        foreach ($section_fields as $meta_key => $label) {
-            $value = get_post_meta($post->ID, $meta_key, true);
-            $is_full_width = in_array($meta_key, ['_talent_education', '_talent_interested_projects', '_talent_notable_works', '_talent_portfolio']);
+/**
+ * Add rewrite rules for edit-talent-profile URL
+ */
+function add_edit_talent_profile_rewrite_rule() {
+    add_rewrite_rule(
+        '^edit-talent-profile/?$',
+        'index.php?pagename=edit-talent-profile',
+        'top'
+    );
+}
+add_action('init', 'add_edit_talent_profile_rewrite_rule');
 
-            echo '<div class="talent-meta-box-field ' . ($is_full_width ? 'full-width' : '') . '">';
-            echo '<label for="' . esc_attr($meta_key) . '">' . esc_html($label) . ':</label>';
+/**
+ * Add rewrite rules for public talent profile URLs
+ */
+function add_public_talent_profile_rewrite_rule() {
+    add_rewrite_rule(
+        '^p/([a-zA-Z0-9]+)/?$',
+        'index.php?public_talent_token=$matches[1]',
+        'top'
+    );
+    
+    // Add query var
+    add_rewrite_tag('%public_talent_token%', '([^&]+)');
+}
+add_action('init', 'add_public_talent_profile_rewrite_rule');
 
-            if ($meta_key === '_talent_portfolio') {
-                // Handle portfolio gallery using WordPress media library
-                echo '<div class="value">';
-                echo '<div class="portfolio-gallery-container">';
+/**
+ * Handle edit-talent-profile URL redirect to use the talent edit template
+ */
+function handle_edit_talent_profile_redirect() {
+    // Check if we're on the edit-talent-profile endpoint
+    $requested_url = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($requested_url, '/edit-talent-profile') === 0) {
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            // Redirect to login page
+            wp_redirect(home_url('/sign-in/'));
+            exit;
+        }
 
-                // Hidden input to store attachment IDs
-                echo '<input type="hidden" id="_talent_portfolio" name="_talent_portfolio" value="' . esc_attr(is_array($value) ? implode(',', $value) : $value) . '" />';
-
-                // Gallery display area
-                echo '<div id="portfolio-gallery-preview" class="portfolio-images-container">';
-                if (!empty($value) && is_array($value)) {
-                    foreach ($value as $image_id) {
-                        if (is_array($image_id)) {
-                            foreach ($image_id as $id) {
-                                $image_url = wp_get_attachment_image_url($id, 'thumbnail');
-                                if ($image_url) {
-                                    echo '<img src="' . esc_url($image_url) . '" class="portfolio-image-preview" alt="Portfolio image" data-id="' . esc_attr($id) . '" />';
-                                }
-                            }
-                        } else {
-                            $image_url = wp_get_attachment_image_url($image_id, 'thumbnail');
-                            if ($image_url) {
-                                echo '<img src="' . esc_url($image_url) . '" class="portfolio-image-preview" alt="Portfolio image" data-id="' . esc_attr($image_id) . '" />';
-                            }
-                        }
-                    }
-                }
-                echo '</div>';
-
-                // Add gallery management buttons
-                echo '<div style="margin-top: 15px;">';
-                echo '<button type="button" id="add-portfolio-images" class="button">Manage Portfolio Gallery</button>';
-                echo '<p class="description">Click to open WordPress Media Library and select images for the portfolio gallery.</p>';
-                echo '</div>';
-
-                echo '</div>';
-
-                // Add JavaScript for WordPress media library integration
-                echo '<script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    var addButton = document.getElementById("add-portfolio-images");
-                    var galleryInput = document.getElementById("_talent_portfolio");
-                    var galleryPreview = document.getElementById("portfolio-gallery-preview");
-                    
-                    if (addButton) {
-                        addButton.addEventListener("click", function() {
-                            // Create a new media frame
-                            var frame = wp.media({
-                                title: "Select Portfolio Images",
-                                multiple: true,
-                                library: { type: "image" },
-                                button: { text: "Use Selected Images" }
-                            });
-                            
-                            // When an image is selected in the media frame...
-                            frame.on("select", function() {
-                                // Get media attachment details from the frame state
-                                var attachments = frame.state().get("selection").toJSON();
-                                
-                                // Update hidden input with attachment IDs
-                                var ids = attachments.map(function(attachment) {
-                                    return attachment.id;
-                                });
-                                galleryInput.value = ids.join(",");
-                                
-                                // Update preview area
-                                galleryPreview.innerHTML = "";
-                                attachments.forEach(function(attachment) {
-                                    var img = document.createElement("img");
-                                    img.src = attachment.sizes.thumbnail.url;
-                                    img.className = "portfolio-image-preview";
-                                    img.alt = "Portfolio image";
-                                    img.setAttribute("data-id", attachment.id);
-                                    galleryPreview.appendChild(img);
-                                });
-                            });
-                            
-                            // Open the media frame
-                            frame.open();
-                        });
-                    }
-                });
-                </script>';
-                echo '</div>';
-            } elseif ($meta_key === '_talent_notable_works') {
-                // Handle notable works with editable fields
-                echo '<div class="value">';
-                echo '<div id="notable-works-container">';
-
-                if (!empty($value) && is_array($value)) {
-                    foreach ($value as $index => $work) {
-                        echo '<div class="notable-work-item">';
-                        echo '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px;">';
-                        echo '<div><label>Title:</label><input type="text" name="_talent_notable_works_titles[]" value="' . esc_attr($work['title'] ?? '') . '" style="width: 100%;" /></div>';
-                        echo '<div><label>Role:</label><input type="text" name="_talent_notable_works_roles[]" value="' . esc_attr($work['role'] ?? '') . '" style="width: 100%;" /></div>';
-                        echo '<div><label>Start Date:</label><input type="month" name="_talent_notable_works_start_dates[]" value="' . esc_attr($work['startDate'] ?? '') . '" style="width: 100%;" /></div>';
-                        echo '<div><label>End Date:</label><input type="month" name="_talent_notable_works_end_dates[]" value="' . esc_attr($work['endDate'] ?? '') . '" style="width: 100%;" /></div>';
-                        echo '<div><label>Present:</label><input type="checkbox" name="_talent_notable_works_present[]" ' . ((isset($work['present']) && $work['present'] === 'on') ? 'checked' : '') . ' value="on" /></div>';
-                        echo '<div style="grid-column: 1 / -1;"><label>Description:</label><textarea name="_talent_notable_works_descriptions[]" style="width: 100%;">' . esc_textarea($work['description'] ?? '') . '</textarea></div>';
-                        echo '</div>';
-                        echo '</div>';
-                    }
-                } else {
-                    // Add empty fields for new entry
-                    echo '<div class="notable-work-item">';
-                    echo '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px;">';
-                    echo '<div><label>Title:</label><input type="text" name="_talent_notable_works_titles[]" value="" style="width: 100%;" /></div>';
-                    echo '<div><label>Role:</label><input type="text" name="_talent_notable_works_roles[]" value="" style="width: 100%;" /></div>';
-                    echo '<div><label>Start Date:</label><input type="month" name="_talent_notable_works_start_dates[]" value="" style="width: 100%;" /></div>';
-                    echo '<div><label>End Date:</label><input type="month" name="_talent_notable_works_end_dates[]" value="" style="width: 100%;" /></div>';
-                    echo '<div><label>Present:</label><input type="checkbox" name="_talent_notable_works_present[]" value="on" /></div>';
-                    echo '<div style="grid-column: 1 / -1;"><label>Description:</label><textarea name="_talent_notable_works_descriptions[]" style="width: 100%;"></textarea></div>';
-                    echo '</div>';
-                    echo '</div>';
-                }
-                echo '</div>';
-                echo '<button type="button" id="add-notable-work" style="margin-top: 10px; padding: 5px 10px;">Add Another Work</button>';
-                echo '<script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    var addButton = document.getElementById("add-notable-work");
-                    if (addButton) {
-                        addButton.addEventListener("click", function() {
-                            var container = document.getElementById("notable-works-container");
-                            var newItem = document.createElement("div");
-                            newItem.className = "notable-work-item";
-                            newItem.innerHTML = \'<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px;"><div><label>Title:</label><input type="text" name="_talent_notable_works_titles[]" value="" style="width: 100%;" /></div><div><label>Role:</label><input type="text" name="_talent_notable_works_roles[]" value="" style="width: 100%;" /></div><div><label>Start Date:</label><input type="month" name="_talent_notable_works_start_dates[]" value="" style="width: 100%;" /></div><div><label>End Date:</label><input type="month" name="_talent_notable_works_end_dates[]" value="" style="width: 100%;" /></div><div><label>Present:</label><input type="checkbox" name="_talent_notable_works_present[]" value="on" /></div><div style="grid-column: 1 / -1;"><label>Description:</label><textarea name="_talent_notable_works_descriptions[]" style="width: 100%;"></textarea></div></div>\';
-                            container.appendChild(newItem);
-                        });
-                    }
-                });
-                </script>';
-                echo '</div>';
-            } elseif (is_array($value)) {
-                // Handle arrays (like checkboxes or repeatable fields)
-                echo '<div class="value">' . esc_html(implode(', ', $value)) . '</div>';
-            } elseif (!empty($value)) {
-                // Handle simple text values
-                if ($meta_key === '_talent_willing_to_travel' || $meta_key === '_talent_brand_collabs') {
-                    echo '<div class="value">' . ($value === 'on' ? 'Yes' : 'No') . '</div>';
-                } else {
-                    echo '<div class="value">' . esc_html($value) . '</div>';
+        // Get the talent ID from the query parameter
+        $talent_id = isset($_GET['talent_id']) ? intval($_GET['talent_id']) : 0;
+        
+        if ($talent_id) {
+            // Check if the current user is the author of this talent profile
+            $talent_post = get_post($talent_id);
+            if ($talent_post && $talent_post->post_type === 'talent') {
+                if (get_post_field('post_author', $talent_id) != get_current_user_id()) {
+                    // User doesn't have permission to edit this profile
+                    wp_die('You do not have permission to edit this profile.');
                 }
             } else {
-                echo '<div class="value"><em>Not provided.</em></div>';
+                // Talent post doesn't exist or isn't of correct type
+                wp_redirect(get_post_type_archive_link('talent'));
+                exit;
             }
-            echo '</div>';
         }
-        echo '</div>'; // end .talent-meta-box-grid
+        
+        // Include the template file directly
+        include get_stylesheet_directory() . '/template-talent-edit.php';
+        exit;
     }
-    echo '</div>'; // end .talent-meta-box
 }
+add_action('template_redirect', 'handle_edit_talent_profile_redirect');
 
 /**
- * When the post is saved, saves our custom data.
- *
- * @param int $post_id The ID of the post being saved.
+ * Handle public talent profile URL redirect to use the public profile template
  */
-function talent_save_meta_box_data($post_id)
-{
-    // Check if our nonce is set.
-    if (!isset($_POST['talent_meta_box_nonce'])) {
-        return;
+function handle_public_talent_profile_redirect() {
+    $public_token = get_query_var('public_talent_token');
+    
+    if (!empty($public_token)) {
+        // Include the public profile template
+        include get_stylesheet_directory() . '/template-public-profile.php';
+        exit;
     }
-    // Verify that the nonce is valid.
-    if (!wp_verify_nonce($_POST['talent_meta_box_nonce'], 'talent_save_meta_box_data')) {
-        return;
-    }
-    // If this is an autosave, our form has not been submitted, so we don't want to do anything.
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-        return;
-    }
-    // Check the user's permissions.
-    if (isset($_POST['post_type']) && 'talent' == $_POST['post_type']) {
-        if (!current_user_can('edit_post', $post_id)) {
+}
+add_action('template_redirect', 'handle_public_talent_profile_redirect');
+
+/**
+ * Handle classified-create URL redirect based on user subscription
+ */
+function handle_classified_create_redirect() {
+    // Check if the current URL is /classified-create/
+    global $wp_query;
+    
+    // Check if we're on the classified-create endpoint
+    if (isset($wp_query->query_vars['pagename']) && $wp_query->query_vars['pagename'] === 'classified') {
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            // Redirect to login page
+            wp_redirect(home_url('/membership-login/'));
+            exit;
+        }
+
+        // Check if user has advertisement plan
+        $has_access = false;
+
+        // Include access control functions if not already included
+        if (!function_exists('has_membership_plan')) {
+            require_once get_stylesheet_directory() . '/includes/access-control.php';
+        }
+
+        // Ensure user's plan tracking is properly initialized
+        ensure_user_plan_tracking();
+
+        // Also migrate current level to plans for backward compatibility
+        migrate_user_current_level_to_plans();
+
+        // Define the plans that have access to create classified ads
+        $plans_with_ad_access = [
+            SIX_MONTH_PLAN_LEVEL,  // 6-month plan
+            ONE_YEAR_PLAN_LEVEL,   // 1-year plan
+            ADVERTISEMENT_PLAN_LEVEL  // Original advertisement plan (level 5)
+        ];
+        
+        // Check if user has any of the plans with ad access
+        foreach ($plans_with_ad_access as $plan_level) {
+            if (has_membership_plan($plan_level)) {
+                $has_access = true;
+                break; // Exit early if any qualifying plan is found
+            }
+        }
+
+        // If user has access, redirect to submit-advertisement page
+        if ($has_access) {
+            wp_redirect(home_url('/submit-advertisement'));
+            exit;
+        } else {
+            // If user doesn't have access, stay on this page to show payment options
+            // The page template will handle showing the payment options
             return;
         }
     }
+}
+add_action('template_redirect', 'handle_classified_create_redirect');
 
-    // Save portfolio gallery images
-    if (isset($_POST['_talent_portfolio'])) {
-        $attachment_ids = sanitize_text_field($_POST['_talent_portfolio']);
-        if (!empty($attachment_ids)) {
-            $attachment_ids = explode(',', $attachment_ids);
-            $attachment_ids = array_map('intval', $attachment_ids);
+/**
+ * Replace hardcoded URLs with dynamic URLs in content
+ */
+function replace_hardcoded_urls_with_dynamic($content) {
+    // Only process if content contains potential hardcoded URLs
+    if (strpos($content, 'http://') !== false || strpos($content, 'https://') !== false) {
+        // Replace hardcoded base URLs with dynamic home_url for membership-related paths
+        $site_url = home_url();
+        
+        // Pattern to match URLs with membership-related paths
+        $pattern = '/(href|src)=(["\'])(https?:\/\/[^\s"\'\/]+\/)(membership-join|membership-login|sign-in|sign-up|membership-register|register)([^\s"\'<>]*)\2/i';
+        $replacement = '$1=$2' . $site_url . '/$4$5$2';
+        $content = preg_replace($pattern, $replacement, $content);
+    }
+    
+    return $content;
+}
+
+// Apply the filter to post content
+add_filter('the_content', 'replace_hardcoded_urls_with_dynamic');
+
+// Apply the filter to widget content (which may include Elementor widgets)
+add_filter('widget_text', 'replace_hardcoded_urls_with_dynamic');
+
+// Apply the filter to nav menu items
+add_filter('wp_nav_menu', 'replace_hardcoded_urls_with_dynamic');
+
+
+/**
+ * Add custom columns to talent post type admin screen
+ */
+function add_talent_admin_columns($columns) {
+    // Add 'Author Email' and 'Approval Payment' columns after the 'title' column
+    $new_columns = array(); 
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        if ($key === 'title') {
+            $new_columns['author_email'] = 'Author Email';
+            $new_columns['approval_payment'] = 'Approval Payment';
+        }
+    }
+    return $new_columns;
+}
+add_filter('manage_talent_posts_columns', 'add_talent_admin_columns');
+
+/**
+ * Populate the custom column with payment information
+ */
+function populate_talent_admin_columns($column, $post_id) {
+    if ($column === 'author_email') {
+        // Get the author ID for this post
+        $author_id = get_post_field('post_author', $post_id);
+        
+        // Get the author's email
+        $author_email = get_the_author_meta('user_email', $author_id);
+        
+        // Display the author's email
+        if (!empty($author_email)) {
+            echo '<span style="font-size: 12px;">' . esc_html($author_email) . '</span>';
         } else {
-            $attachment_ids = [];
+            echo '<span style="color: #999; font-size: 12px;">No email</span>';
         }
-        update_post_meta($post_id, '_talent_portfolio', $attachment_ids);
-    }
-
-    // Save other fields
-    $meta_fields = [
-        '_talent_email' => 'Contact Email',
-        '_talent_phone' => 'Phone Number',
-        '_talent_state' => 'State',
-        '_talent_country' => 'Country',
-        '_talent_age_group' => 'Age Group',
-        '_talent_gender' => 'Gender',
-        '_talent_height' => 'Height',
-        '_talent_height_unit' => 'Height Unit',
-        '_talent_measurements' => 'Measurements',
-        '_talent_languages' => 'Languages Known',
-        '_talent_years_active' => 'Years Active',
-        '_talent_affiliation' => 'Affiliation',
-        '_talent_education' => 'Education / Training',
-        '_talent_interested_projects' => 'Interested Projects',
-        '_talent_available_for' => 'Available For',
-        '_talent_willing_to_travel' => 'Willing to Travel',
-        '_talent_preferred_locations' => 'Preferred Locations',
-        '_talent_brand_collabs' => 'Open to Brand Collaborations',
-        '_talent_domain' => 'Domain',
-        '_talent_role' => 'Role',
-        '_talent_instagram' => 'Instagram',
-        '_talent_linkedin' => 'LinkedIn',
-        '_talent_tiktok' => 'TikTok',
-        '_talent_website' => 'Website',
-    ];
-
-    foreach ($meta_fields as $meta_key => $label) {
-        if (isset($_POST[$meta_key])) {
-            update_post_meta($post_id, $meta_key, sanitize_text_field($_POST[$meta_key]));
-        }
-    }
-
-    // Handle array fields
-    if (isset($_POST['_talent_languages']) && is_array($_POST['_talent_languages'])) {
-        update_post_meta($post_id, '_talent_languages', array_map('sanitize_text_field', $_POST['_talent_languages']));
-    }
-    if (isset($_POST['_talent_available_for']) && is_array($_POST['_talent_available_for'])) {
-        update_post_meta($post_id, '_talent_available_for', array_map('sanitize_text_field', $_POST['_talent_available_for']));
-    }
-
-    // Handle notable works
-    if (isset($_POST['_talent_notable_works_titles']) && is_array($_POST['_talent_notable_works_titles'])) {
-        $notable_works = [];
-        $titles = $_POST['_talent_notable_works_titles'];
-        $roles = $_POST['_talent_notable_works_roles'] ?? [];
-        $start_dates = $_POST['_talent_notable_works_start_dates'] ?? [];
-        $end_dates = $_POST['_talent_notable_works_end_dates'] ?? [];
-        $present = $_POST['_talent_notable_works_present'] ?? [];
-        $descriptions = $_POST['_talent_notable_works_descriptions'] ?? [];
-
-        for ($i = 0; $i < count($titles); $i++) {
-            // Skip empty titles
-            if (empty($titles[$i])) {
-                continue;
-            }
-
-            $is_present = isset($present[$i]) && $present[$i] === 'on';
-            $notable_works[] = [
-                'title' => sanitize_text_field($titles[$i]),
-                'role' => sanitize_text_field($roles[$i] ?? ''),
-                'startDate' => sanitize_text_field($start_dates[$i] ?? ''),
-                'endDate' => $is_present ? '' : sanitize_text_field($end_dates[$i] ?? ''),
-                'present' => $is_present ? 'on' : 'off',
-                'description' => sanitize_textarea_field($descriptions[$i] ?? ''),
-            ];
-        }
-        update_post_meta($post_id, '_talent_notable_works', $notable_works);
-    }
-}
-add_action('save_post', 'talent_save_meta_box_data');
-
-/**
- * Shortcode to display a success message and a link to the talent archive.
- * This will only display if 'success=true' is in the URL.
- */
-function talent_submission_success_message_shortcode()
-{
-    // Check if the 'success' query parameter is set to 'true'
-    if (!isset($_GET['success']) || 'true' !== $_GET['success']) {
-        return ''; // If not, return nothing.
-    }
-
-    // Get the URL for the 'talent' post type archive
-    $portfolio_archive_url = get_post_type_archive_link('talent');
-
-    ob_start();
-    ?>
-    <div
-        style="text-align: center; margin: 20px 0; padding: 20px; border: 1px solid #4CAF50; background-color: #f0fff0; border-radius: 8px; color: #333;">
-        <h3 style="color: #4CAF50;">Profile Submitted Successfully!</h3>
-        <p>Your profile has been submitted for review. Thank you!</p>
-        <?php if ($portfolio_archive_url): ?>
-            <a href="<?php echo esc_url($portfolio_archive_url); ?>"
-                style="display: inline-block; padding: 12px 24px; font-size: 16px; font-weight: bold; color: #fff; background-color: #b2122d; border-radius: 5px; text-decoration: none; margin-top: 10px;">
-                View All Portfolios
-            </a>
-        <?php endif; ?>
-    </div>
-    <?php
-    return ob_get_clean();
-}
-add_shortcode('talent_submission_success', 'talent_submission_success_message_shortcode');
-
-/**
- * Tracks profile views for talent posts.
- *
- * This function increments a 'profile_clicks' meta field for a talent post
- * each time it is viewed on the front-end. It includes checks to prevent
- * authors from inflating their own view counts and uses a session variable
- * to count only one view per user session.
- */
-function velvetreel_track_profile_views()
-{
-    // Only run on single 'talent' post pages
-    if (!is_singular('talent')) {
-        return;
-    }
-
-    $post_id = get_the_ID();
-
-    // Start a session if not already started
-    if (!session_id()) {
-        session_start();
-    }
-
-    // Check if this post has already been viewed in this session
-    if (!isset($_SESSION['viewed_talent_' . $post_id])) {
-        $count = (int) get_post_meta($post_id, '_talent_profile_clicks', true);
-        update_post_meta($post_id, '_talent_profile_clicks', $count + 1);
-        $_SESSION['viewed_talent_' . $post_id] = true; // Mark as viewed for this session
-    }
-}
-add_action('wp_head', 'velvetreel_track_profile_views');
-
-/**
- * Restrict access to the talent submission page
- */
-function restrict_talent_submission_access()
-{
-    // Only apply to the talent submission page
-    if (is_page_template('template-talent-submission.php')) {
-        // Check if user is logged in
-        if (!is_user_logged_in()) {
-            // Redirect to sign-in page for non-logged in users
-            $redirect_url = home_url('/sign-up/');
-            wp_redirect($redirect_url);
-            exit;
-        }
-
-        // Get current user ID
-        $user_id = get_current_user_id();
-
-
-    }
-
-    // Also check by page ID if template check fails
-    // Replace 5327 with your actual talent submission page ID
-    $talent_submission_page_id = 5327; // Default ID from your original code
-    if (is_page($talent_submission_page_id)) {
-        // Check if user is logged in
-        if (!is_user_logged_in()) {
-            // Redirect to sign-in page for non-logged in users
-            $redirect_url = home_url('/sign-up/');
-            wp_redirect($redirect_url);
-            exit;
-        }
-
-        // Get current user ID
-        $user_id = get_current_user_id();
-
-
-    }
-}
-add_action('template_redirect', 'restrict_talent_submission_access');
-
-/**
- * Restrict access to single talent profiles
- */
-function restrict_single_talent_access()
-{
-    // Only apply to single talent posts
-    if (is_singular('talent')) {
-        // Check if user is logged in
-        if (!is_user_logged_in()) {
-            // Check if this is a redirect from login with cache-busting parameter
-            if (isset($_GET['login']) && $_GET['login'] === 'success') {
-                // Force WordPress to re-check authentication
-                wp_get_current_user();
-
-                // If user is now logged in, don't redirect
-                if (is_user_logged_in()) {
-                    return;
+    } elseif ($column === 'approval_payment') {
+        // Check if user has paid for faster approval using plan ID 6958
+        $payment_info = get_post_meta($post_id, '_talent_approval_payment_info', true);
+        $has_paid = get_post_meta($post_id, '_talent_has_paid_approval', true);
+        
+        if ($has_paid) {
+            // Display payment information
+            $payment_date = get_post_meta($post_id, '_talent_approval_payment_date', true);
+            $payment_amount = get_post_meta($post_id, '_talent_approval_payment_amount', true);
+            
+            if (!empty($payment_info)) {
+                echo '<span style="color: green; font-weight: bold;">Paid</span><br>';
+                echo '<small>Date: ' . esc_html($payment_date) . '</small><br>';
+                if (!empty($payment_amount)) {
+                    echo '<small style="color: #00a32a; font-weight: 500;">Amount: $' . esc_html($payment_amount) . '</small>';
+                } else {
+                    echo '<small>Amount: $5.00</small>'; // Default amount based on your payment data
+                }
+            } else {
+                if (!empty($payment_amount)) {
+                    echo '<span style="color: green; font-weight: bold;">Paid: $' . esc_html($payment_amount) . '</span>';
+                } else {
+                    echo '<span style="color: green; font-weight: bold;">Paid: $5.00</span>'; // Default amount
                 }
             }
+        } else {
+            echo '<span style="color: #999;">Not Paid</span>';
+        }
+    }
+}
+add_action('manage_talent_posts_custom_column', 'populate_talent_admin_columns', 10, 2);
 
-            // Redirect to sign-in page for non-logged in users
-            $redirect_url = home_url('/sign-in/');
-            wp_redirect($redirect_url);
+/**
+ * Make the approval payment column sortable
+ */
+function make_talent_admin_columns_sortable($columns) {
+    $columns['approval_payment'] = 'approval_payment';
+    return $columns;
+}
+add_filter('manage_edit-talent_sortable_columns', 'make_talent_admin_columns_sortable');
+
+/**
+ * Save payment information when a talent post is updated
+ * This function can be called when payment is processed to record payment details
+ */
+function record_talent_approval_payment($post_id, $payment_data = array()) {
+    if (get_post_type($post_id) !== 'talent') {
+        return;
+    }
+    
+    // Mark that user has paid for approval
+    update_post_meta($post_id, '_talent_has_paid_approval', true);
+    
+    // Record payment information
+    if (isset($payment_data['date'])) {
+        update_post_meta($post_id, '_talent_approval_payment_date', $payment_data['date']);
+    }
+    
+    if (isset($payment_data['amount'])) {
+        update_post_meta($post_id, '_talent_approval_payment_amount', $payment_data['amount']);
+    }
+    
+    if (isset($payment_data['info'])) {
+        update_post_meta($post_id, '_talent_approval_payment_info', $payment_data['info']);
+    }
+}
+
+
+/**
+ * Alternative function to manually trigger payment recording
+ * This can be used if SWPM hooks don't work as expected
+ */
+function trigger_talent_approval_payment_check($user_id) {
+    // Check if the user has membership level 7 (based on your payment data)
+    if (class_exists('SwpmMemberUtils')) {
+        $user_level = SwpmMemberUtils::get_member_field('membership_level', $user_id);
+        
+        if ($user_level == '7') { // Level 7 is the approval plan based on your payment data
+            // Find talent post associated with this user
+            $talent_posts = get_posts(array(
+                'post_type' => 'talent',
+                'author' => $user_id,
+                'posts_per_page' => 1,
+                'post_status' => array('pending', 'draft', 'publish'),
+                'orderby' => 'date',
+                'order' => 'DESC'
+            ));
+            
+            if (!empty($talent_posts)) {
+                $post_id = $talent_posts[0]->ID;
+                
+                // Check if payment info already exists to avoid duplicates
+                $existing_payment_info = get_post_meta($post_id, '_talent_approval_payment_info', true);
+                
+                if (empty($existing_payment_info)) {
+                    // Record payment information
+                    $payment_record = array(
+                        'date' => current_time('mysql'),
+                        'amount' => '5.00', // Default amount based on your payment data
+                        'info' => 'Plan ID 7 - Faster Approval (Manually Verified)'
+                    );
+                    
+                    record_talent_approval_payment($post_id, $payment_record);
+                    error_log('Manually recorded talent approval payment for user ID: ' . $user_id . ', post ID: ' . $post_id);
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Function to manually update a talent post's payment status with specific details
+ */
+function manually_update_talent_payment_status($post_id, $amount = '', $payment_info = '') {
+    if (get_post_type($post_id) !== 'talent') {
+        return false;
+    }
+    
+    $payment_record = array(
+        'date' => current_time('mysql'),
+        'amount' => $amount,
+        'info' => $payment_info
+    );
+    
+    record_talent_approval_payment($post_id, $payment_record);
+    
+    return true;
+}
+
+
+/**
+ * Add a meta box to talent posts for admins to manually mark as paid for approval
+ */
+function add_talent_approval_payment_meta_box() {
+    add_meta_box(
+        'talent-approval-payment',
+        'Approval Payment Status',
+        'render_talent_approval_payment_meta_box',
+        'talent',
+        'side',
+        'default'
+    );
+}
+add_action('add_meta_boxes', 'add_talent_approval_payment_meta_box');
+
+/**
+ * Render the approval payment meta box
+ */
+function render_talent_approval_payment_meta_box($post) {
+    // Add nonce for security
+    wp_nonce_field('talent_approval_payment_meta_box', 'talent_approval_payment_nonce');
+    
+    // Get current payment status
+    $has_paid = get_post_meta($post->ID, '_talent_has_paid_approval', true);
+    $payment_date = get_post_meta($post->ID, '_talent_approval_payment_date', true);
+    $payment_amount = get_post_meta($post->ID, '_talent_approval_payment_amount', true);
+    $payment_info = get_post_meta($post->ID, '_talent_approval_payment_info', true);
+    
+    echo '<div style="margin-bottom: 10px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Mark as Paid for Approval:</label>
+            <input type="checkbox" name="talent_has_paid_approval" value="1" ' . checked($has_paid, true, false) . '> Yes, this user paid for faster approval
+        </div>';
+    
+    echo '<div style="margin-bottom: 10px;">
+            <label style="display: block; margin-bottom: 5px;">Payment Date:</label>
+            <input type="text" name="talent_approval_payment_date" value="' . esc_attr($payment_date) . '" style="width: 100%;" placeholder="YYYY-MM-DD">
+        </div>';
+    
+    echo '<div style="margin-bottom: 10px;">
+            <label style="display: block; margin-bottom: 5px;">Payment Amount:</label>
+            <input type="text" name="talent_approval_payment_amount" value="' . esc_attr($payment_amount) . '" style="width: 100%;" placeholder="Amount">
+        </div>';
+    
+    echo '<div style="margin-bottom: 10px;">
+            <label style="display: block; margin-bottom: 5px;">Payment Info:</label>
+            <input type="text" name="talent_approval_payment_info" value="' . esc_attr($payment_info) . '" style="width: 100%;" placeholder="Info">
+        </div>';
+}
+
+/**
+ * Save the approval payment meta box data
+ */
+function save_talent_approval_payment_meta_box($post_id) {
+    // Verify nonce
+    if (!isset($_POST['talent_approval_payment_nonce']) || !wp_verify_nonce($_POST['talent_approval_payment_nonce'], 'talent_approval_payment_meta_box')) {
+        return;
+    }
+    
+    // Check if user has permission to edit post
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+    
+    // Check if this is an autosave
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+    
+    // Save payment status
+    if (isset($_POST['talent_has_paid_approval'])) {
+        update_post_meta($post_id, '_talent_has_paid_approval', true);
+    } else {
+        delete_post_meta($post_id, '_talent_has_paid_approval');
+    }
+    
+    // Save payment date
+    if (isset($_POST['talent_approval_payment_date']) && !empty($_POST['talent_approval_payment_date'])) {
+        update_post_meta($post_id, '_talent_approval_payment_date', sanitize_text_field($_POST['talent_approval_payment_date']));
+    } else {
+        delete_post_meta($post_id, '_talent_approval_payment_date');
+    }
+    
+    // Save payment amount
+    if (isset($_POST['talent_approval_payment_amount']) && !empty($_POST['talent_approval_payment_amount'])) {
+        update_post_meta($post_id, '_talent_approval_payment_amount', sanitize_text_field($_POST['talent_approval_payment_amount']));
+    } else {
+        delete_post_meta($post_id, '_talent_approval_payment_amount');
+    }
+    
+    // Save payment info
+    if (isset($_POST['talent_approval_payment_info']) && !empty($_POST['talent_approval_payment_info'])) {
+        update_post_meta($post_id, '_talent_approval_payment_info', sanitize_text_field($_POST['talent_approval_payment_info']));
+    } else {
+        delete_post_meta($post_id, '_talent_approval_payment_info');
+    }
+}
+add_action('save_post', 'save_talent_approval_payment_meta_box');
+
+
+/**
+ * Add image protection headers to prevent direct downloading
+ */
+function add_image_protection_headers($headers, $attachment_id) {
+    // Check if this is an image attachment
+    if (wp_attachment_is_image($attachment_id)) {
+        // Add headers to prevent right-click and direct access
+        $headers['X-Content-Type-Options'] = 'nosniff';
+        $headers['X-Frame-Options'] = 'DENY';
+        $headers['X-XSS-Protection'] = '1; mode=block';
+        
+        // Add Referrer-Policy to prevent access from external sites
+        $headers['Referrer-Policy'] = 'same-origin';
+    }
+    return $headers;
+}
+add_filter('wp_get_attachment_image_attributes', 'add_image_protection_headers', 10, 2);
+
+
+/**
+ * Protect media uploads by restricting direct access based on referrer and user capability
+ */
+function protect_media_files() {
+    if (is_admin() || current_user_can('manage_options')) {
+        return; // Allow access for admins
+    }
+    
+    // Check if this is a request for an attachment
+    if (is_attachment()) {
+        // Check referrer to ensure it's coming from our site
+        $referrer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+        $site_url = home_url();
+        
+        // If referrer is not from our site, redirect or deny access
+        if ($referrer && strpos($referrer, $site_url) !== 0) {
+            // Redirect to homepage or show a message
+            wp_redirect(home_url());
             exit;
         }
     }
 }
-add_action('template_redirect', 'restrict_single_talent_access');
+add_action('template_redirect', 'protect_media_files');
 
-
-
-
-
-// ... existing code ...
 
 /**
- * Restrict access to classified ad posting plan product page
+ * Add JavaScript to all pages to prevent image downloading
  */
-function restrict_classified_ad_posting_plan_access()
-{
-    // Check if we're on the specific product page by URL path
-    // This approach works regardless of domain/base URL changes
-    if (strpos($_SERVER['REQUEST_URI'], '/product/classified-ad-posting-plan') === 0) {
-        // Check if user is not logged in
-        if (!is_user_logged_in()) {
-            // Redirect to login page (works with any domain)
-            wp_redirect(home_url('/sign-up/'));
-            exit;
-        }
-    }
-}
-add_action('template_redirect', 'restrict_classified_ad_posting_plan_access');
-
-/**
- * Shortcode to display subscription status indicator for Elementor
- */
-function elementor_subscription_status_shortcode()
-{
-    // Only show for logged in users
-    if (!is_user_logged_in()) {
-        return '';
-    }
-
-    // Display subscription indicator for all logged-in users
-    if (true) {
-        ob_start();
+function add_image_protection_script() {
+    if (!is_admin()) {
         ?>
-        <div class="subscription-status-indicator">
-            <div class="subscription-badge">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
-                <span>You are a subscribed Member</span>
-            </div>
-        </div>
-        <style>
-            .subscription-status-indicator {
-                margin: 15px 0;
-                display: flex;
-                justify-content: center;
-            }
+        <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Disable right-click on images
+            document.addEventListener('contextmenu', function(e) {
+                if (e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Disable drag-and-drop for images
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Disable image selection
+            document.addEventListener('selectstart', function(e) {
+                if (e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Disable keyboard shortcuts that might affect images
+            document.addEventListener('keydown', function(e) {
+                // Disable F12 (Developer Tools), Ctrl+Shift+I (Inspect), Ctrl+U (View Source)
+                if (
+                    e.keyCode === 123 || // F12
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+                    (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
+                    (e.ctrlKey && e.keyCode === 83) // Ctrl+S
+                ) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+            
+            // Additional protection: Prevent copying images
+            document.addEventListener('copy', function(e) {
+                const selection = window.getSelection();
+                if (selection) {
+                    const range = selection.getRangeAt(0);
+                    const img = range.startContainer.parentElement.querySelector('img');
+                    if (img) {
+                        e.preventDefault();
+                    }
+                }
+            });
+            
+            // Protect all images on the page with attributes
+            const allImages = document.querySelectorAll('img');
+            allImages.forEach(img => {
+                img.setAttribute('oncontextmenu', 'return false;');
+                img.setAttribute('ondragstart', 'return false;');
+                img.setAttribute('onselectstart', 'return false;');
+                img.style.userSelect = 'none';
+                img.style.webkitUserSelect = 'none';
+                img.style.mozUserSelect = 'none';
+                img.style.msUserSelect = 'none';
+                img.style.webkitTouchCallout = 'none';
+                img.style.webkitUserDrag = 'none';
+            });
+        });
+        </script>
+        <?php
+    }
+}
+add_action('wp_head', 'add_image_protection_script');
 
-            .subscription-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 8px 16px;
-                background-color: green;
-                color: white;
-                border-radius: 20px;
-                font-weight: 600;
-                font-size: 14px;
-                border: 1px solid rgba(255, 255, 255, 0.4);
-            }
 
-            .subscription-badge svg {
-                fill: white;
-            }
+/**
+ * Add CSS to make images harder to download
+ */
+function add_image_protection_css() {
+    if (!is_admin()) {
+        ?>
+        <style type="text/css">
+        /* Prevent image selection and context menu */
+        img {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+            pointer-events: auto;
+        }
+        
+        /* Additional protection for image containers */
+        .wp-block-image img,
+        .gallery img,
+        .portfolio-item img {
+            position: relative;
+        }
+        
+        .wp-block-image img::before,
+        .gallery img::before,
+        .portfolio-item img::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 1;
+        }
         </style>
         <?php
-        return ob_get_clean();
     }
-
-    return ''; // No subscription badge for users without plans
 }
-add_shortcode('elementor_subscription_status', 'elementor_subscription_status_shortcode');
-
-
+add_action('wp_head', 'add_image_protection_css');
 
 
 /**
- * User Dashboard Shortcode for Elementor
+ * Modify image output to add protection attributes
  */
-function user_dashboard_shortcode()
-{
-    // Check if user is logged in
-    if (!is_user_logged_in()) {
-        return '<div style="padding:40px;text-align:center;background:#3a3a3a;border-radius:8px;color:white;">
-                    <p style="font-size:18px;margin-bottom:20px;">Please login to view your dashboard.</p>
-                    <a href="' . esc_url(wp_login_url(get_permalink())) . '" style="display:inline-block;padding:12px 24px;background:#df1d3d;color:white;border-radius:6px;text-decoration:none;font-weight:bold;">Login Now</a>
-                </div>';
-    }
-
-    // Start output buffering
-    ob_start();
-
-    $current_user = wp_get_current_user();
-    $user_id = $current_user->ID;
-
-    $first_name = $current_user->first_name;
-    $last_name = $current_user->last_name;
-    $email = $current_user->user_email;
-    $username = $current_user->user_login;
-
-    // Get extra user information from custom table
-    global $wpdb;
-    $table = $wpdb->prefix . 'userinformation';
-    $extra = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE user_id = %d", $user_id), ARRAY_A);
-
-    $dob = $extra['dob'] ?? '';
-    $address = $extra['address'] ?? '';
-    $region = $extra['region'] ?? '';
-    $phone = $extra['phone'] ?? '';
-    $street_address = $extra['street_address'] ?? '';
-    $zip_code = $extra['zip_code'] ?? '';
-
-    $profile_img = get_user_meta($user_id, 'profile_picture', true);
-
-    // Handle form submission
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_dashboard']) && isset($_POST['dashboard_nonce'])) {
-        if (wp_verify_nonce($_POST['dashboard_nonce'], 'update_user_dashboard')) {
-            $new_first = sanitize_text_field($_POST['first_name']);
-            $new_last = sanitize_text_field($_POST['last_name']);
-            $new_dob = sanitize_text_field($_POST['dob']);
-            $new_email = sanitize_email($_POST['email']);
-            $new_phone = sanitize_text_field($_POST['phone']);
-            $new_address = sanitize_text_field($_POST['address']);
-            $new_region = sanitize_text_field($_POST['region']);
-            $new_street = sanitize_text_field($_POST['street_address']);
-            $new_zip = sanitize_text_field($_POST['zip_code']);
-
-            wp_update_user([
-                'ID' => $user_id,
-                'user_email' => $new_email,
-                'first_name' => $new_first,
-                'last_name' => $new_last
-            ]);
-
-            $data = [
-                'dob' => $new_dob,
-                'phone' => $new_phone,
-                'address' => $new_address,
-                'region' => $new_region,
-                'street_address' => $new_street,
-                'zip_code' => $new_zip
-            ];
-
-            if ($extra) {
-                $wpdb->update($table, $data, ['user_id' => $user_id]);
-            } else {
-                $data['user_id'] = $user_id;
-                $wpdb->insert($table, $data);
-            }
-
-            wp_redirect(add_query_arg('updated', '1', get_permalink()));
-            exit;
+function modify_image_output($html, $attachment_id = null, $size = null, $icon = null, $attr = null) {
+    if ($attachment_id && wp_attachment_is_image($attachment_id)) {
+        // Add attributes to make images harder to download
+        $protection_attrs = ' oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;"';
+        
+        // Find where the opening img tag ends and add our attributes
+        if (strpos($html, '<img') !== false && !strpos($html, 'oncontextmenu')) {
+            $html = str_replace('<img', '<img' . $protection_attrs, $html);
         }
     }
-
-    ?>
-    <style>
-        .user-dashboard-container h2 {
-            margin-top: 0;
-            color: white;
-        }
-
-        .user-dashboard-container .form-group {
-            margin-bottom: 20px;
-        }
-
-        .user-dashboard-container label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: white;
-        }
-
-        .user-dashboard-container input,
-        .user-dashboard-container select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 4px;
-            border: none;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .user-dashboard-container input[type="submit"] {
-            background: #df1d3d;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .user-dashboard-container input[type="submit"]:hover {
-            background: #c0392b;
-        }
-
-        .user-dashboard-container img.profile-pic {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 15px;
-            background-color: #666;
-            display: block;
-        }
-
-        .user-dashboard-container button#editBtn {
-            width: 100%;
-            background: #3498db;
-            color: white;
-            padding: 10px;
-            border: none;
-            font-weight: bold;
-            border-radius: 4px;
-            font-size: 16px;
-            margin-top: 10px;
-            cursor: pointer;
-        }
-
-        .user-dashboard-container button#editBtn:hover {
-            background: #2980b9;
-        }
-
-        .user-dashboard-container input[readonly] {
-            color: #fff !important;
-            opacity: 1 !important;
-            background-color: #4a4a4a;
-        }
-
-        .success-message {
-            color: #2ecc71;
-            padding: 15px;
-            background: rgba(46, 204, 113, 0.1);
-            border-radius: 4px;
-            margin-bottom: 20px;
-            border: 1px solid #2ecc71;
-        }
-    </style>
-
-    <div class="user-dashboard-wrapper">
-        <div class="user-dashboard-container">
-            <h2>Welcome, <?= esc_html($first_name ?: $username) ?> 👋</h2>
-
-
-            <?php if (isset($_GET['updated']) && $_GET['updated'] == '1'): ?>
-                <div class="success-message">✓ Dashboard updated successfully!</div>
-            <?php endif; ?>
-
-            <form method="POST" enctype="multipart/form-data">
-                <?php wp_nonce_field('update_user_dashboard', 'dashboard_nonce'); ?>
-
-                <?php if ($profile_img): ?>
-                    <img id="profileImage" src="<?= esc_url($profile_img) ?>" class="profile-pic" alt="Profile Picture">
-                <?php else: ?>
-                    <img id="profileImage" src="<?= esc_url(get_avatar_url($user_id)) ?>" class="profile-pic"
-                        alt="Profile Picture">
-                <?php endif; ?>
-
-                <div class="form-group">
-                    <label for="profile_image">Change Profile Picture</label>
-                    <input type="file" id="fileInput" name="profile_image" accept="image/*" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>First Name</label>
-                    <input type="text" name="first_name" value="<?= esc_attr($first_name) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Last Name</label>
-                    <input type="text" name="last_name" value="<?= esc_attr($last_name) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <input type="date" name="dob" value="<?= esc_attr($dob) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" value="<?= esc_attr($email) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Phone</label>
-                    <input type="text" name="phone" value="<?= esc_attr($phone) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" name="address" value="<?= esc_attr($address) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Region</label>
-                    <input type="text" name="region" value="<?= esc_attr($region) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Street Address</label>
-                    <input type="text" name="street_address" value="<?= esc_attr($street_address) ?>" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>ZIP Code</label>
-                    <input type="text" name="zip_code" value="<?= esc_attr($zip_code) ?>" readonly>
-                </div>
-
-                <button type="button" id="editBtn">✏️ Edit Profile</button>
-                <input type="submit" name="update_dashboard" value="💾 Save Profile" style="display:none;" id="saveBtn">
-            </form>
-        </div>
-    </div>
-
-    <script>
-        (function () {
-            const editBtn = document.getElementById('editBtn');
-            const saveBtn = document.getElementById('saveBtn');
-
-            if (editBtn) {
-                editBtn.addEventListener('click', function () {
-                    const inputs = document.querySelectorAll('.user-dashboard-container form input');
-                    inputs.forEach(input => {
-                        if (input.hasAttribute('readonly')) {
-                            input.removeAttribute('readonly');
-                        }
-                    });
-                    this.style.display = 'none';
-                    saveBtn.style.display = 'block';
-                });
-            }
-
-            const fileInput = document.getElementById('fileInput');
-            if (fileInput) {
-                fileInput.addEventListener('change', function (e) {
-                    const file = e.target.files[0];
-                    if (!file || !file.type.startsWith('image/')) return;
-
-                    const formData = new FormData();
-                    formData.append('action', 'upload_dashboard_image');
-                    formData.append('profile_image', file);
-                    formData.append('_wpnonce', '<?php echo wp_create_nonce('dashboard_image_nonce'); ?>');
-
-                    const profileImg = document.getElementById('profileImage');
-                    profileImg.style.opacity = 0.5;
-
-                    fetch('<?php echo admin_url("admin-ajax.php"); ?>', {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        body: formData
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            profileImg.style.opacity = 1;
-                            if (data.success && data.url) {
-                                profileImg.src = data.url + '?t=' + new Date().getTime();
-                            } else {
-                                alert(data.message || 'Upload failed.');
-                            }
-                        })
-                        .catch(err => {
-                            profileImg.style.opacity = 1;
-                            alert('Upload failed. Please try again.');
-                            console.error(err);
-                        });
-                });
-            }
-        })();
-    </script>
-
-    <?php
-    return ob_get_clean();
+    return $html;
 }
-add_shortcode('user_dashboard', 'user_dashboard_shortcode');
+add_filter('wp_get_attachment_image', 'modify_image_output', 20, 5);
 
 
 /**
- * AJAX handler for dashboard image upload
+ * Protect uploaded images by adding .htaccess rules (conceptual - would need actual .htaccess modification)
+ * Note: This function adds a conceptual approach - actual implementation would require filesystem access
  */
-function handle_dashboard_image_upload()
-{
-    check_ajax_referer('dashboard_image_nonce', '_wpnonce');
-
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'You must be logged in.']);
-    }
-
-    $user_id = get_current_user_id();
-
-    if (!isset($_FILES['profile_image'])) {
-        wp_send_json_error(['message' => 'No file uploaded.']);
-    }
-
-    require_once(ABSPATH . 'wp-admin/includes/file.php');
-    require_once(ABSPATH . 'wp-admin/includes/image.php');
-    require_once(ABSPATH . 'wp-admin/includes/media.php');
-
-    $file = $_FILES['profile_image'];
-
-    // Validate image
-    $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-    if (!in_array($file['type'], $allowed_types)) {
-        wp_send_json_error(['message' => 'Invalid file type. Only JPG, PNG, and GIF allowed.']);
-    }
-
-    // Upload file
-    $upload = wp_handle_upload($file, ['test_form' => false]);
-
-    if (isset($upload['error'])) {
-        wp_send_json_error(['message' => $upload['error']]);
-    }
-
-    // Save to user meta
-    update_user_meta($user_id, 'profile_picture', $upload['url']);
-
-    wp_send_json_success([
-        'url' => $upload['url'],
-        'message' => 'Profile picture updated successfully!'
-    ]);
-
-
+function add_htaccess_image_protection() {
+    // This is a conceptual function - actual implementation would need filesystem write access
+    // which is often restricted on shared hosting
+    
+    // The idea would be to add rules to .htaccess to prevent hotlinking and direct access
+    // RewriteEngine On
+    // RewriteCond %{HTTP_REFERER} !^$
+    // RewriteCond %{HTTP_REFERER} !^http(s)?://(www\.)?yourdomain.com [NC]
+    // RewriteRule \.(jpg|jpeg|png|gif)$ - [NC,F,L]
 }
-add_action('wp_ajax_upload_dashboard_image', 'handle_dashboard_image_upload');
-// ... existing code ...
 
 /**
- * Check if a user already has a talent profile
- *
- * @param int $user_id The user ID to check
- * @param bool $include_drafts Whether to include draft posts in the check
- * @return bool True if user has a talent profile, false otherwise
+ * Additional server-side image protection by filtering image URLs
  */
-function user_has_talent_profile($user_id = null, $include_drafts = true)
-{
-    // Display subscription indicator for all logged-in users
-    if (true) {
-        // If no user ID provided, use current user
-        if (!$user_id) {
-            $user_id = get_current_user_id();
+function secure_image_urls($url, $attachment_id) {
+    // Add query parameters to image URLs to make them harder to access directly
+    if (wp_attachment_is_image($attachment_id)) {
+        $parsed_url = parse_url($url);
+        if (isset($parsed_url['path'])) {
+            $extension = strtolower(pathinfo($parsed_url['path'], PATHINFO_EXTENSION));
+            if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                // Add a security token as a query parameter
+                $token = md5($attachment_id . $GLOBALS['wp']->request . wp_salt());
+                $url = add_query_arg('token', substr($token, 0, 8), $url);
+            }
+        }
+    }
+    return $url;
+}
+add_filter('wp_get_attachment_url', 'secure_image_urls', 10, 2);
+
+/**
+ * Validate image requests with tokens
+ */
+function validate_image_requests() {
+    if (isset($_GET['token']) && preg_match('/\.(jpg|jpeg|png|gif|webp)$/i', $_SERVER['REQUEST_URI'])) {
+        // Extract attachment ID from URL if possible
+        $attachment_id = attachment_url_to_postid($_SERVER['REQUEST_URI']);
+        if ($attachment_id) {
+            $expected_token = substr(md5($attachment_id . $_SERVER['HTTP_REFERER'] . wp_salt()), 0, 8);
+            if ($_GET['token'] !== $expected_token) {
+                // Invalid token, redirect to home or show error
+                wp_redirect(home_url());
+                exit;
+            }
+        }
+    }
+}
+add_action('init', 'validate_image_requests');
+
+/**
+ * Handle Stripe payment completion for talent approval
+ * This function checks if the current page load includes payment completion parameters
+ * and updates the talent post accordingly
+ */
+function handle_stripe_talent_approval_payment() {
+    // Check if we're on the talent archive page and have session ID parameter
+    if (is_post_type_archive('talent') && isset($_GET['session_id'])) {
+        $session_id = sanitize_text_field($_GET['session_id']);
+        $current_user_id = get_current_user_id();
+        if (!$current_user_id) {
+            return;
         }
 
-        // If no user is logged in, return false
-        if (!$user_id) {
-            return false;
-        }
-
-        $post_statuses = array('publish', 'pending');
-        if ($include_drafts) {
-            $post_statuses[] = 'draft';
-        }
-
-        // Query for talent posts by this user
-        $args = array(
+        // We need to verify the payment status with Stripe
+        // For now, let's just store the session ID temporarily
+        update_user_meta($current_user_id, '_last_stripe_session_id', $session_id);
+        
+        // Find the user's talent post
+        $talent_posts = get_posts(array(
             'post_type' => 'talent',
-            'author' => $user_id,
-            'post_status' => $post_statuses,
-            'posts_per_page' => 1
-        );
+            'author' => $current_user_id,
+            'posts_per_page' => 1,
+            'post_status' => array('pending', 'draft', 'publish'),
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ));
+
+        if (!empty($talent_posts)) {
+            $post_id = $talent_posts[0]->ID;
+            
+            // Update the post with the session ID
+            update_post_meta($post_id, '_stripe_session_id', $session_id);
+            
+            // Check if payment info already exists to avoid duplicates
+            $existing_payment_info = get_post_meta($post_id, '_talent_has_paid_approval', true);
+            
+            // If we don't have payment confirmation yet, we can mark that payment was initiated
+            if (empty($existing_payment_info)) {
+                // For now, just update the session ID - actual payment confirmation will happen via webhook
+                update_post_meta($post_id, '_stripe_payment_initiated', true);
+                update_post_meta($post_id, '_stripe_payment_initiated_date', current_time('mysql'));
+            }
+        }
     }
+}
 
-    $talent_posts = get_posts($args);
+// Hook into template redirect to handle payment completion
+add_action('template_redirect', 'handle_stripe_talent_approval_payment');
 
-    // Return true if any talent posts found, false otherwise
-    return !empty($talent_posts);
+/**
+ * Function to verify Stripe payment status using the session ID
+ * This would typically be called by a webhook, but for now we'll simulate it
+ */
+function verify_stripe_payment_status($session_id, $post_id) {
+    // In a real implementation, you would call the Stripe API to verify the payment status
+    // For now, we'll just return true to simulate a successful payment
+    // In production, you would use the Stripe PHP library to verify the session
+    
+    // $stripe = new \Stripe\StripeClient('your-secret-key');
+    // $session = $stripe->checkout->sessions->retrieve($session_id);
+    // return $session->payment_status === 'paid';
+    
+    // For now, simulate successful payment
+    return true;
 }
 
 /**
- * Get the user's draft talent profile if it exists
- *
- * @param int $user_id The user ID to check
- * @return WP_Post|null The draft post object or null
+ * Process Stripe payment confirmation when user returns from Stripe
  */
-function get_user_draft_profile($user_id = null)
-{
-    if (!$user_id) {
-        $user_id = get_current_user_id();
+function process_stripe_payment_confirmation() {
+    if (is_post_type_archive('talent') && isset($_GET['session_id'])) {
+        $session_id = sanitize_text_field($_GET['session_id']);
+        $current_user_id = get_current_user_id();
+        
+        if (!$current_user_id) {
+            return;
+        }
+        
+        // Find the user's talent post
+        $talent_posts = get_posts(array(
+            'post_type' => 'talent',
+            'author' => $current_user_id,
+            'posts_per_page' => 1,
+            'post_status' => array('pending', 'draft', 'publish'),
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ));
+
+        if (!empty($talent_posts)) {
+            $post_id = $talent_posts[0]->ID;
+            
+            // Verify payment status (in real implementation, this would call Stripe API)
+            if (verify_stripe_payment_status($session_id, $post_id)) {
+                // Check if payment info already exists to avoid duplicates
+                $existing_payment_info = get_post_meta($post_id, '_talent_has_paid_approval', true);
+                
+                if (empty($existing_payment_info)) {
+                    // Record payment information
+                    $payment_record = array(
+                        'date' => current_time('mysql'),
+                        'amount' => '5.00', // Amount based on your Stripe configuration
+                        'info' => 'Stripe - Portfolio Approval Payment (Session: ' . $session_id . ')'
+                    );
+                    
+                    record_talent_approval_payment($post_id, $payment_record);
+                    
+                    // Remove the session_id parameter from URL to avoid re-processing
+                    $redirect_url = remove_query_arg('session_id', $_SERVER['REQUEST_URI']);
+                    wp_safe_redirect($redirect_url);
+                    exit;
+                }
+            }
+        }
     }
+}
 
-    if (!$user_id) {
-        return null;
+// Hook to process payment confirmation when user returns from Stripe
+add_action('template_redirect', 'process_stripe_payment_confirmation');
+
+/**
+ * Register REST API endpoint for Stripe webhook
+ */
+function register_stripe_webhook_endpoint() {
+    register_rest_route('stripe', '/webhook', array(
+        'methods' => 'POST',
+        'callback' => 'handle_stripe_webhook',
+        'permission_callback' => '__return_true'
+    ));
+}
+add_action('rest_api_init', 'register_stripe_webhook_endpoint');
+
+/**
+ * Handle Stripe webhook
+ */
+function handle_stripe_webhook($request) {
+    $input = file_get_contents('php://input');
+    $event = json_decode($input, true);
+    
+    if ($event && isset($event['type']) && $event['type'] === 'checkout.session.completed') {
+        $session = $event['data']['object'];
+        $session_id = $session['id'];
+        
+        // Look up the talent post associated with this session
+        $posts = get_posts(array(
+            'post_type' => 'talent',
+            'meta_query' => array(
+                array(
+                    'key' => '_stripe_session_id',
+                    'value' => $session_id,
+                    'compare' => '='
+                )
+            ),
+            'posts_per_page' => 1
+        ));
+        
+        if (!empty($posts)) {
+            $post_id = $posts[0]->ID;
+            $existing_payment_info = get_post_meta($post_id, '_talent_has_paid_approval', true);
+            
+            if (empty($existing_payment_info)) {
+                // Record payment information
+                $payment_record = array(
+                    'date' => current_time('mysql'),
+                    'amount' => $session['amount_total'] / 100, // Convert from cents to dollars
+                    'info' => 'Stripe Webhook - Portfolio Approval Payment (Session: ' . $session_id . ')'
+                );
+                
+                record_talent_approval_payment($post_id, $payment_record);
+                
+                // Log the successful payment
+                error_log('Stripe webhook processed successfully for session: ' . $session_id . ', post ID: ' . $post_id);
+                
+                return new WP_REST_Response(array('status' => 'success'), 200);
+            } else {
+                // Payment already recorded
+                error_log('Payment already recorded for session: ' . $session_id);
+                return new WP_REST_Response(array('status' => 'already_processed'), 200);
+            }
+        } else {
+            // No talent post found for this session
+            error_log('No talent post found for session: ' . $session_id);
+            return new WP_REST_Response(array('status' => 'no_post_found'), 200);
+        }
     }
-
-    $args = array(
-        'post_type' => 'talent',
-        'author' => $user_id,
-        'post_status' => 'draft',
-        'posts_per_page' => 1,
-        'orderby' => 'date',
-        'order' => 'DESC'
-    );
-
-    $posts = get_posts($args);
-    return !empty($posts) ? $posts[0] : null;
+    
+    return new WP_REST_Response(array('status' => 'ignored'), 200);
 }
 
 /**
@@ -2061,45 +1057,30 @@ function get_user_draft_profile($user_id = null)
  */
 function wp_ajax_save_talent_progress()
 {
-    // Log that the function was called
-    error_log('wp_ajax_save_talent_progress called');
+    try {
+        // Verify nonce - accept both talent_submission (create) and talent_update (edit) nonces
+        $nonce = isset($_POST['nonce']) ? $_POST['nonce'] : '';
+        $nonce_valid = wp_verify_nonce($nonce, 'talent_submission') || wp_verify_nonce($nonce, 'talent_update');
     
-    // Log the POST data for debugging
-    error_log('POST data: ' . print_r($_POST, true));
-    
-    // Check if nonce is present
-    if (!isset($_POST['nonce'])) {
-        error_log('Nonce not present in request');
-        wp_send_json_error('Nonce not present');
+    if (!$nonce_valid) {
+        error_log('AJAX save_talent_progress: Nonce verification failed. POST: ' . print_r($_POST, true));
+        wp_send_json_error('Security check failed. Please refresh the page and try again.');
     }
     
-    // Verify nonce
-    $nonce_verified = check_ajax_referer('talent_submission_nonce', 'nonce', false);
-    if (!$nonce_verified) {
-        error_log('Nonce verification failed');
-        wp_send_json_error('Nonce verification failed');
-    }
-    
-    error_log('Nonce verified successfully');
-
+    // Check if user is logged in
     if (!is_user_logged_in()) {
         wp_send_json_error('User not logged in');
     }
-
-    $user_id = get_current_user_id();
-    error_log('User ID: ' . $user_id);
     
+    $user_id = get_current_user_id();
     $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
-    error_log('Post ID: ' . $post_id);
 
     // Collect form data
     $form_data = isset($_POST['form_data']) ? $_POST['form_data'] : [];
-    error_log('Form data received: ' . print_r($form_data, true));
 
     // Parse the serialized form data into an associative array
     $parsed_data = [];
     parse_str($form_data, $parsed_data);
-    error_log('Parsed data: ' . print_r($parsed_data, true));
 
     // Basic post data
     $post_title = isset($parsed_data['fullName']) ? sanitize_text_field($parsed_data['fullName']) : 'Draft Profile - ' . date('Y-m-d H:i:s');
@@ -2131,17 +1112,81 @@ function wp_ajax_save_talent_progress()
         wp_send_json_error($post_id->get_error_message());
     }
 
-    // Save Meta Fields
-    // We reuse the same meta keys as the main submission handler
+    $existing_portfolio_ids = get_post_meta($post_id, '_talent_portfolio', true);
+    $submitted_existing_order = isset($parsed_data['portfolio_existing_order']) ? $parsed_data['portfolio_existing_order'] : null;
+    $portfolio_validation = velvet_reel_validate_portfolio_upload_groups($existing_portfolio_ids, $submitted_existing_order);
+    if (is_wp_error($portfolio_validation)) {
+        wp_send_json_error(array(
+            'message' => 'Portfolio validation failed.',
+            'errors' => $portfolio_validation->get_error_data(),
+        ));
+    }
+
+    // --- Handle File Upload (Profile Photo) ---
+    $profile_photo_uploaded = false;
+    if (!empty($_FILES['profilePhoto']['name'])) {
+        error_log('Profile photo upload attempt: ' . print_r($_FILES['profilePhoto'], true));
+        
+        if (!function_exists('media_handle_upload')) {
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+        }
+
+        $current_thumbnail_id = (int) get_post_thumbnail_id($post_id);
+        $duplicate_id = 0;
+        if ($current_thumbnail_id > 0) {
+            $duplicate_id = velvet_reel_find_duplicate_attachment(
+                $_FILES['profilePhoto']['name'],
+                $_FILES['profilePhoto']['size'],
+                array($current_thumbnail_id)
+            );
+        }
+
+        if ($duplicate_id > 0) {
+            $attachment_id = $duplicate_id;
+            $profile_photo_uploaded = true;
+        } else {
+            // Delete old thumbnail if it exists and is different
+            if ($current_thumbnail_id > 0) {
+                delete_post_thumbnail($post_id);
+            }
+
+            $attachment_id = velvet_reel_media_handle_upload('profilePhoto', $post_id);
+            
+            if (is_wp_error($attachment_id)) {
+                error_log('Profile photo upload result: WP_Error: ' . $attachment_id->get_error_message());
+            } else {
+                error_log('Profile photo upload result: ' . $attachment_id);
+            }
+            if (is_wp_error($attachment_id)) {
+                error_log('Profile photo upload WP_Error: ' . $attachment_id->get_error_message());
+                wp_send_json_error('Profile Photo Upload Error: ' . $attachment_id->get_error_message());
+            } elseif ($attachment_id > 0) {
+                set_post_thumbnail($post_id, $attachment_id);
+                $profile_photo_uploaded = true;
+            }
+        }
+    }
+
+    // --- Save Custom Fields (Meta Data) ---
     $meta_fields = [
-        '_talent_state' => 'city',  // Form uses 'city' as field name for state
+        '_talent_state' => 'city',
         '_talent_country' => 'country',
         '_talent_email' => 'email',
         '_talent_phone' => 'phone',
+        '_talent_country_code' => 'countryCode',
         '_talent_age_group' => 'ageGroup',
         '_talent_gender' => 'gender',
         '_talent_height' => 'height',
         '_talent_height_unit' => 'heightUnit',
+        '_talent_weight' => 'weight',
+        '_talent_weight_unit' => 'weightUnit',
+        '_talent_complexion' => 'complexion',
+        '_talent_bust_size' => 'bustSize',
+        '_talent_hair_color' => 'hairColor',
+        '_talent_dress_size' => 'dressSize',
+        '_talent_shirt_size' => 'shirtSize',
         '_talent_measurements' => 'measurements',
         '_talent_years_active' => 'yearsActive',
         '_talent_affiliation' => 'affiliation',
@@ -2153,9 +1198,16 @@ function wp_ajax_save_talent_progress()
         '_talent_domain' => 'domain',
         '_talent_role' => 'role',
         '_talent_instagram' => 'instagram',
-        '_talent_linkedin' => 'linkedin',
+        '_talent_youtube' => 'youtube',
         '_talent_tiktok' => 'tiktok',
         '_talent_website' => 'website',
+        // Privacy settings
+        '_talent_hide_email' => 'hideEmail',
+        '_talent_hide_phone' => 'hidePhone',
+        '_talent_hide_instagram' => 'hideInstagram',
+        '_talent_hide_youtube' => 'hideYoutube',
+        '_talent_hide_tiktok' => 'hideTiktok',
+        '_talent_hide_website' => 'hideWebsite',
     ];
 
     foreach ($meta_fields as $meta_key => $post_key) {
@@ -2176,11 +1228,17 @@ function wp_ajax_save_talent_progress()
     }
 
     if (isset($parsed_data['availableFor'])) {
-        update_post_meta($post_id, '_talent_available_for', $parsed_data['availableFor']);
+        $available_for = is_array($parsed_data['availableFor'])
+            ? array_map('sanitize_text_field', $parsed_data['availableFor'])
+            : [sanitize_text_field($parsed_data['availableFor'])];
+        update_post_meta($post_id, '_talent_available_for', $available_for);
     }
 
     if (isset($parsed_data['designCategories'])) {
-        update_post_meta($post_id, '_talent_designCategories', $parsed_data['designCategories']);
+        $design_categories = is_array($parsed_data['designCategories'])
+            ? array_map('sanitize_text_field', $parsed_data['designCategories'])
+            : [sanitize_text_field($parsed_data['designCategories'])];
+        update_post_meta($post_id, '_talent_designCategories', $design_categories);
     }
 
     // Handle Notable Works
@@ -2188,7 +1246,7 @@ function wp_ajax_save_talent_progress()
         $notable_works = [];
         for ($i = 0; $i < count($parsed_data['workTitle']); $i++) {
             if (!empty($parsed_data['workTitle'][$i])) {
-                $is_present = isset($parsed_data['workPresent']) && isset($parsed_data['workPresent'][$i]) && $parsed_data['workPresent'][$i] === 'on';
+                $is_present = velvet_reel_repeater_checkbox_is_checked($parsed_data['workPresent'] ?? [], $i);
                 $notable_works[] = [
                     'title' => sanitize_text_field($parsed_data['workTitle'][$i]),
                     'role' => sanitize_text_field($parsed_data['workRole'][$i]),
@@ -2226,156 +1284,466 @@ function wp_ajax_save_talent_progress()
         }
     }
 
-    error_log('About to send success response with post_id: ' . $post_id);
+    velvet_reel_handle_portfolio_uploads(
+        $post_id,
+        array(
+            'cover_choice' => isset($parsed_data['portfolio_cover_choice']) ? $parsed_data['portfolio_cover_choice'] : '',
+            'existing_order' => $submitted_existing_order,
+            'allow_thumbnail_override' => empty($_FILES['profilePhoto']['name']),
+        )
+    );
+    
+    // Handle Video Links
+    if (isset($parsed_data['videoLinks'])) {
+        if (is_array($parsed_data['videoLinks']) && !empty($parsed_data['videoLinks'])) {
+            $video_links = [];
+            $unique_urls = []; // Track unique URLs to prevent duplicates
+            
+            for ($i = 0; $i < count($parsed_data['videoLinks']); $i++) {
+                if (!empty($parsed_data['videoLinks'][$i])) {
+                    $url = esc_url_raw($parsed_data['videoLinks'][$i]);
+                    // Only add the URL if it's not already in our unique list
+                    if (!in_array($url, $unique_urls)) {
+                        $unique_urls[] = $url;
+                        $video_links[] = [
+                            'url' => $url,
+                            'title' => ''
+                        ];
+                    }
+                }
+            }
+            update_post_meta($post_id, '_talent_video_links', $video_links);
+        } else {
+            // If videoLinks is set but empty or not an array, remove all video links
+            delete_post_meta($post_id, '_talent_video_links');
+        }
+    }
+
     wp_send_json_success(['post_id' => $post_id]);
+    } catch (\Throwable $e) {
+        error_log('Fatal Error in wp_ajax_save_talent_progress: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        wp_send_json_error('A critical error occurred: ' . $e->getMessage());
+    }
 }
 add_action('wp_ajax_save_talent_progress', 'wp_ajax_save_talent_progress');
-// Restrict access to talent submission page if user already has a profile
-function restrict_talent_submission_if_profile_exists()
-{
-    // Only apply to the talent submission page
-    if (is_page_template('template-talent-submission.php')) {
-        // Check if user is logged in
-        if (!is_user_logged_in()) {
-            return; // Let the existing restriction handle this
-        }
-
-        // Check if user already has a talent profile (excluding drafts)
-        if (user_has_talent_profile(null, false)) {
-            // Add a message
-            add_action('wp', function () {
-                add_action('the_content', function ($content) {
-                    $message = '<div class="talent-warning" style="padding:15px;background:#fff3cd;border:1px solid #ffeeba;color:#856404;margin-bottom:20px;border-radius:5px;">
-                        You already have a profile. You cannot create multiple profiles.
-                    </div>';
-                    return $message . $content;
-                });
-            });
-        }
-    }
-}
-add_action('template_redirect', 'restrict_talent_submission_if_profile_exists');
-// ... existing code ...
+add_action('wp_ajax_nopriv_save_talent_progress', 'wp_ajax_save_talent_progress');
 
 /**
- * Redirect default WordPress lost password page to custom forgot password page
+ * AJAX handler to refresh nonce for form submission
+ * This helps prevent stale nonce errors when the form is submitted after
+ * the page has been open for a long time
  */
-function redirect_lost_password_page()
-{
-    // Check if we're on the default lost password page
-    global $wp;
-
-    // Check for both WooCommerce and WordPress default lost password URLs
-    if (
-        isset($wp->request) && (
-            strpos($wp->request, 'my-account/lost-password') !== false ||
-            strpos($wp->request, 'wp-login.php?action=lostpassword') !== false ||
-            (isset($_GET['action']) && $_GET['action'] === 'lostpassword')
-        )
-    ) {
-        // Redirect to custom forgot password page
-        wp_redirect(home_url('/forgot-password/'));
-        exit;
-    }
-}
-add_action('template_redirect', 'redirect_lost_password_page', 5);
-
-// Also hook into the login URL filter to change the lost password URL
-function custom_lostpassword_url($lostpassword_url)
-{
-    return home_url('/forgot-password/');
-}
-add_filter('lostpassword_url', 'custom_lostpassword_url', 10, 1);
-
-/**
- * Redirect users to sign-in page after WooCommerce logout
- */
-function custom_woocommerce_logout_redirect($redirect_url)
-{
-    return home_url('/sign-in/');
-}
-add_filter('woocommerce_logout_default_redirect_url', 'custom_woocommerce_logout_redirect');
-
-/**
- * Enqueue styles and scripts for talent submission and edit pages
- */
-function enqueue_talent_form_assets()
-{
-    // Always enqueue for testing
-    error_log('enqueue_talent_form_assets called');
+function wp_ajax_get_refreshed_nonce() {
+    $nonce_action = isset($_POST['nonce_action']) ? sanitize_text_field($_POST['nonce_action']) : 'talent_submission';
     
-    // Enqueue the form CSS
-    wp_enqueue_style(
-        'talent-form-style',
-        get_stylesheet_directory_uri() . '/form-style.css',
-        array(),
-        HELLO_ELEMENTOR_CHILD_VERSION
-    );
+    // Validate the nonce action
+    $allowed_actions = ['talent_submission', 'talent_update'];
+    if (!in_array($nonce_action, $allowed_actions)) {
+        wp_send_json_error('Invalid nonce action');
+    }
+    
+    // Generate a fresh nonce
+    $nonce = wp_create_nonce($nonce_action);
+    
+    wp_send_json_success(['nonce' => $nonce]);
+}
+add_action('wp_ajax_get_refreshed_nonce', 'wp_ajax_get_refreshed_nonce');
 
-    // Enqueue the global JS file
-    wp_enqueue_script(
-        'theme-global-js',
-        get_stylesheet_directory_uri() . '/global.js',
-        array(),
-        HELLO_ELEMENTOR_CHILD_VERSION,
-        true
-    );
+/**
+ * Shortcode to display dynamic login/signup or username
+ * Shows "Login/Sign Up" when logged out, username when logged in
+ * Usage: [login_status] or [login_status login_text="Login" signup_text="Sign Up"]
+ */
+function display_login_status_shortcode($atts) {
+    // Get shortcode attributes
+    $atts = shortcode_atts(array(
+        'login_text' => 'Login',
+        'signup_text' => 'Sign Up',
+        'separator' => ' / ',
+        'format' => 'full', // Options: 'full', 'first', 'last', 'display'
+        'prefix' => '',
+        'suffix' => '',
+        'default' => 'User',
+        'login_url' => home_url('/membership-login/'),
+        'profile_url' => home_url('/membership-login/'),
+        'signup_url' => home_url('/membership-join/membership-registration/')
+    ), $atts);
+    
+    // Check if user is logged in
+    if (is_user_logged_in()) {
+        // User is logged in - show username with link to profile
+        $current_user = wp_get_current_user();
+        
+        // Get user name based on format
+        $user_name = '';
+        
+        switch (strtolower($atts['format'])) {
+            case 'first':
+                $user_name = $current_user->first_name;
+                if (empty($user_name)) {
+                    $user_name = !empty($current_user->display_name) ? 
+                        explode(' ', $current_user->display_name)[0] : 
+                        $current_user->user_login;
+                }
+                break;
+                
+            case 'last':
+                $user_name = $current_user->last_name;
+                if (empty($user_name)) {
+                    $display_name_parts = explode(' ', $current_user->display_name);
+                    $user_name = count($display_name_parts) > 1 ? 
+                        end($display_name_parts) : 
+                        $current_user->user_login;
+                }
+                break;
+                
+            case 'display':
+                $user_name = $current_user->display_name;
+                if (empty($user_name)) {
+                    $user_name = $current_user->user_login;
+                }
+                break;
+                
+            case 'full':
+            default:
+                if (!empty($current_user->first_name) && !empty($current_user->last_name)) {
+                    $user_name = $current_user->first_name . ' ' . $current_user->last_name;
+                } elseif (!empty($current_user->first_name)) {
+                    $user_name = $current_user->first_name;
+                } elseif (!empty($current_user->last_name)) {
+                    $user_name = $current_user->last_name;
+                } elseif (!empty($current_user->display_name)) {
+                    $user_name = $current_user->display_name;
+                } else {
+                    $user_name = $current_user->user_login;
+                }
+                break;
+        }
+        
+        // Use default if name is still empty
+        if (empty($user_name)) {
+            $user_name = $atts['default'];
+        }
+        
+        // Apply prefix and suffix with profile link
+        $profile_url = esc_url($atts['profile_url']);
+        $output = $atts['prefix'] . '<a href="' . $profile_url . '" class="user-profile-link">' . esc_html($user_name) . '</a>' . $atts['suffix'];
+        
+        return $output;
+    } else {
+        // User is logged out - show login/signup links
+        $login_link = '<a href="' . esc_url($atts['login_url']) . '">' . esc_html($atts['login_text']) . '</a>';
+        $signup_link = '<a href="' . esc_url($atts['signup_url']) . '">' . esc_html($atts['signup_text']) . '</a>';
+        
+        return $login_link . $atts['separator'] . $signup_link;
+    }
+}
+add_shortcode('login_status', 'display_login_status_shortcode');
 
-    // Enqueue the talent submission JS file
-    wp_enqueue_script(
-        'talent-submission-js',
-        get_stylesheet_directory_uri() . '/talent--submission.js',
-        array('jquery'),
-        HELLO_ELEMENTOR_CHILD_VERSION,
-        true
-    );
+/**
+ * Shortcode to display logged-in user's name
+ * Usage: [user_name] or [user_name format="full"] or [user_name format="first"]
+ */
+function display_user_name_shortcode($atts) {
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        return ''; // Return empty string if not logged in
+    }
+    
+    // Get shortcode attributes
+    $atts = shortcode_atts(array(
+        'format' => 'full', // Options: 'full', 'first', 'last', 'display'
+        'prefix' => '',     // Text to add before name
+        'suffix' => '',     // Text to add after name
+        'default' => 'User' // Default text if name is empty
+    ), $atts);
+    
+    $current_user = wp_get_current_user();
+    
+    // Get user name based on format
+    $user_name = '';
+    
+    switch (strtolower($atts['format'])) {
+        case 'first':
+            $user_name = $current_user->first_name;
+            if (empty($user_name)) {
+                // Fallback to display name or username
+                $user_name = !empty($current_user->display_name) ? 
+                    explode(' ', $current_user->display_name)[0] : 
+                    $current_user->user_login;
+            }
+            break;
+            
+        case 'last':
+            $user_name = $current_user->last_name;
+            if (empty($user_name)) {
+                // Fallback to display name
+                $display_name_parts = explode(' ', $current_user->display_name);
+                $user_name = count($display_name_parts) > 1 ? 
+                    end($display_name_parts) : 
+                    $current_user->user_login;
+            }
+            break;
+            
+        case 'display':
+            $user_name = $current_user->display_name;
+            if (empty($user_name)) {
+                $user_name = $current_user->user_login;
+            }
+            break;
+            
+        case 'full':
+        default:
+            // Try first name + last name
+            if (!empty($current_user->first_name) && !empty($current_user->last_name)) {
+                $user_name = $current_user->first_name . ' ' . $current_user->last_name;
+            } elseif (!empty($current_user->first_name)) {
+                $user_name = $current_user->first_name;
+            } elseif (!empty($current_user->last_name)) {
+                $user_name = $current_user->last_name;
+            } elseif (!empty($current_user->display_name)) {
+                $user_name = $current_user->display_name;
+            } else {
+                $user_name = $current_user->user_login;
+            }
+            break;
+    }
+    
+    // Use default if name is still empty
+    if (empty($user_name)) {
+        $user_name = $atts['default'];
+    }
+    
+    // Apply prefix and suffix
+    $output = $atts['prefix'] . esc_html($user_name) . $atts['suffix'];
+    
+    return $output;
+}
+add_shortcode('user_name', 'display_user_name_shortcode');
 
-    // Localize script with draft data and AJAX info
-    $draft_post = get_user_draft_profile();
-    $draft_data = [];
+/**
+ * Alternative shortcode for username only
+ * Usage: [username]
+ */
+function display_username_shortcode($atts) {
+    if (!is_user_logged_in()) {
+        return '';
+    }
+    
+    $current_user = wp_get_current_user();
+    return esc_html($current_user->user_login);
+}
+add_shortcode('username', 'display_username_shortcode');
 
-    if ($draft_post) {
-        $draft_data = [
-            'post_id' => $draft_post->ID,
-            'fullName' => $draft_post->post_title,
-            'styleDescription' => $draft_post->post_content,
-            // Meta fields
-            'state' => get_post_meta($draft_post->ID, '_talent_state', true),
-            'country' => get_post_meta($draft_post->ID, '_talent_country', true),
-            'email' => get_post_meta($draft_post->ID, '_talent_email', true),
-            'phone' => get_post_meta($draft_post->ID, '_talent_phone', true),
-            'ageGroup' => get_post_meta($draft_post->ID, '_talent_age_group', true),
-            'gender' => get_post_meta($draft_post->ID, '_talent_gender', true),
-            'height' => get_post_meta($draft_post->ID, '_talent_height', true),
-            'heightUnit' => get_post_meta($draft_post->ID, '_talent_height_unit', true),
-            'measurements' => get_post_meta($draft_post->ID, '_talent_measurements', true),
-            'yearsActive' => get_post_meta($draft_post->ID, '_talent_years_active', true),
-            'affiliation' => get_post_meta($draft_post->ID, '_talent_affiliation', true),
-            'education' => get_post_meta($draft_post->ID, '_talent_education', true),
-            'interestedProjects' => get_post_meta($draft_post->ID, '_talent_interested_projects', true),
-            'willingToTravel' => get_post_meta($draft_post->ID, '_talent_willing_to_travel', true),
-            'preferredLocations' => get_post_meta($draft_post->ID, '_talent_preferred_locations', true),
-            'brandCollabs' => get_post_meta($draft_post->ID, '_talent_brand_collabs', true),
-            'domain' => get_post_meta($draft_post->ID, '_talent_domain', true),
-            'role' => get_post_meta($draft_post->ID, '_talent_role', true),
-            'instagram' => get_post_meta($draft_post->ID, '_talent_instagram', true),
-            'linkedin' => get_post_meta($draft_post->ID, '_talent_linkedin', true),
-            'tiktok' => get_post_meta($draft_post->ID, '_talent_tiktok', true),
-            'website' => get_post_meta($draft_post->ID, '_talent_website', true),
-            // Arrays
-            'languages' => get_post_meta($draft_post->ID, '_talent_languages', true),
-            'availableFor' => get_post_meta($draft_post->ID, '_talent_available_for', true),
-            'designCategories' => get_post_meta($draft_post->ID, '_talent_designCategories', true),
-            'notableWorks' => get_post_meta($draft_post->ID, '_talent_notable_works', true),
-        ];
+/**
+ * Shortcode to display user's display name
+ * Usage: [display_name]
+ */
+function display_user_display_name_shortcode($atts) {
+    if (!is_user_logged_in()) {
+        return '';
+    }
+    
+    $current_user = wp_get_current_user();
+    $display_name = !empty($current_user->display_name) ? 
+        $current_user->display_name : 
+        $current_user->user_login;
+    
+    return esc_html($display_name);
+}
+add_shortcode('display_name', 'display_user_display_name_shortcode');
+
+
+
+/**
+ * Register cron job to add 'new' badge to recent advertisements
+ * (Disabled auto-draft functionality - advertisements stay published)
+ */
+function register_new_ad_badge_cron() {
+    // Keeping the hook registered but not scheduling to disable auto-draft
+    // If needed in future, uncomment the line below:
+    // if (!wp_next_scheduled('add_new_badge_to_ads')) {
+    //     wp_schedule_event(time(), 'hourly', 'add_new_badge_to_ads');
+    // }
+}
+add_action('init', 'register_new_ad_badge_cron');
+
+/**
+ * Mark advertisements as 'new' when they're first published
+ */
+function mark_advertisement_as_new($post_id, $post, $update) {
+    // Only for advertisements
+    if ($post->post_type !== 'advertisement') {
+        return;
+    }
+    
+    // Only when first published (not on updates)
+    if ($post->post_status === 'publish' && !$update) {
+        // Mark as new with timestamp
+        update_post_meta($post_id, '_advertisement_is_new', '1');
+        update_post_meta($post_id, '_advertisement_published_date', current_time('mysql'));
+    }
+}
+add_action('wp_insert_post', 'mark_advertisement_as_new', 10, 3);
+
+/**
+ * Notify admin when a new advertisement is submitted
+ */
+function notify_admin_on_new_advertisement($post_id, $post, $update) {
+    // Only for advertisements
+    if ($post->post_type !== 'advertisement') {
+        return;
     }
 
-    error_log('Localizing talentData script');
-    wp_localize_script('talent-submission-js', 'talentData', [
-        'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('talent_submission_nonce'),
-        'draft' => $draft_data
-    ]);
-    error_log('Finished localizing talentData script');
+    // Only for new posts (not updates)
+    if ($update) {
+        return;
+    }
+
+    // Get author details
+    $author_id = $post->post_author;
+    $author = get_userdata($author_id);
+    
+    if (!$author) {
+        return;
+    }
+
+    $first_name = $author->first_name;
+    $last_name = $author->last_name;
+    $email = $author->user_email;
+    
+    // Get phone number from user meta (checking common keys)
+    $phone = get_user_meta($author_id, 'phone_number', true);
+    if (empty($phone)) {
+        $phone = get_user_meta($author_id, 'phone', true);
+    }
+    if (empty($phone)) {
+        $phone = get_user_meta($author_id, 'user_phone', true);
+    }
+    if (empty($phone)) {
+        $phone = 'Not provided';
+    }
+
+    // Get advertisement details
+    $ad_title = $post->post_title;
+    $ad_url = get_permalink($post_id);
+    $admin_email = get_option('admin_email');
+
+    // Build the email
+    $subject = '[Admin Notification] New Advertisement Posted - ' . get_bloginfo('name');
+    
+    $message = "Hello Admin,\n\n";
+    $message .= "A new advertisement has been posted on " . get_bloginfo('name') . ".\n\n";
+    $message .= "Hiring Agent Details:\n";
+    $message .= "- Name: {$first_name} {$last_name}\n";
+    $message .= "- Email: {$email}\n";
+    $message .= "- Phone: {$phone}\n\n";
+    $message .= "Advertisement Details:\n";
+    $message .= "- Title: {$ad_title}\n";
+    $message .= "- URL: {$ad_url}\n";
+    $message .= "- Status: " . ucfirst($post->post_status) . "\n\n";
+    $message .= "Please review this advertisement in the dashboard: " . admin_url('post.php?post=' . $post_id . '&action=edit') . "\n\n";
+    $message .= "This is an automated notification.";
+
+    $headers = ['Content-Type: text/plain; charset=UTF-8'];
+
+    // Send the email
+    wp_mail($admin_email, $subject, $message, $headers);
 }
-add_action('wp_enqueue_scripts', 'enqueue_talent_form_assets');
+add_action('wp_insert_post', 'notify_admin_on_new_advertisement', 20, 3);
+
+/**
+ * Check and update 'new' status - remove after 72 hours
+ * This can be called periodically or checked at display time
+ */
+function check_advertisement_new_status($post_id) {
+    $published_date = get_post_meta($post_id, '_advertisement_published_date', true);
+    
+    if (!$published_date) {
+        return false;
+    }
+    
+    $published_timestamp = strtotime($published_date);
+    $current_timestamp = current_time('timestamp');
+    $hours_since_published = ($current_timestamp - $published_timestamp) / 3600;
+    
+    // Remove new status after 72 hours
+    if ($hours_since_published > 72) {
+        delete_post_meta($post_id, '_advertisement_is_new');
+        return false;
+    }
+    
+    return get_post_meta($post_id, '_advertisement_is_new', true) === '1';
+}
+
+// Allow HEIC/HEIF image uploads
+add_filter('upload_mimes', function ($mimes) {
+    $mimes['heic|heif'] = 'image/heic';
+    return $mimes;
+});
+
+// Add Account Type field to WordPress admin user profile
+add_action('show_user_profile', 'render_account_type_field');
+add_action('edit_user_profile', 'render_account_type_field');
+
+function render_account_type_field($user) {
+    $account_type = get_user_meta($user->ID, 'account_type', true);
+    ?>
+    <h3>Account Information</h3>
+    <table class="form-table">
+        <tr>
+            <th><label for="account_type">Account Type</label></th>
+            <td>
+                <select name="account_type" id="account_type">
+                    <option value="">Not set</option>
+                    <option value="talent" <?php selected($account_type, 'talent'); ?>>Talent</option>
+                    <option value="hiring" <?php selected($account_type, 'hiring'); ?>>Hiring</option>
+                </select>
+                <p class="description">Determines the user's account type on the platform.</p>
+            </td>
+        </tr>
+    </table>
+    <?php
+}
+
+add_action('personal_options_update', 'save_account_type_field');
+add_action('edit_user_profile_update', 'save_account_type_field');
+
+function save_account_type_field($user_id) {
+    if (!current_user_can('edit_user', $user_id)) {
+        return;
+    }
+    if (isset($_POST['account_type'])) {
+        $type = sanitize_text_field($_POST['account_type']);
+        if (in_array($type, ['talent', 'hiring', ''])) {
+            update_user_meta($user_id, 'account_type', $type);
+        }
+    }
+}
+
+// Add Account Type column to users admin table
+add_filter('manage_users_columns', function ($columns) {
+    $new_columns = [];
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        if ($key === 'phone') {
+            $new_columns['account_type'] = 'Account Type';
+        }
+    }
+    return $new_columns;
+});
+
+add_filter('manage_users_custom_column', function ($output, $column_name, $user_id) {
+    if ($column_name === 'account_type') {
+        $type = get_user_meta($user_id, 'account_type', true);
+        if ($type === 'talent') {
+            return '<span style="color: #b2122d; font-weight: 600;">Talent</span>';
+        } elseif ($type === 'hiring') {
+            return '<span style="color: #3498db; font-weight: 600;">Hiring</span>';
+        }
+        return '<span style="color: #888;">—</span>';
+    }
+    return $output;
+}, 10, 3);
+
+?>

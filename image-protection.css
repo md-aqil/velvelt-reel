@@ -1,0 +1,104 @@
+/* Comprehensive Image Protection Styles */
+
+/* Disable image selection and context menu */
+img {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+    position: relative;
+}
+
+/* Additional protection for image containers */
+.wp-block-image img,
+.gallery img,
+.portfolio-item img,
+.talent-photo img,
+.avatar img {
+    position: relative;
+}
+
+/* Overlay to prevent right-click and selection */
+.wp-block-image img::before,
+.gallery img::before,
+.portfolio-item img::before,
+.talent-photo img::before,
+.avatar img::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    z-index: 1;
+}
+
+/* More specific protection for portfolio items */
+.portfolio-item img {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+    position: relative;
+}
+
+/* Prevent highlighting of images */
+img::-moz-selection {
+    background: transparent;
+}
+
+img::selection {
+    background: transparent;
+}
+
+/* Additional protection for media elements */
+figure img,
+.figure-img,
+.attachment img {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+}
+
+/* Disable context menu for all images */
+img[oncontextmenu="return false;"] {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+}
+
+/* Additional protection for any image with protection attributes */
+img[ondragstart="return false;"],
+img[onselectstart="return false;"] {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+    pointer-events: auto;
+}
+
+/* Prevent image drag in different browsers */
+img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}

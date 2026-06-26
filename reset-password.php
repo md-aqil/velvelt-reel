@@ -68,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .chaitu-body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
+                background-image: linear-gradient(rgb(107, 15, 15), rgb(45, 45, 45)) !important;
+
         min-height: 100vh;
         display: flex;
         align-items: center;
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .chaitu-container {
-        background: rgba(45, 45, 45, 0.95);
+      
         backdrop-filter: blur(10px);
         border-radius: 20px;
         padding: 40px;

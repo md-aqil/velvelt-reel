@@ -7,6 +7,9 @@ require_once ABSPATH . 'wp-load.php';
 
 $errors = [];
 $success = "";
+$resend_message = "";
+$can_resend = true;
+$remaining_time = 0;
 
 // Check if reset email exists in session
 if (!isset($_SESSION['reset_email'])) {
@@ -23,7 +26,37 @@ if (!$user) {
     $user_id = $user->ID;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Check if resend is allowed (60 seconds cooldown)
+$last_otp_time = get_user_meta($user_id, 'last_otp_time', true);
+if ($last_otp_time) {
+    $time_diff = time() - strtotime($last_otp_time);
+    if ($time_diff < 60) {
+        $can_resend = false;
+        $remaining_time = 60 - $time_diff;
+    }
+}
+
+// Handle resend OTP request
+if (isset($_POST['resend_otp']) && $can_resend) {
+    // Generate new OTP
+    $otp = rand(100000, 999999);
+    
+    // Store OTP and expiry (10 minutes)
+    update_user_meta($user_id, 'reset_token', $otp);
+    update_user_meta($user_id, 'reset_token_expiry', date('Y-m-d H:i:s', strtotime('+10 minutes')));
+    update_user_meta($user_id, 'last_otp_time', date('Y-m-d H:i:s'));
+    
+    // Send email with OTP
+    $subject = 'Password Reset OTP';
+    $message = "Your OTP for password reset is: $otp\n\nThis OTP will expire in 10 minutes.";
+    wp_mail($email, $subject, $message);
+    
+    $resend_message = "A new OTP has been sent to your email.";
+    $can_resend = false;
+    $remaining_time = 60;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['resend_otp'])) {
     $input_otp = trim($_POST['otp'] ?? '');
 
     if (!$input_otp) {
@@ -38,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // OTP is valid — proceed
             delete_user_meta($user_id, 'reset_token');
             delete_user_meta($user_id, 'reset_token_expiry');
+            delete_user_meta($user_id, 'last_otp_time');
 
             // Redirect to reset password page
             wp_redirect(home_url('/reset-password'));
@@ -65,7 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background-color: #2a2a2a;
+               background-image: linear-gradient(rgb(107, 15, 15), rgb(45, 45, 45)) !important;
+
         color: #ffffff;
         min-height: 100vh;
         display: flex;
@@ -75,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .chaitu-container {
-        background-color: #3a3a3a;
+      
         border-radius: 16px;
         padding: 40px;
         width: 100%;
@@ -241,6 +276,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         color: #4CAF50;
     }
 
+    .chaitu-resend-form {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #5a5a5a;
+    }
+
+    .chaitu-resend-btn {
+        background-color: transparent;
+        color: #b0b0b0;
+        border: 1px solid #5a5a5a;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .chaitu-resend-btn:hover {
+        background-color: #5a5a5a;
+        color: #ffffff;
+    }
+
+    .chaitu-resend-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .chaitu-success-message {
+        background-color: rgba(76, 175, 80, 0.1);
+        border: 1px solid rgba(76, 175, 80, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 25px;
+        color: #4CAF50;
+        font-size: 14px;
+    }
+
+    .chaitu-timer {
+        font-size: 14px;
+        color: #b0b0b0;
+        margin-top: 10px;
+    }
+
     @media (max-width: 480px) {
         .chaitu-container {
             padding: 30px 20px;
@@ -255,6 +333,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     </style>
+    <script>
+    function startTimer(duration, display) {
+        var timer = duration, minutes, seconds;
+        var interval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            display.textContent = "You can resend OTP in " + minutes + ":" + seconds;
+
+            if (--timer < 0) {
+                clearInterval(interval);
+                display.textContent = "";
+                document.getElementById('resendBtn').disabled = false;
+            }
+        }, 1000);
+    }
+
+    window.onload = function () {
+        var resendBtn = document.getElementById('resendBtn');
+        var timerDisplay = document.getElementById('timerDisplay');
+        
+        <?php if (!$can_resend && $remaining_time > 0): ?>
+        resendBtn.disabled = true;
+        startTimer(<?= $remaining_time ?>, timerDisplay);
+        <?php endif; ?>
+    };
+    </script>
 </head>
 
 <body>
@@ -268,6 +376,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="chaitu-email-info">
             OTP sent to: <?= htmlspecialchars($email) ?>
         </div>
+
+        <?php if ($resend_message): ?>
+        <div class="chaitu-success-message">
+            <?= htmlspecialchars($resend_message) ?>
+        </div>
+        <?php endif; ?>
 
         <?php if ($errors): ?>
         <div class="chaitu-error-messages">
@@ -287,6 +401,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     required />
             </div>
             <button type="submit" class="chaitu-submit-btn">VERIFY OTP</button>
+        </form>
+
+        <form method="POST" class="chaitu-resend-form">
+            <input type="hidden" name="resend_otp" value="1">
+            <button type="submit" class="chaitu-resend-btn" id="resendBtn" <?php if (!$can_resend) echo 'disabled'; ?>>Resend OTP</button>
+            <div class="chaitu-timer" id="timerDisplay">
+                <?php if (!$can_resend && $remaining_time > 0): ?>
+                You can resend OTP in 00:<?= sprintf("%02d", $remaining_time) ?>
+                <?php endif; ?>
+            </div>
         </form>
 
         <a href="<?= esc_url(home_url('/forgot-password')) ?>" class="chaitu-back-link">← Back to Forgot Password</a>

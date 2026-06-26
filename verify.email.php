@@ -50,6 +50,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'phone'   => $phone,
                 ]);
 
+                // Store phone in WordPress user meta (for easy retrieval with get_user_meta)
+                update_user_meta($user_id, 'phone', $phone);
+                update_user_meta($user_id, 'user_phone', $phone);
+
+                // Store account type
+                $account_type = sanitize_text_field($data['account_type'] ?? '');
+                if ($account_type) {
+                    update_user_meta($user_id, 'account_type', $account_type);
+                }
+
+                // Add free membership plan for new users (level 4 = FREE_PLAN_LEVEL)
+                // This allows free members to create portfolios
+                update_user_meta($user_id, 'membership_plans', array(4));
+
                 // Clean up session
                 unset(
                     $_SESSION['pending_signup'],
@@ -58,7 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['email_to_verify']
                 );
 
-                wp_redirect(home_url('/sign-in'));
+                // Set success message and redirect to login
+                $_SESSION['signup_success'] = "Account created successfully! Please sign in.";
+
+                wp_redirect(home_url('/membership-login'));
                 exit;
             } else {
                 $errors[] = "Account creation failed: " . $user_id->get_error_message();
@@ -93,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background-color: #2a2a2a;
+       	background: linear-gradient(0deg, #6b0f0f, #2d2d2d) !important;
         color: #ffffff;
         min-height: 100vh;
         display: flex;
@@ -109,7 +126,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         width: 100%;
         max-width: 400px;
         text-align: center;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     }
 
     .chaitu-lock-icon {

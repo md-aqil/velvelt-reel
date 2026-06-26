@@ -1,0 +1,802 @@
+<?php
+/**
+ * Talent submission and update forms
+ *
+ * @package HelloElementorChild
+ */
+
+// Exit if accessed directly.
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/**
+ * Handle the front-end talent submission form.
+ */
+function handle_talent_submission() {
+    // Check if our form is submitted
+    if ('POST' !== $_SERVER['REQUEST_METHOD'] || !isset($_POST['action']) || 'submit_talent_profile' !== $_POST['action']) {
+        return;
+    }
+
+    // Verify nonce
+    if (!isset($_POST['talent_submission_nonce']) || !wp_verify_nonce($_POST['talent_submission_nonce'], 'talent_submission')) {
+        wp_die('Security check failed.');
+    }
+
+    // Sanitize and prepare post data
+    $full_name = sanitize_text_field($_POST['fullName']);
+    $style_description = wp_kses_post($_POST['styleDescription']);
+
+    $talent_post = array(
+        'post_title' => $full_name,
+        'post_content' => $style_description,
+        'post_status' => 'pending', // Set to 'publish' to auto-publish, 'pending' for review
+        'post_type' => 'talent',
+    );
+
+    // Insert the post into the database
+    $post_id = wp_insert_post($talent_post);
+
+    if (is_wp_error($post_id)) {
+        wp_die('Error creating talent profile: ' . $post_id->get_error_message());
+    }
+
+    // --- Handle File Upload (Profile Photo) ---
+    // Check if profile photo was uploaded directly or set from portfolio
+    if (!empty($_FILES['profilePhoto']['name'])) {
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $attachment_id = media_handle_upload('profilePhoto', $post_id);
+
+        if (!is_wp_error($attachment_id)) {
+            set_post_thumbnail($post_id, $attachment_id);
+        }
+    } else {
+        // NEW: If no profile photo was uploaded, check if we should use the first portfolio image
+        $portfolio_attachment_ids = get_post_meta($post_id, '_talent_portfolio', true);
+        if (!empty($portfolio_attachment_ids) && is_array($portfolio_attachment_ids)) {
+            // Use the first portfolio image as the profile photo
+            $first_portfolio_id = reset($portfolio_attachment_ids);
+            if (is_numeric($first_portfolio_id)) {
+                set_post_thumbnail($post_id, $first_portfolio_id);
+            }
+        }
+    }
+
+    // --- Save Custom Fields (Meta Data) ---
+    $meta_fields = [
+        '_talent_state' => 'city',  // Form uses 'city' as field name for state
+        '_talent_country' => 'country',
+        '_talent_email' => 'email',
+        '_talent_phone' => 'phone',
+        '_talent_age_group' => 'ageGroup',
+        '_talent_gender' => 'gender',
+        '_talent_height' => 'height',
+        '_talent_height_unit' => 'heightUnit',
+        '_talent_measurements' => 'measurements',
+        '_talent_years_active' => 'yearsActive',
+        '_talent_affiliation' => 'affiliation',
+        '_talent_education' => 'education',
+        '_talent_interested_projects' => 'interestedProjects',
+        '_talent_willing_to_travel' => 'willingToTravel',
+        '_talent_preferred_locations' => 'preferredLocations',
+        '_talent_brand_collabs' => 'brandCollabs',
+        '_talent_domain' => 'domain',
+        '_talent_role' => 'role',
+        '_talent_instagram' => 'instagram',
+        '_talent_linkedin' => 'linkedin',
+        '_talent_tiktok' => 'tiktok',
+        '_talent_website' => 'website',
+        // Privacy settings
+        '_talent_hide_email' => 'hideEmail',
+        '_talent_hide_phone' => 'hidePhone',
+        '_talent_hide_instagram' => 'hideInstagram',
+        '_talent_hide_linkedin' => 'hideLinkedin',
+        '_talent_hide_tiktok' => 'hideTiktok',
+        '_talent_hide_website' => 'hideWebsite',
+    ];
+
+    foreach ($meta_fields as $meta_key => $post_key) {
+        if (isset($_POST[$post_key])) {
+            $value = sanitize_text_field($_POST[$post_key]);
+            update_post_meta($post_id, $meta_key, $value);
+        }
+    }
+
+    // Handle languages field (comma-separated string)
+    if (isset($_POST['languages'])) {
+        if (is_array($_POST['languages'])) {
+            // If it's already an array (from JS processing)
+            $languages = array_map('sanitize_text_field', $_POST['languages']);
+        } else {
+            // If it's a comma-separated string
+            $languages = array_map('trim', explode(',', sanitize_text_field($_POST['languages'])));
+        }
+        update_post_meta($post_id, '_talent_languages', $languages);
+    }
+    if (isset($_POST['availableFor']) && is_array($_POST['availableFor'])) {
+        $available_for = array_map('sanitize_text_field', $_POST['availableFor']);
+        update_post_meta($post_id, '_talent_available_for', $available_for);
+    }
+
+    // --- Set Taxonomy Term for Talent Type ---
+    if (isset($_POST['role'])) {
+        $role_slug = sanitize_title($_POST['role']);
+        if (!empty($role_slug)) {
+            // Create a user-friendly name from the slug
+            $role_name = ucwords(str_replace('-', ' ', $role_slug));
+            // This will create the term if it doesn't exist, and assign it.
+            wp_set_object_terms($post_id, $role_name, 'talent_type');
+        }
+    }
+
+    // --- Set Taxonomy Term for Talent State ---
+    if (isset($_POST['state'])) {
+        $state = sanitize_text_field($_POST['state']);
+        if (!empty($state)) {
+            wp_set_object_terms($post_id, $state, 'talent_state');
+        }
+    }
+
+    // --- Set Taxonomy Term for Talent Country ---
+    if (isset($_POST['country'])) {
+        $country = sanitize_text_field($_POST['country']);
+        if (!empty($country)) {
+            wp_set_object_terms($post_id, $country, 'talent_country');
+        }
+    }
+
+    // Handle repeatable fields (Notable Works)
+    if (isset($_POST['workTitle']) && is_array($_POST['workTitle'])) {
+        $notable_works = [];
+        $work_titles = $_POST['workTitle'];
+        // $work_years = $_POST['workYear']; // This field is no longer in use
+        $work_start_dates = $_POST['workStartDate'] ?? [];
+        $work_end_dates = $_POST['workEndDate'] ?? [];
+        $work_present = $_POST['workPresent'] ?? [];
+        $work_roles = $_POST['workRole'];
+        $work_descriptions = $_POST['workDescription'];
+
+        for ($i = 0; $i < count($work_titles); $i++) {
+            if (!empty($work_titles[$i])) {
+                $notable_works[] = [
+                    'title' => sanitize_text_field($work_titles[$i]),
+                    'role' => sanitize_text_field($work_roles[$i]),
+                    'startDate' => sanitize_text_field($work_start_dates[$i]),
+                    'endDate' => isset($work_present[$i]) && $work_present[$i] === 'on' ? '' : sanitize_text_field($work_end_dates[$i]),
+                    'present' => isset($work_present[$i]) && $work_present[$i] === 'on' ? 'on' : 'off',
+                    'description' => sanitize_textarea_field($work_descriptions[$i]),
+                ];
+            }
+        }
+        update_post_meta($post_id, '_talent_notable_works', $notable_works);
+    }
+
+    // --- Handle Role-Specific Fields & Portfolio Gallery ---
+    // Handle design categories for all roles that have them
+    if (isset($_POST['designCategories']) && is_array($_POST['designCategories'])) {
+        $design_categories = array_map('sanitize_text_field', $_POST['designCategories']);
+        update_post_meta($post_id, '_talent_designCategories', $design_categories);
+    }
+
+    // Handle Portfolio Gallery Upload (for roles that have it)
+    // This will ADD to existing images. For a replacement logic, you'd first delete old attachments.
+    // Check for all possible portfolio input names
+    $portfolio_files = null;
+    if (!empty($_FILES['portfolio']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio'];
+    } elseif (!empty($_FILES['portfolio-textile']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-textile'];
+    } elseif (!empty($_FILES['portfolio-accessory']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-accessory'];
+    } elseif (!empty($_FILES['portfolio-illustrator']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-illustrator'];
+    } elseif (!empty($_FILES['portfolio-model']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-model'];
+    } elseif (!empty($_FILES['portfolio-choreographer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-choreographer'];
+    } elseif (!empty($_FILES['portfolio-stylist']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-stylist'];
+    } elseif (!empty($_FILES['portfolio-makeup']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-makeup'];
+    } elseif (!empty($_FILES['portfolio-director']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-director'];
+    } elseif (!empty($_FILES['portfolio-storyboard']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-storyboard'];
+    } elseif (!empty($_FILES['portfolio-actor']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-actor'];
+    } elseif (!empty($_FILES['portfolio-voice']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-voice'];
+    } elseif (!empty($_FILES['portfolio-dancer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-dancer'];
+    } elseif (!empty($_FILES['portfolio-dop']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-dop'];
+    } elseif (!empty($_FILES['portfolio-assistant-director']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-assistant-director'];
+    } elseif (!empty($_FILES['portfolio-screenwriter']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-screenwriter'];
+    } elseif (!empty($_FILES['portfolio-editor']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-editor'];
+    } elseif (!empty($_FILES['portfolio-fashion-designer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-designer'];
+    } elseif (!empty($_FILES['portfolio-textile-designer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-textile-designer'];
+    } elseif (!empty($_FILES['portfolio-accessory-designer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-accessory-designer'];
+    } elseif (!empty($_FILES['portfolio-fashion-illustrator']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-illustrator'];
+    } elseif (!empty($_FILES['portfolio-fashion-model']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-model'];
+    } elseif (!empty($_FILES['portfolio-ramp-choreographer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-ramp-choreographer'];
+    } elseif (!empty($_FILES['portfolio-fashion-stylist']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-stylist'];
+    } elseif (!empty($_FILES['portfolio-makeup-artist']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-makeup-artist'];
+    }
+
+    if ($portfolio_files) {
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        $attachment_ids = [];
+
+        foreach ($portfolio_files['name'] as $key => $value) {
+            if ($portfolio_files['name'][$key]) {
+                // Create a temporary file array for media_handle_upload
+                $_FILES['single_portfolio_image'] = [
+                    'name' => $portfolio_files['name'][$key],
+                    'type' => $portfolio_files['type'][$key],
+                    'tmp_name' => $portfolio_files['tmp_name'][$key],
+                    'error' => $portfolio_files['error'][$key],
+                    'size' => $portfolio_files['size'][$key]
+                ];
+                $attachment_id = media_handle_upload('single_portfolio_image', $post_id);
+                if (!is_wp_error($attachment_id)) {
+                    $attachment_ids[] = $attachment_id;
+                }
+        }
+        update_post_meta($post_id, '_talent_portfolio', $attachment_ids);
+    }
+    
+    // Handle Video Links
+    if (isset($_POST['videoLinks']) && is_array($_POST['videoLinks'])) {
+        $video_links = [];
+        $video_titles = isset($_POST['videoTitles']) ? $_POST['videoTitles'] : [];
+        
+        for ($i = 0; $i < count($_POST['videoLinks']); $i++) {
+            if (!empty($_POST['videoLinks'][$i])) {
+                $video_links[] = [
+                    'url' => esc_url_raw($_POST['videoLinks'][$i]),
+                    'title' => isset($video_titles[$i]) ? sanitize_text_field($video_titles[$i]) : ''
+                ];
+            }
+        }
+        update_post_meta($post_id, '_talent_video_links', $video_links);
+    }
+
+    // --- Redirect after submission ---
+    // You can create a "Thank You" page and redirect there.
+    $redirect_url = add_query_arg('success', 'true', get_permalink()); // Redirect back to the form page with a success message
+    wp_redirect($redirect_url);
+    exit;
+}
+add_action('template_redirect', 'handle_talent_submission');
+
+/**
+ * Handle the front-end talent profile update form.
+ */
+function handle_talent_update() {
+    // Check if our update form is submitted
+    if ('POST' !== $_SERVER['REQUEST_METHOD'] || !isset($_POST['action']) || 'update_talent_profile' !== $_POST['action']) {
+        return;
+    }
+
+    // Verify nonce
+    if (!isset($_POST['talent_update_nonce']) || !wp_verify_nonce($_POST['talent_update_nonce'], 'talent_update')) {
+        wp_die('Security check failed.');
+    }
+
+    // Check user is logged in and is the author of the post
+    $post_id = (int) $_POST['post_id'];
+    if (!is_user_logged_in() || get_post_field('post_author', $post_id) != get_current_user_id()) {
+        wp_die('You do not have permission to edit this profile.');
+    }
+
+    // Sanitize and prepare post data
+    $full_name = sanitize_text_field($_POST['fullName']);
+    $style_description = wp_kses_post($_POST['styleDescription']);
+
+    $talent_post_update = array(
+        'ID' => $post_id,
+        'post_title' => $full_name,
+        'post_content' => $style_description,
+        'post_status' => 'pending', // Set back to pending for re-approval
+    );
+
+    // Update the post in the database
+    $result = wp_update_post($talent_post_update);
+
+    // Check if post update was successful
+    if (is_wp_error($result)) {
+        error_log('Talent profile update failed: ' . $result->get_error_message());
+        // Continue with the rest of the update instead of dying
+    }
+
+    // --- Handle File Upload (Profile Photo) ---
+    // Check if profile photo was uploaded directly or set from portfolio
+    if (!empty($_FILES['profilePhoto']['name'])) {
+        // Ensure required functions are available
+        if (!function_exists('media_handle_upload')) {
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+        }
+
+        // Delete old thumbnail if it exists
+        if (has_post_thumbnail($post_id)) {
+            delete_post_thumbnail($post_id);
+        }
+
+        $attachment_id = media_handle_upload('profilePhoto', $post_id);
+
+        if (is_wp_error($attachment_id)) {
+            error_log('Profile photo upload failed: ' . $attachment_id->get_error_message());
+            // Don't die here, just continue with the rest of the update
+        } else {
+            set_post_thumbnail($post_id, $attachment_id);
+        }
+    } else {
+        // NEW: If no profile photo was uploaded, check if we should use the first portfolio image
+        // Only set from portfolio if there's no existing profile photo
+        if (!has_post_thumbnail($post_id)) {
+            $portfolio_attachment_ids = get_post_meta($post_id, '_talent_portfolio', true);
+            if (!empty($portfolio_attachment_ids) && is_array($portfolio_attachment_ids)) {
+                // Use the first portfolio image as the profile photo
+                $first_portfolio_id = reset($portfolio_attachment_ids);
+                if (is_numeric($first_portfolio_id)) {
+                    set_post_thumbnail($post_id, $first_portfolio_id);
+                }
+            }
+        }
+    }
+
+    // --- Save Custom Fields (Meta Data) ---
+    $meta_fields = [
+        '_talent_state' => 'state',
+        '_talent_country' => 'country',
+        '_talent_email' => 'email',
+        '_talent_phone' => 'phone',
+        '_talent_age_group' => 'ageGroup',
+        '_talent_gender' => 'gender',
+        '_talent_height' => 'height',
+        '_talent_height_unit' => 'heightUnit',
+        '_talent_measurements' => 'measurements',
+        '_talent_years_active' => 'yearsActive',
+        '_talent_affiliation' => 'affiliation',
+        '_talent_education' => 'education',
+        '_talent_interested_projects' => 'interestedProjects',
+        '_talent_willing_to_travel' => 'willingToTravel',
+        '_talent_preferred_locations' => 'preferredLocations',
+        '_talent_brand_collabs' => 'brandCollabs',
+        '_talent_domain' => 'domain',
+        '_talent_role' => 'role',
+        '_talent_instagram' => 'instagram',
+        '_talent_linkedin' => 'linkedin',
+        '_talent_tiktok' => 'tiktok',
+        '_talent_website' => 'website',
+        // Privacy settings
+        '_talent_hide_email' => 'hideEmail',
+        '_talent_hide_phone' => 'hidePhone',
+        '_talent_hide_instagram' => 'hideInstagram',
+        '_talent_hide_linkedin' => 'hideLinkedin',
+        '_talent_hide_tiktok' => 'hideTiktok',
+        '_talent_hide_website' => 'hideWebsite',
+    ];
+
+    foreach ($meta_fields as $meta_key => $post_key) {
+        if (isset($_POST[$post_key])) {
+            update_post_meta($post_id, $meta_key, sanitize_text_field($_POST[$post_key]));
+        }
+    }
+
+    // Handle languages field (comma-separated string)
+    if (isset($_POST['languages'])) {
+        if (is_array($_POST['languages'])) {
+            // If it's already an array (from JS processing)
+            $languages = array_map('sanitize_text_field', $_POST['languages']);
+        } else {
+            // If it's a comma-separated string
+            $languages = array_map('trim', explode(',', sanitize_text_field($_POST['languages'])));
+        }
+        update_post_meta($post_id, '_talent_languages', $languages);
+    }
+
+    if (isset($_POST['availableFor']) && is_array($_POST['availableFor'])) {
+        update_post_meta($post_id, '_talent_available_for', array_map('sanitize_text_field', $_POST['availableFor']));
+    }
+
+    if (isset($_POST['workTitle']) && is_array($_POST['workTitle'])) {
+        // --- Set Taxonomy Term for Talent Type on Update ---
+        if (isset($_POST['role'])) {
+            $role_slug = sanitize_title($_POST['role']);
+            if (!empty($role_slug)) {
+                // Create a user-friendly name from the slug
+                $role_name = ucwords(str_replace('-', ' ', $role_slug));
+                // This will create the term if it doesn't exist, and assign it.
+                // The `false` for the third parameter replaces existing terms in this taxonomy.
+                wp_set_object_terms($post_id, $role_name, 'talent_type', false);
+            }
+        }
+
+        $notable_works = [];
+        for ($i = 0; $i < count($_POST['workTitle']); $i++) {
+            if (!empty($_POST['workTitle'][$i])) {
+                $is_present = isset($_POST['workPresent']) && is_array($_POST['workPresent']) && isset($_POST['workPresent'][$i]) && $_POST['workPresent'][$i] === 'on';
+                $notable_works[] = [
+                    'title' => sanitize_text_field($_POST['workTitle'][$i]),
+                    'role' => sanitize_text_field($_POST['workRole'][$i]),
+                    'startDate' => sanitize_text_field($_POST['workStartDate'][$i]),
+                    'endDate' => $is_present ? '' : sanitize_text_field($_POST['workEndDate'][$i]),
+                    'present' => $is_present ? 'on' : 'off',
+                    'description' => sanitize_textarea_field($_POST['workDescription'][$i]),
+                ];
+            }
+        }
+        update_post_meta($post_id, '_talent_notable_works', $notable_works);
+    }
+
+    // --- Handle Role-Specific Fields & Portfolio Gallery Update ---
+    if (isset($_POST['designCategories']) && is_array($_POST['designCategories'])) {
+        $design_categories = array_map('sanitize_text_field', $_POST['designCategories']);
+        update_post_meta($post_id, '_talent_designCategories', $design_categories);
+    }
+
+    // Handle Portfolio Gallery Upload (for roles that have it)
+    // This will ADD to existing images. For a replacement logic, you'd first delete old attachments.
+    // Check for all possible portfolio input names
+    $portfolio_files = null;
+    if (!empty($_FILES['portfolio']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio'];
+    } elseif (!empty($_FILES['portfolio-textile']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-textile'];
+    } elseif (!empty($_FILES['portfolio-accessory']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-accessory'];
+    } elseif (!empty($_FILES['portfolio-illustrator']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-illustrator'];
+    } elseif (!empty($_FILES['portfolio-model']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-model'];
+    } elseif (!empty($_FILES['portfolio-choreographer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-choreographer'];
+    } elseif (!empty($_FILES['portfolio-stylist']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-stylist'];
+    } elseif (!empty($_FILES['portfolio-makeup']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-makeup'];
+    } elseif (!empty($_FILES['portfolio-director']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-director'];
+    } elseif (!empty($_FILES['portfolio-storyboard']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-storyboard'];
+    } elseif (!empty($_FILES['portfolio-actor']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-actor'];
+    } elseif (!empty($_FILES['portfolio-voice']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-voice'];
+    } elseif (!empty($_FILES['portfolio-dancer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-dancer'];
+    } elseif (!empty($_FILES['portfolio-dop']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-dop'];
+    } elseif (!empty($_FILES['portfolio-assistant-director']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-assistant-director'];
+    } elseif (!empty($_FILES['portfolio-screenwriter']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-screenwriter'];
+    } elseif (!empty($_FILES['portfolio-editor']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-editor'];
+    } elseif (!empty($_FILES['portfolio-fashion-designer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-designer'];
+    } elseif (!empty($_FILES['portfolio-textile-designer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-textile-designer'];
+    } elseif (!empty($_FILES['portfolio-accessory-designer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-accessory-designer'];
+    } elseif (!empty($_FILES['portfolio-fashion-illustrator']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-illustrator'];
+    } elseif (!empty($_FILES['portfolio-fashion-model']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-model'];
+    } elseif (!empty($_FILES['portfolio-ramp-choreographer']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-ramp-choreographer'];
+    } elseif (!empty($_FILES['portfolio-fashion-stylist']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-fashion-stylist'];
+    } elseif (!empty($_FILES['portfolio-makeup-artist']['name'][0])) {
+        $portfolio_files = $_FILES['portfolio-makeup-artist'];
+    }
+
+    if ($portfolio_files) {
+        // Ensure required functions are available
+        if (!function_exists('media_handle_upload')) {
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+        }
+
+        $new_attachment_ids = get_post_meta($post_id, '_talent_portfolio', true) ?: [];
+        if (!is_array($new_attachment_ids))
+            $new_attachment_ids = [];
+
+        foreach ($portfolio_files['name'] as $key => $value) {
+            if ($portfolio_files['name'][$key]) {
+                $_FILES['single_portfolio_image'] = [
+                    'name' => $portfolio_files['name'][$key],
+                    'type' => $portfolio_files['type'][$key],
+                    'tmp_name' => $portfolio_files['tmp_name'][$key],
+                    'error' => $portfolio_files['error'][$key],
+                    'size' => $portfolio_files['size'][$key]
+                ];
+                $attachment_id = media_handle_upload('single_portfolio_image', $post_id);
+                if (!is_wp_error($attachment_id)) {
+                    $new_attachment_ids[] = $attachment_id;
+                } else {
+                    error_log('Portfolio image upload failed: ' . $attachment_id->get_error_message());
+                }
+            }
+        }
+        update_post_meta($post_id, '_talent_portfolio', $new_attachment_ids);
+    }
+    
+    // Handle Video Links for updates
+    if (isset($_POST['videoLinks']) && is_array($_POST['videoLinks'])) {
+        $video_links = [];
+        $video_titles = isset($_POST['videoTitles']) ? $_POST['videoTitles'] : [];
+        
+        for ($i = 0; $i < count($_POST['videoLinks']); $i++) {
+            if (!empty($_POST['videoLinks'][$i])) {
+                $video_links[] = [
+                    'url' => esc_url_raw($_POST['videoLinks'][$i]),
+                    'title' => isset($video_titles[$i]) ? sanitize_text_field($video_titles[$i]) : ''
+                ];
+            }
+        }
+        update_post_meta($post_id, '_talent_video_links', $video_links);
+    }
+
+    // --- Redirect after update ---
+    $redirect_url = add_query_arg('updated', 'true', get_permalink());
+    wp_redirect($redirect_url);
+    exit;
+}
+add_action('template_redirect', 'handle_talent_update');
+
+/**
+ * AJAX handler to save talent form progress
+ */
+function wp_ajax_save_talent_progress() {
+    check_ajax_referer('talent_submission_nonce', 'nonce');
+
+    if (!is_user_logged_in()) {
+        wp_send_json_error('User not logged in');
+    }
+
+    $user_id = get_current_user_id();
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+    $save_and_exit = isset($_POST['save_and_exit']) && $_POST['save_and_exit'] === 'true';
+
+    // Collect form data
+    $form_data = isset($_POST['form_data']) ? $_POST['form_data'] : [];
+
+    // Parse the serialized form data into an associative array
+    $parsed_data = [];
+    parse_str($form_data, $parsed_data);
+
+    // Basic post data
+    $post_title = isset($parsed_data['fullName']) ? sanitize_text_field($parsed_data['fullName']) : 'Draft Profile - ' . date('Y-m-d H:i:s');
+    $post_content = isset($parsed_data['styleDescription']) ? wp_kses_post($parsed_data['styleDescription']) : '';
+
+    $post_args = array(
+        'post_title' => $post_title,
+        'post_content' => $post_content,
+        'post_status' => 'draft',
+        'post_type' => 'talent',
+        'post_author' => $user_id
+    );
+
+    if ($post_id > 0) {
+        // Update existing draft
+        $post_args['ID'] = $post_id;
+
+        // Verify ownership
+        $post = get_post($post_id);
+        if (!$post || $post->post_author != $user_id) {
+            wp_send_json_error('Invalid post ID or not authorized to edit.');
+        }
+        $post_id = wp_update_post($post_args);
+    } else {
+        $post_id = wp_insert_post($post_args);
+    }
+
+    if (is_wp_error($post_id)) {
+        wp_send_json_error($post_id->get_error_message());
+    }
+
+    // --- Save Custom Fields (Meta Data) ---
+    $meta_fields = [
+        '_talent_state' => 'city',  // Form uses 'city' as field name for state
+        '_talent_country' => 'country',
+        '_talent_email' => 'email',
+        '_talent_phone' => 'phone',
+        '_talent_age_group' => 'ageGroup',
+        '_talent_gender' => 'gender',
+        '_talent_height' => 'height',
+        '_talent_height_unit' => 'heightUnit',
+        '_talent_measurements' => 'measurements',
+        '_talent_languages' => 'languages',
+        '_talent_years_active' => 'yearsActive',
+        '_talent_affiliation' => 'affiliation',
+        '_talent_education' => 'education',
+        '_talent_style_description' => 'styleDescription',
+        '_talent_interested_projects' => 'interestedProjects',
+        '_talent_willing_to_travel' => 'willingToTravel',
+        '_talent_preferred_locations' => 'preferredLocations',
+        '_talent_brand_collabs' => 'brandCollabs',
+        '_talent_domain' => 'domain',
+        '_talent_role' => 'role',
+        '_talent_instagram' => 'instagram',
+        '_talent_linkedin' => 'linkedin',
+        '_talent_tiktok' => 'tiktok',
+        '_talent_website' => 'website',
+        // Privacy settings
+        '_talent_hide_email' => 'hideEmail',
+        '_talent_hide_phone' => 'hidePhone',
+        '_talent_hide_instagram' => 'hideInstagram',
+        '_talent_hide_linkedin' => 'hideLinkedin',
+        '_talent_hide_tiktok' => 'hideTiktok',
+        '_talent_hide_website' => 'hideWebsite',
+    ];
+
+    foreach ($meta_fields as $meta_key => $post_key) {
+        if (isset($parsed_data[$post_key])) {
+            $value = sanitize_text_field($parsed_data[$post_key]);
+            update_post_meta($post_id, $meta_key, $value);
+        }
+    }
+
+    // Handle languages field (comma-separated string)
+    if (isset($parsed_data['languages'])) {
+        if (is_array($parsed_data['languages'])) {
+            // If it's already an array (from JS processing)
+            $languages = array_map('sanitize_text_field', $_POST['languages']);
+        } else {
+            // If it's a comma-separated string
+            $languages = array_map('trim', explode(',', sanitize_text_field($_POST['languages'])));
+        }
+        update_post_meta($post_id, '_talent_languages', $languages);
+    }
+
+    if (isset($parsed_data['availableFor']) && is_array($parsed_data['availableFor'])) {
+        $available_for = array_map('sanitize_text_field', $parsed_data['availableFor']);
+        update_post_meta($post_id, '_talent_available_for', $available_for);
+    }
+
+    // Handle Notable Works (Repeater Fields)
+    if (isset($parsed_data['workTitle']) && is_array($parsed_data['workTitle'])) {
+        $notable_works = [];
+        $count = count($parsed_data['workTitle']);
+        for ($i = 0; $i < $count; $i++) {
+            $work = [
+                'title' => isset($parsed_data['workTitle'][$i]) ? sanitize_text_field($parsed_data['workTitle'][$i]) : '',
+                'role' => isset($parsed_data['workRole'][$i]) ? sanitize_text_field($parsed_data['workRole'][$i]) : '',
+                'start_date' => isset($parsed_data['workStartDate'][$i]) ? sanitize_text_field($parsed_data['workStartDate'][$i]) : '',
+                'end_date' => isset($parsed_data['workEndDate'][$i]) ? sanitize_text_field($parsed_data['workEndDate'][$i]) : '',
+                'present' => isset($parsed_data['workPresent'][$i]) ? 'yes' : 'no',
+                'description' => isset($parsed_data['workDescription'][$i]) ? sanitize_textarea_field($parsed_data['workDescription'][$i]) : ''
+            ];
+            $notable_works[] = $work;
+        }
+        update_post_meta($post_id, '_talent_notable_works', $notable_works);
+    }
+
+    // Handle Video Links
+    if (isset($parsed_data['videoLinks']) && is_array($parsed_data['videoLinks'])) {
+        $video_links = [];
+        $count = count($parsed_data['videoLinks']);
+        for ($i = 0; $i < $count; $i++) {
+            if (!empty($parsed_data['videoLinks'][$i])) {
+                $video_links[] = [
+                    'url' => esc_url_raw($parsed_data['videoLinks'][$i]),
+                    'title' => isset($parsed_data['videoTitles'][$i]) ? sanitize_text_field($parsed_data['videoTitles'][$i]) : ''
+                ];
+            }
+        }
+        update_post_meta($post_id, '_talent_video_links', $video_links);
+    }
+
+    // Handle Portfolio Images
+    // Note: File uploads are not handled via AJAX in this implementation.
+    // They are handled on full form submission.
+    // This is a limitation of the current implementation.
+
+    // Handle role-specific fields dynamically
+    foreach ($parsed_data as $key => $value) {
+        // Skip fields we've already handled
+        if (array_key_exists('_talent_' . $key, array_flip($meta_fields)) || 
+            in_array($key, ['action', 'nonce', 'current_step', 'post_id', 'form_data', 'save_and_exit', 'availableFor', 'workTitle', 'workRole', 'workStartDate', 'workEndDate', 'workPresent', 'workDescription', 'videoLinks', 'videoTitles', 'languages'])) {
+            continue;
+        }
+
+        // Handle any other fields that start with known prefixes
+        if (strpos($key, 'portfolio') === 0 || strpos($key, 'video') === 0) {
+            // Skip file upload fields as they're not handled via AJAX
+            continue;
+        }
+
+        // For all other fields, save them as meta fields
+        $meta_key = '_talent_' . $key;
+        if (is_array($value)) {
+            $value = array_map('sanitize_text_field', $value);
+        } else {
+            $value = sanitize_text_field($value);
+        }
+        update_post_meta($post_id, $meta_key, $value);
+    }
+
+    // --- Set Taxonomy Terms ---
+    if (isset($parsed_data['city'])) {
+        $city = sanitize_text_field($parsed_data['city']);
+        if (!empty($city)) {
+            wp_set_object_terms($post_id, $city, 'talent_city');
+        }
+    }
+
+    if (isset($parsed_data['country'])) {
+        $country = sanitize_text_field($parsed_data['country']);
+        if (!empty($country)) {
+            wp_set_object_terms($post_id, $country, 'talent_country');
+        }
+    }
+
+    if (isset($parsed_data['role'])) {
+        $role_slug = sanitize_title($parsed_data['role']);
+        if (!empty($role_slug)) {
+            $role_name = ucwords(str_replace('-', ' ', $role_slug));
+            wp_set_object_terms($post_id, $role_name, 'talent_type', false);
+        }
+    }
+
+    // Send success response
+    $response = ['post_id' => $post_id];
+    
+    // If this was a save and exit, include redirect URL
+    if ($save_and_exit) {
+        $response['redirect_url'] = get_post_type_archive_link('talent');
+    }
+    
+    wp_send_json_success($response);
+}
+add_action('wp_ajax_save_talent_progress', 'wp_ajax_save_talent_progress');
+
+// Restrict access to talent submission page if user already has a profile
+function restrict_talent_submission_if_profile_exists() {
+    // Only apply to the talent submission page
+    if (is_page_template('template-talent-submission.php')) {
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            return; // Let the existing restriction handle this
+        }
+
+        // Check if user already has a talent profile (excluding drafts)
+        if (user_has_talent_profile(null, false)) {
+            // Add a message
+            add_action('wp', function () {
+                add_action('the_content', function ($content) {
+                    $message = '<div class="talent-warning" style="padding:15px;background:#fff3cd;border:1px solid #ffeeba;color:#856404;margin-bottom:20px;border-radius:5px;">
+                        You already have a profile. You cannot create multiple profiles.
+                    </div>';
+                    return $message . $content;
+                });
+            });
+        }
+    }
+}
+add_action('template_redirect', 'restrict_talent_submission_if_profile_exists');
+
+?>

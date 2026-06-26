@@ -24,12 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user && wp_check_password($password, $user->user_pass, $user->ID)) {
             // Log the user in
             wp_set_current_user($user->ID);
-            wp_set_auth_cookie($user->ID);
+            wp_set_auth_cookie($user->ID, true, is_ssl()); // Secure cookie if using SSL
 
             // Optional session (for non-WP usage)
             $_SESSION['user'] = $user->user_login;
 
-            wp_redirect(home_url('/all-talents')); // or your dashboard URL
+            // Ensure the user is properly logged in before redirecting
+            // Add a cache-busting parameter to prevent cached pages
+            $redirect_url = add_query_arg('login', 'success', get_post_type_archive_link('talent'));
+            wp_safe_redirect($redirect_url);
             exit;
         } else {
             $errors[] = "Invalid email or password.";
@@ -147,6 +150,36 @@ get_header();
     font-size: 1.1rem;
 }
 
+.chaitu-success-messages {
+    background: rgba(76, 175, 80, 0.15);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.chaitu-success-messages ul {
+    list-style: none;
+}
+
+.chaitu-success-messages li {
+    color: #4ade80;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    padding-left: 25px;
+    position: relative;
+}
+
+.chaitu-success-messages li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #4ade80;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
 .chaitu-form {
     display: flex;
     flex-direction: column;
@@ -207,6 +240,35 @@ get_header();
 .chaitu-input:hover {
     border-color: rgba(255, 255, 255, 0.25);
     background: rgba(255, 255, 255, 0.1);
+}
+
+.chaitu-password-container {
+    position: relative;
+}
+
+.chaitu-toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chaitu-toggle-password svg {
+    width: 20px;
+    height: 20px;
+    fill: #999999;
+    transition: fill 0.3s ease;
+}
+
+.chaitu-toggle-password:hover svg {
+    fill: #ffffff;
 }
 
 .chaitu-submit-btn {
@@ -333,6 +395,11 @@ get_header();
         padding: 15px 30px;
         font-size: 1rem;
     }
+    
+    .chaitu-toggle-password svg {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -422,12 +489,35 @@ get_header();
 }
 </style>
 
+<script>
+function togglePasswordVisibility() {
+    const passwordInput = document.querySelector('input[name="password"]');
+    const toggleButton = document.querySelector('.chaitu-toggle-password');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+    } else {
+        passwordInput.type = 'password';
+        toggleButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/><path d="M0 0h24v24H0z" fill="none"/></svg>';
+    }
+}
+</script>
+
 <div class="chaitu-body">
     <div class="chaitu-container">
         <div class="chaitu-header">
           
             <h2 class="chaitu-title">Sign In to Your Account</h2>
         </div>
+
+        <?php if (!empty($_SESSION['signup_success'])): ?>
+        <div class="chaitu-success-messages">
+            <ul>
+                <li><?= htmlspecialchars($_SESSION['signup_success']) ?></li>
+            </ul>
+        </div>
+        <?php unset($_SESSION['signup_success']); endif; ?>
 
         <?php if (!empty($errors)): ?>
         <div class="chaitu-error-messages">
@@ -449,8 +539,16 @@ get_header();
 
             <div class="chaitu-form-group">
                 <label class="chaitu-label">Password</label>
-                <input type="password" name="password" class="chaitu-input" placeholder="Enter your password"
-                    required />
+                <div class="chaitu-password-container">
+                    <input type="password" name="password" class="chaitu-input" placeholder="Enter your password"
+                        required />
+                    <button type="button" class="chaitu-toggle-password" onclick="togglePasswordVisibility()">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            <path d="M0 0h24v24H0z" fill="none"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" name="submit" class="chaitu-submit-btn">Sign In</button>
