@@ -368,7 +368,7 @@ function velvet_reel_find_duplicate_attachment($filename, $filesize, $existing_i
             // Check if names match exactly or if one is a sanitize-version/suffixed version of the other
             if ($existing_filename === $filename || 
                 strcasecmp($existing_name_only, $uploaded_name_only) === 0 ||
-                stripos($existing_name_only, $uploaded_name_only) === 0) {
+                ($uploaded_name_only !== '' && stripos($existing_name_only, $uploaded_name_only) === 0)) {
                 return $attachment_id;
             }
         }
@@ -530,6 +530,11 @@ function handle_talent_submission() {
         return;
     }
 
+    // Prevent timeout during file uploads
+    if (function_exists('set_time_limit')) {
+        @set_time_limit(300);
+    }
+
     // Verify nonce
     if (!isset($_POST['talent_submission_nonce']) || !wp_verify_nonce($_POST['talent_submission_nonce'], 'talent_submission')) {
         error_log('Talent submission nonce verification failed. POST data: ' . print_r($_POST, true));
@@ -682,11 +687,11 @@ function handle_talent_submission() {
             if (!empty($work_titles[$i])) {
                 $notable_works[] = [
                     'title' => sanitize_text_field($work_titles[$i]),
-                    'role' => sanitize_text_field($work_roles[$i]),
-                    'startDate' => sanitize_text_field($work_start_dates[$i]),
-                    'endDate' => velvet_reel_repeater_checkbox_is_checked($work_present, $i) ? '' : sanitize_text_field($work_end_dates[$i]),
+                    'role' => sanitize_text_field($work_roles[$i] ?? ''),
+                    'startDate' => sanitize_text_field($work_start_dates[$i] ?? ''),
+                    'endDate' => velvet_reel_repeater_checkbox_is_checked($work_present, $i) ? '' : sanitize_text_field($work_end_dates[$i] ?? ''),
                     'present' => velvet_reel_repeater_checkbox_is_checked($work_present, $i) ? 'on' : 'off',
-                    'description' => sanitize_textarea_field($work_descriptions[$i]),
+                    'description' => sanitize_textarea_field($work_descriptions[$i] ?? ''),
                 ];
             }
         }
@@ -726,6 +731,11 @@ function handle_talent_update() {
     // Check if our update form is submitted
     if ('POST' !== $_SERVER['REQUEST_METHOD'] || !isset($_POST['action']) || 'update_talent_profile' !== $_POST['action']) {
         return;
+    }
+
+    // Prevent timeout during file uploads
+    if (function_exists('set_time_limit')) {
+        @set_time_limit(300);
     }
 
     // Verify nonce

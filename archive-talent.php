@@ -233,8 +233,9 @@ get_header();
 
 /* Premium design for the verification card */
 .pending-verification-card {
-    background: linear-gradient(135deg, #fffee0 0%, #fef6b0 100%) !important;
-    border: 2px solid #ffd43b !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 12px !important;
     padding: 24px !important;
     margin: 20px auto 30px auto !important;
@@ -242,26 +243,28 @@ get_header();
     display: flex !important;
     align-items: flex-start !important;
     gap: 20px !important;
-    box-shadow: 0 8px 24px rgba(255, 212, 59, 0.15) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
     font-family: 'Inter', 'Poppins', sans-serif !important;
     text-align: left !important;
     transition: all 0.3s ease !important;
+    color: #ffffff !important;
 }
 .pending-verification-card:hover {
-    box-shadow: 0 12px 30px rgba(255, 212, 59, 0.25) !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4) !important;
     transform: translateY(-2px) !important;
 }
 .pending-verification-card .notification-icon {
     flex-shrink: 0 !important;
     width: 48px !important;
     height: 48px !important;
-    background: #ffd43b !important;
+    background: rgba(220, 53, 69, 0.15) !important;
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    color: #783301 !important;
-    box-shadow: 0 4px 10px rgba(255, 212, 59, 0.3) !important;
+    color: #ff6b7a !important;
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.1) !important;
+    border: 1px solid rgba(220, 53, 69, 0.3) !important;
 }
 .pending-verification-card .notification-icon svg {
     width: 24px !important;
@@ -273,20 +276,20 @@ get_header();
 .pending-verification-card h3 {
     margin: 0 0 10px 0 !important;
     font-size: 20px !important;
-    color: #783301 !important;
-    font-weight: 700 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
     letter-spacing: -0.3px !important;
     line-height: 1.3 !important;
 }
 .pending-verification-card p {
     margin: 0 0 20px 0 !important;
-    color: #783301 !important;
+    color: #cccccc !important;
     font-size: 15.5px !important;
     line-height: 1.6 !important;
 }
 .pending-verification-card strong {
-    color: #d94f00 !important;
-    font-weight: 800 !important;
+    color: #ff6b7a !important;
+    font-weight: 700 !important;
     font-size: 1.1em !important;
 }
 
@@ -294,7 +297,7 @@ get_header();
 .pending-verification-card .stripe-payment-container {
     margin-top: 15px !important;
     padding-top: 15px !important;
-    border-top: 1px dashed rgba(120, 51, 1, 0.2) !important;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1) !important;
 }
 .pending-verification-card .wp-stripe-checkout-button,
 .pending-verification-card button,
@@ -304,29 +307,29 @@ get_header();
     align-items: center !important;
     justify-content: center !important;
     padding: 14px 36px !important;
-    background: linear-gradient(135deg, #fe114b 0%, #d40e3b 100%) !important;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
     color: #ffffff !important;
     border: none !important;
     border-radius: 8px !important;
     font-size: 15px !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.8px !important;
     cursor: pointer !important;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-    box-shadow: 0 4px 15px rgba(254, 17, 75, 0.3) !important;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3) !important;
     text-decoration: none !important;
 }
 .pending-verification-card button:hover,
 .pending-verification-card input[type="submit"]:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 8px 25px rgba(254, 17, 75, 0.5) !important;
-    background: linear-gradient(135deg, #ff2c60 0%, #e51245 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4) !important;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
 }
 .pending-verification-card button:active,
 .pending-verification-card input[type="submit"]:active {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 10px rgba(254, 17, 75, 0.3) !important;
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3) !important;
 }
 
 .subscription-status-indicator {

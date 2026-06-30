@@ -681,34 +681,6 @@ get_header();
                         </div>
                     </div>
                 </div>
-                <?php elseif (!$is_logged_in) : ?>
-                <div class="express-interest-section">
-                    <div class="express-interest-header">
-                        <div class="express-interest-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="express-interest-title">Interested in this opportunity?</h3>
-                            <p class="express-interest-subtitle">Login to express your interest</p>
-                        </div>
-                    </div>
-                    
-                    <div class="login-prompt">
-                        <div class="login-prompt-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                                <polyline points="10 17 15 12 10 7"></polyline>
-                                <line x1="15" y1="12" x2="3" y2="12"></line>
-                            </svg>
-                        </div>
-                        <div class="login-prompt-text">
-                            <p>Please sign in to express your interest in this advertisement and connect with the poster.</p>
-                        </div>
-                        <a href="<?php echo home_url('/sign-in'); ?>" class="express-interest-btn">Sign In</a>
-                    </div>
-                </div>
                 <?php endif; ?>
             </footer>
         </article>

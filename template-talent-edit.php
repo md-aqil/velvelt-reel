@@ -444,7 +444,7 @@ $theme_version = $controller->get_theme_version();
                         </div>
                         <div class="notification-content">
                             <h3>Profile Verification Required</h3>
-                            <p>By proceeding, you agree to pay <strong>$ 5 </strong>for profile verification. for review
+                            <p>By proceeding, you agree to pay <strong>$5 </strong>for profile verification. for review
                                 and approval.</p>
                         </div>
                     </div>

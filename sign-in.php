@@ -532,16 +532,16 @@ function togglePasswordVisibility() {
         <form method="POST" action="<?= esc_url(home_url('/sign-in')) ?>" novalidate class="chaitu-form">
 
             <div class="chaitu-form-group">
-                <label class="chaitu-label">Email Address</label>
-                <input type="email" name="email" class="chaitu-input" placeholder="Enter your email address"
-                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required />
+                <label class="chaitu-label" for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="chaitu-input" placeholder="Enter your email address"
+                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" autocomplete="email" required />
             </div>
 
             <div class="chaitu-form-group">
-                <label class="chaitu-label">Password</label>
+                <label class="chaitu-label" for="password">Password</label>
                 <div class="chaitu-password-container">
-                    <input type="password" name="password" class="chaitu-input" placeholder="Enter your password"
-                        required />
+                    <input type="password" id="password" name="password" class="chaitu-input" placeholder="Enter your password"
+                        autocomplete="current-password" required />
                     <button type="button" class="chaitu-toggle-password" onclick="togglePasswordVisibility()">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>

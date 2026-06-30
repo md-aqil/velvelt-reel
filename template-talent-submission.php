@@ -46,9 +46,9 @@ $form_values = $controller->get_form_values();
     <div class="form-container">
         <!-- Progress Sidebar -->
         <?php
-// Include modular progress sidebar
-get_template_part('templates/talent-submission/progress-sidebar');
-?>
+        // Include modular progress sidebar
+        get_template_part('templates/talent-submission/progress-sidebar');
+        ?>
 
         <!-- Main Form Area -->
         <div class="form-main">
@@ -62,16 +62,16 @@ get_template_part('templates/talent-submission/progress-sidebar');
 
                 <!-- Include form steps using output buffering for cleaner template -->
                 <?php
-// Step 1: Profile Basics
-get_template_part('templates/talent-submission/form-step-1', null, array(
-    'values' => $form_values,
-));
+                // Step 1: Profile Basics
+                get_template_part('templates/talent-submission/form-step-1', null, array(
+                    'values' => $form_values,
+                ));
 
-// Step 2: Experience  
-get_template_part('templates/talent-submission/form-step-2', null, array(
-    'values' => $form_values,
-));
-?>
+                // Step 2: Experience  
+                get_template_part('templates/talent-submission/form-step-2', null, array(
+                    'values' => $form_values,
+                ));
+                ?>
 
                 <!-- STEP 3: Portfolio Summary -->
                 <div class="form-step" data-step="3">
@@ -197,10 +197,10 @@ get_template_part('templates/talent-submission/form-step-2', null, array(
 
                     <div class="domain-cards">
                         <?php
-if (function_exists('render_domain_cards')) {
-    render_domain_cards();
-}
-?>
+                        if (function_exists('render_domain_cards')) {
+                            render_domain_cards();
+                        }
+                        ?>
                     </div>
                     <input type="hidden" id="selectedDomain" name="domain">
                 </div>
@@ -213,17 +213,17 @@ if (function_exists('render_domain_cards')) {
 
                     <div id="roleContainer">
                         <?php
-if (function_exists('get_domains') && function_exists('render_role_cards')) {
-    $domains = get_domains();
-    foreach ($domains as $domain_key => $domain_data):
-?>
-                        <div class="role-category" data-domain="<?php echo esc_attr($domain_key); ?>">
-                            <?php render_role_cards($domain_key); ?>
-                        </div>
-                        <?php
-    endforeach;
-}
-?>
+                        if (function_exists('get_domains') && function_exists('render_role_cards')) {
+                            $domains = get_domains();
+                            foreach ($domains as $domain_key => $domain_data):
+                                ?>
+                                <div class="role-category" data-domain="<?php echo esc_attr($domain_key); ?>">
+                                    <?php render_role_cards($domain_key); ?>
+                                </div>
+                                <?php
+                            endforeach;
+                        }
+                        ?>
                     </div>
                     <input type="hidden" id="selectedRole" name="role">
                 </div>
@@ -235,19 +235,19 @@ if (function_exists('get_domains') && function_exists('render_role_cards')) {
 
                     <div id="roleFieldsContainer">
                         <?php
-if (function_exists('render_all_role_fields_clean')) {
-    render_all_role_fields_clean();
-}
-?>
+                        if (function_exists('render_all_role_fields_clean')) {
+                            render_all_role_fields_clean();
+                        }
+                        ?>
                     </div>
 
                     <?php
-$render_portfolio_gallery_shared_instance = true;
-$portfolio_role_key = '';
-$portfolio_role_name = '';
-include get_stylesheet_directory() . '/components/portfolio-gallery.php';
-unset($render_portfolio_gallery_shared_instance, $portfolio_role_key, $portfolio_role_name);
-?>
+                    $render_portfolio_gallery_shared_instance = true;
+                    $portfolio_role_key = '';
+                    $portfolio_role_name = '';
+                    include get_stylesheet_directory() . '/components/portfolio-gallery.php';
+                    unset($render_portfolio_gallery_shared_instance, $portfolio_role_key, $portfolio_role_name);
+                    ?>
 
                     <!-- Physical Details Section (only for models, actors, dancers, etc.) -->
                     <h3 id="physicalDetailsHeading" style="margin-top: 20px; margin-bottom: 15px;" hidden>Physical
@@ -373,10 +373,11 @@ unset($render_portfolio_gallery_shared_instance, $portfolio_role_key, $portfolio
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                             </svg>
+
                         </div>
                         <div class="notification-content">
                             <h3>Profile Verification Required</h3>
-                            <p>By proceeding, you agree to pay <strong>$ 5 </strong>for profile verification. for review
+                            <p>By proceeding, you agree to pay <strong>$5</strong>for profile verification. for review
                                 and approval.</p>
                         </div>
                     </div>
