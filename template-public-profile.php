@@ -303,8 +303,8 @@ while ($query->have_posts()):
             <!-- Top Section (Header Card) -->
             <header class="talent-header-card" style="margin-top:40px;">
                 <div class="talent-photo">
-                    <?php if (has_post_thumbnail()): ?>
-                        <?php the_post_thumbnail('large'); ?>
+                    <?php if (has_post_thumbnail($post_id)): ?>
+                        <?php echo get_the_post_thumbnail($post_id, 'large'); ?>
                     <?php else: ?>
                         <div class="talent-photo-placeholder">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
@@ -316,7 +316,7 @@ while ($query->have_posts()):
                     <?php endif; ?>
                 </div>
                 <div class="talent-info">
-                    <h1 class="talent-name"><?php the_title(); ?></h1>
+                    <h1 class="talent-name"><?php echo esc_html(get_the_title($post_id)); ?></h1>
                     <?php if ($role): ?>
                         <h2 class="talent-role-subtitle"><?php echo esc_html(ucwords(str_replace('-', ' ', $role))); ?></h2>
                     <?php endif; ?>
@@ -382,11 +382,14 @@ while ($query->have_posts()):
             </header>
 
             <!-- Biography Section -->
-            <?php if (get_the_content()): ?>
+            <?php 
+            $biography = get_post_field('post_content', $post_id);
+            if (!empty($biography)): 
+            ?>
                 <section class="talent-biography">
                     <h3 class="section-title">Biography</h3>
                     <div class="biography-content">
-                        <?php the_content(); ?>
+                        <?php echo apply_filters('the_content', $biography); ?>
                     </div>
                 </section>
                 <hr class="soft-divider">
