@@ -216,7 +216,7 @@ if ($has_access) {
             <div class="talent-profile-container">
     
                 <!-- Top Section (Header Card) -->
-                <header class="talent-header-card" style="margin-top:40px;">
+                <header class="talent-header-card">
                     <div class="talent-photo">
                         <?php if (has_post_thumbnail()): ?>
                             <?php the_post_thumbnail('large'); ?>
@@ -529,7 +529,6 @@ if ($has_access) {
             
             <!-- Admin Share Section -->
             <?php 
-            // Check if current user is admin or profile owner
             $is_admin = current_user_can('manage_options');
             $is_owner = (get_post_field('post_author', $post_id) == get_current_user_id());
             
@@ -538,24 +537,24 @@ if ($has_access) {
                 $share_token = get_post_meta($post_id, '_talent_shareable_token', true);
                 $nonce = wp_create_nonce('shareable_token_nonce');
             ?>
-            <div class="admin-share-section" style="margin-top: 40px; padding: 30px; background: #1a1a1a; border-radius: 12px; border: 1px solid #333;">
-                <h2 style="color: #fff; font-size: 20px; margin-bottom: 10px;">Share This Profile</h2>
-                <p style="color: #aaa; margin-bottom: 20px;">Generate a unique link to share this profile publicly (no login required)</p>
+            <div class="admin-share-section">
+                <h2>Share This Profile</h2>
+                <p>Generate a unique link to share this profile publicly (no login required)</p>
                 
-                <div class="sharing-controls" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                    <!-- Beautiful iOS-style Switch -->
-                    <label class="ios-switch" style="position: relative; display: inline-block; width: 60px; height: 34px;">
-                        <input type="checkbox" class="sharing-toggle-switch" data-talent-id="<?php echo esc_attr($post_id); ?>" data-nonce="<?php echo esc_attr($nonce); ?>" <?php checked($sharing_enabled, '1'); ?> style="opacity: 0; width: 0; height: 0;">
-                        <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: <?php echo ($sharing_enabled === '1') ? '#df1d3d' : '#ccc'; ?>; transition: .4s; border-radius: 34px;">
-                            <span style="position: absolute; content: ''; height: 26px; width: 26px; left: <?php echo ($sharing_enabled === '1') ? '28px' : '4px'; ?>; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
-                        </span>
-                    </label>
-                    <span style="color: #fff; font-size: 14px; font-weight: 500;"><?php echo ($sharing_enabled === '1') ? 'Public Sharing Enabled' : 'Enable Public Sharing'; ?></span>
+                <div class="sharing-controls">
+                    <div class="sharing-controls-left">
+                        <label class="ios-switch">
+                            <input type="checkbox" class="sharing-toggle-switch" data-talent-id="<?php echo esc_attr($post_id); ?>" data-nonce="<?php echo esc_attr($nonce); ?>" <?php checked($sharing_enabled, '1'); ?>>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <span class="switch-label"><?php echo ($sharing_enabled === '1') ? 'Public Sharing Enabled' : 'Enable Public Sharing'; ?></span>
+                    </div>
                     
-                    <button type="button" class="share-profile-btn" data-talent-id="<?php echo esc_attr($post_id); ?>" data-nonce="<?php echo esc_attr($nonce); ?>" <?php echo ($sharing_enabled !== '1') ? 'disabled' : ''; ?> style="padding: 10px 20px; background: <?php echo ($sharing_enabled === '1') ? '#df1d3d' : '#555'; ?>; color: white; border: none; border-radius: 6px; cursor: <?php echo ($sharing_enabled === '1') ? 'pointer' : 'not-allowed'; ?>; font-weight: bold; transition: all 0.3s ease;">
+                    <button type="button" class="share-profile-btn" data-talent-id="<?php echo esc_attr($post_id); ?>" data-nonce="<?php echo esc_attr($nonce); ?>" <?php echo ($sharing_enabled !== '1') ? 'disabled' : ''; ?>>
                         <?php echo ($sharing_enabled === '1') ? 'Share Profile' : 'Enable Sharing First'; ?>
                     </button>
                 </div>
+            </div>
             </div>
             <?php endif; ?>
 
@@ -577,7 +576,7 @@ if ($has_access) {
             <div class="portfolio-modal-content">
                 <img id="portfolio-modal-image" src="" alt="Portfolio image">
                 <!-- Video container for modal -->
-                <div id="portfolio-modal-video" class="portfolio-modal-video" style="display: none;">
+                <div id="portfolio-modal-video" class="portfolio-modal-video">
                     <iframe id="portfolio-modal-iframe" src="" frameborder="0" allow="autoplay; fullscreen; encrypted-media; accelerometer; gyroscope; picture-in-picture" allowfullscreen loading="eager"></iframe>
                 </div>
                 <div class="portfolio-modal-counter">
@@ -588,30 +587,30 @@ if ($has_access) {
     
         <!-- Share Profile Modal (Admin Only) -->
         <?php if (current_user_can('manage_options') || get_post_field('post_author', $post_id) == get_current_user_id()) : ?>
-        <div class="share-modal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7);">
-            <div class="share-modal-content" style="background-color: #1a1a1a; margin: 10% auto; padding: 30px; border-radius: 12px; max-width: 500px; border: 1px solid #333; color: #fff;">
-                <span class="close-share-modal" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 20px;">&times;</span>
-                <h3 style="margin-top: 0; color: #fff; font-size: 22px;">Share This Profile</h3>
-                <p style="color: #aaa; margin-bottom: 20px;">Copy and share this link with anyone. They can view this profile without logging in.</p>
+        <div class="share-modal">
+            <div class="share-modal-content">
+                <span class="close-share-modal">&times;</span>
+                <h3>Share This Profile</h3>
+                <p>Copy and share this link with anyone. They can view this profile without logging in.</p>
                 
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 8px; color: #fff; font-weight: bold;">Public Profile URL:</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="share-profile-url" readonly style="flex: 1; padding: 10px; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; color: #fff; font-size: 14px;">
-                        <button type="button" class="copy-share-url-btn" style="padding: 10px 20px; background: #df1d3d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap;">Copy Link</button>
+                <div class="share-url-section">
+                    <label class="share-url-label">Public Profile URL:</label>
+                    <div class="share-url-container">
+                        <input type="text" id="share-profile-url" readonly class="share-url-input">
+                        <button type="button" class="copy-share-url-btn share-url-btn">Copy Link</button>
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px; justify-content: space-between;">
-                    <button type="button" class="regenerate-token-btn" data-talent-id="<?php echo $post_id; ?>" data-nonce="<?php echo esc_attr($nonce); ?>" style="padding: 10px 20px; background: #444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Regenerate Link</button>
-                    <button type="button" class="close-share-modal" style="padding: 10px 20px; background: #df1d3d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Close</button>
+                <div class="share-modal-actions">
+                    <button type="button" class="regenerate-token-btn" data-talent-id="<?php echo $post_id; ?>" data-nonce="<?php echo esc_attr($nonce); ?>">Regenerate Link</button>
+                    <button type="button" class="close-share-modal share-modal-close-btn">Close</button>
                 </div>
                 
-                <p style="margin-top: 20px; color: #ff9800; font-size: 13px;"><strong>Note:</strong> Anyone with this link can view this public profile. You can disable sharing or regenerate the link anytime.</p>
+                <p class="share-modal-note"><strong>Note:</strong> Anyone with this link can view this public profile. You can disable sharing or regenerate the link anytime.</p>
             </div>
         </div>
         
-        <div class="share-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;"></div>
+        <div class="share-modal-overlay"></div>
         <?php endif; ?>
     
         <?php

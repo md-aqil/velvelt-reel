@@ -9,6 +9,21 @@
 get_header(); ?>
 
 <?php
+if (!function_exists('velvet_get_category_svg')) {
+    function velvet_get_category_svg($cat_name) {
+        if (stripos($cat_name, 'Casting') !== false) {
+            return '<svg class="category-icon-svg" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 2a5 5 0 0 0-5 5v3a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z"></path><path d="M17 14h.01"></path><path d="M7 14h.01"></path><path d="M12 18h.01"></path><path d="M2 22a10 10 0 0 1 20 0H2z"></path></svg>';
+        } elseif (stripos($cat_name, 'Crew') !== false) {
+            return '<svg class="category-icon-svg" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>';
+        } elseif (stripos($cat_name, 'Rentals') !== false) {
+            return '<svg class="category-icon-svg" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2.5"></rect><rect x="2" y="14" width="20" height="8" rx="2.5"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>';
+        }
+        return '<svg class="category-icon-svg" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>';
+    }
+}
+?>
+
+<?php
 $can_post_ad = false;
 if (!function_exists('has_membership_plan')) {
     require_once get_stylesheet_directory() . '/includes/access-control.php';
@@ -111,9 +126,14 @@ $is_super_admin = is_super_admin(); // Super Admin has full access
                         $name = $category->name;
                         $link = get_term_link($category);
                         ?>
-                        <a href="<?php echo esc_url($link); ?>" class="category-card">
-                            <h3 class="category-name"><?php echo esc_html($name); ?></h3>
-                            <span class="category-count"><?php echo number_format_i18n($count); ?> ads</span>
+                        <a href="<?php echo esc_url($link); ?>" class="category-card" role="button">
+                            <div class="category-icon-wrapper">
+                                <?php echo velvet_get_category_svg($name); ?>
+                            </div>
+                            <div class="category-info">
+                                <h3 class="category-name"><?php echo esc_html($name); ?></h3>
+                                <span class="category-count"><?php echo number_format_i18n($count); ?> ads</span>
+                            </div>
                         </a>
                         <?php
                         $found_categories[] = $category->name;
@@ -130,9 +150,14 @@ $is_super_admin = is_super_admin(); // Super Admin has full access
                         $link = home_url('/advertisement/?advertisement_category=' . $slug);
                     }
                     ?>
-                    <a href="<?php echo esc_url($link); ?>" class="category-card">
-                        <h3 class="category-name"><?php echo esc_html($cat_name); ?></h3>
-                        <span class="category-count">0 ads</span>
+                    <a href="<?php echo esc_url($link); ?>" class="category-card" role="button">
+                        <div class="category-icon-wrapper">
+                            <?php echo velvet_get_category_svg($cat_name); ?>
+                        </div>
+                        <div class="category-info">
+                            <h3 class="category-name"><?php echo esc_html($cat_name); ?></h3>
+                            <span class="category-count">0 ads</span>
+                        </div>
                     </a>
                     <?php
                 }
@@ -569,39 +594,83 @@ $is_super_admin = is_super_admin(); // Super Admin has full access
 
     .categories-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 20px;
-        max-width: 1000px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        max-width: 1200px;
         margin: 0 auto;
-        justify-content: center;
     }
 
     .category-card {
-        background: #111;
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        border: 1px solid #1a1a1a;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 20px !important;
+        background: rgba(18, 18, 20, 0.5) !important;
+        backdrop-filter: blur(12px) !important;
+        border-radius: 16px !important;
+        padding: 24px 28px !important;
+        text-align: left !important;
+        text-decoration: none !important;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        border: 1px solid #1f1f23 !important;
+        cursor: pointer !important;
+        box-sizing: border-box !important;
+        height: 100% !important;
+        outline: none !important;
+        pointer-events: auto !important;
     }
 
     .category-card:hover {
-        transform: translateY(-5px);
-        border-color: #b2122d;
-        background: #151515;
+        transform: translateY(-4px) !important;
+        border-color: rgba(254, 17, 75, 0.4) !important;
+        background: rgba(254, 17, 75, 0.04) !important;
+        box-shadow: 0 10px 30px rgba(254, 17, 75, 0.08) !important;
+    }
+
+    .category-icon-wrapper {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        background: rgba(254, 17, 75, 0.08);
+        border: 1px solid rgba(254, 17, 75, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #FE114B;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover .category-icon-wrapper {
+        background: #FE114B;
+        color: #fff;
+        box-shadow: 0 0 15px rgba(254, 17, 75, 0.3);
+    }
+
+    .category-icon-svg {
+        width: 24px;
+        height: 24px;
+        stroke: currentColor;
+    }
+
+    .category-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 
     .category-name {
-        color: #fff;
-        font-size: 1rem;
-        margin-bottom: 6px;
-        font-weight: 600;
+        color: #fff !important;
+        font-size: 1.15rem !important;
+        margin: 0 !important;
+        font-weight: 700 !important;
+        font-family: 'Outfit', sans-serif !important;
     }
 
     .category-count {
-        color: #666;
-        font-size: 0.85rem;
+        color: #71717a !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
     }
 
     /* Ads Section */

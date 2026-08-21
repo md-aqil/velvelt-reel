@@ -197,14 +197,14 @@ function initFormEnhancements() {
  */
 function initMobileMenuToggle() {
     try {
-        const menuToggle = document.querySelector('.menu-toggle');
+        const menuToggle = document.querySelector('.mobile-menu-toggle');
         const mainMenu = document.querySelector('.main-navigation');
-        
+
         if (menuToggle && mainMenu) {
             menuToggle.addEventListener('click', function() {
-                mainMenu.classList.toggle('toggled');
-                menuToggle.classList.toggle('toggled');
-                
+                mainMenu.classList.toggle('active');
+                menuToggle.classList.toggle('active');
+
                 const expanded = menuToggle.getAttribute('aria-expanded') === 'true' || false;
                 menuToggle.setAttribute('aria-expanded', !expanded);
             });

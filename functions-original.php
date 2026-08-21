@@ -1,4 +1,44 @@
 <?php
+
+/**
+ * Ensure missing Elementor dependencies are registered.
+ */
+function ensure_elementor_dependencies() {
+    // Register the controls if missing
+    if (!wp_script_is('elementor-v2-editor-controls', 'registered')) {
+        wp_register_script(
+            'elementor-v2-editor-controls',
+            get_stylesheet_directory_uri() . '/js/elementor-v2-editor-controls.js',
+            [],
+            '6.9.1',
+            true
+        );
+    }
+
+    // Register editing panel if missing
+    if (!wp_script_is('elementor-v2-editor-editing-panel', 'registered')) {
+        wp_register_script(
+            'elementor-v2-editor-editing-panel',
+            get_stylesheet_directory_uri() . '/js/elementor-v2-editor-editing-panel.js',
+            [],
+            '6.9.1',
+            true
+        );
+    }
+
+    // Register props if missing
+    if (!wp_script_is('elementor-v2-editor-props', 'registered')) {
+        wp_register_script(
+            'elementor-v2-editor-props',
+            get_stylesheet_directory_uri() . '/js/elementor-v2-editor-props.js',
+            [],
+            '6.9.1',
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'ensure_elementor_dependencies', 15);
+<?php
 ob_start();
 /**
  * Theme functions and definitions.

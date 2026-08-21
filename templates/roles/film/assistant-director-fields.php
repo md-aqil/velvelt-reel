@@ -13,12 +13,13 @@ if ($role_data):
     <div class="role-specific-fields" data-role-specific="<?php echo esc_attr($role_key); ?>" style="display: none;">
         <div class="form-group full-width">
             <label><?php echo $role_name; ?> Categories</label>
-            <div class="checkbox-grid">
+            <div class="radio-cards">
                 <?php foreach ($role_data['categories'] as $category_key => $category_value): ?>
-                <label class="checkbox-label">
+                <label class="radio-card">
                     <input type="checkbox" name="designCategories[]" value="<?php echo esc_attr($category_key); ?>">
-                    <span class="control-indicator"></span>
-                    <span><?php echo esc_html($category_value); ?></span>
+                    <div class="card-content">
+                        <span><?php echo esc_html($category_value); ?></span>
+                    </div>
                 </label>
                 <?php endforeach; ?>
             </div>

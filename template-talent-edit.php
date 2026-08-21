@@ -26,22 +26,6 @@ $theme_version = $controller->get_theme_version();
 </head>
 
 <body>
-    <!-- Mobile Alert -->
-    <div class="mobile-alert">
-        <div class="alert-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-        </div>
-        <div class="alert-content">
-            <h3>For Better Experience</h3>
-            <p>Kindly open this page on a web browser for better experience</p>
-        </div>
-    </div>
-    
     <div class="form-container">
         <!-- Progress Sidebar -->
         <?php get_template_part('templates/talent-submission/progress-sidebar'); ?>
@@ -390,48 +374,47 @@ $theme_version = $controller->get_theme_version();
                     <h2>Preview & Publish</h2>
                     <p class="step-description">Review your portfolio and add social links before publishing.</p>
 
-                    <div class="form-group full-width">
+                    <div class="form-group full-width social-links-section">
                         <h3>Social Links</h3>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="instagram">Instagram</label>
                                 <input type="text" id="instagram" name="instagram" placeholder="@username"
                                     value="<?php echo esc_attr($controller->get('instagram')); ?>">
-                                <label class="checkbox-label" style="font-weight: normal; margin-top: 5px;">
+                                <label class="checkbox-inline">
                                     <input type="checkbox" name="hideInstagram" value="1" 
                                         <?php checked($controller->get('hide_instagram'), '1'); ?>>
                                     <span class="control-indicator"></span>
-                                    <span>Hide my Instagram from public view</span>
+                                    <span>Hide from public view</span>
                                 </label>
                             </div>
                             <div class="form-group">
                                 <label for="tiktok">TikTok</label>
                                 <input type="text" id="tiktok" name="tiktok" placeholder="@username"
                                     value="<?php echo esc_attr($controller->get('tiktok')); ?>">
-                                <label class="checkbox-label" style="font-weight: normal; margin-top: 5px;">
+                                <label class="checkbox-inline">
                                     <input type="checkbox" name="hideTiktok" value="1" 
                                         <?php checked($controller->get('hide_tiktok'), '1'); ?>>
                                     <span class="control-indicator"></span>
-                                    <span>Hide my TikTok from public view</span>
+                                    <span>Hide from public view</span>
                                 </label>
                             </div>
                         </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="website">Personal Website</label>
-                                <input type="url" id="website" name="website" placeholder="https://..."
-                                    value="<?php echo esc_attr($controller->get('website')); ?>">
-                                <label class="checkbox-label" style="font-weight: normal; margin-top: 5px;">
-                                    <input type="checkbox" name="hideWebsite" value="1" 
-                                        <?php checked($controller->get('hide_website'), '1'); ?>>
-                                    <span class="control-indicator"></span>
-                                    <span>Hide my website from public view</span>
-                                </label>
-                            </div>
+
+                        <div class="form-group full-width">
+                            <label for="website">Personal Website</label>
+                            <input type="url" id="website" name="website" placeholder="https://..."
+                                value="<?php echo esc_attr($controller->get('website')); ?>">
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="hideWebsite" value="1" 
+                                    <?php checked($controller->get('hide_website'), '1'); ?>>
+                                <span class="control-indicator"></span>
+                                <span>Hide from public view</span>
+                            </label>
                         </div>
                     </div>
 
-                    <?php 
+                    <?php
                     $has_paid_approval = get_post_meta($controller->get_talent_id(), '_talent_has_paid_approval', true);
                     if (!$has_paid_approval) : 
                     ?>

@@ -61,7 +61,13 @@ function enqueue_talent_form_assets() {
     $should_enqueue = $is_submission_page || $is_edit_page;
 
     if ($should_enqueue) {
-        // Enqueue the form CSS
+        // Dequeue Elementor frontend scripts — these pages use custom templates
+        // without Elementor widgets, so elementorFrontendConfig is never set,
+        // causing JS errors.
+        wp_dequeue_script('elementor-frontend-js');
+        wp_deregister_script('elementor-frontend-js');
+        wp_dequeue_script('elementor-frontend-modules-js');
+        wp_deregister_script('elementor-frontend-modules-js');
         wp_enqueue_style(
             'talent-form-style',
             get_stylesheet_directory_uri() . '/form-style.css',
@@ -84,6 +90,10 @@ function enqueue_talent_form_assets() {
             HELLO_ELEMENTOR_CHILD_VERSION,
             true
         );
+
+        // Provide a minimal elementorFrontendConfig fallback in case any
+        // remaining script references it
+        wp_add_inline_script('theme-global-js', 'window.elementorFrontendConfig = window.elementorFrontendConfig || {};', 'before');
 
         // Enqueue the talent submission JS file
         wp_enqueue_script(
@@ -155,6 +165,13 @@ function enqueue_talent_form_assets() {
             'draft' => empty($draft_data) ? null : $draft_data,
             'isEditPage' => $is_edit_page ? 1 : 0
         ]);
+    }
+
+    // Define elementorFrontendConfig early in <head> as a safety net
+    if ($should_enqueue) {
+        add_action('wp_head', function() {
+            echo '<script>window.elementorFrontendConfig = window.elementorFrontendConfig || {};</script>';
+        }, 1);
     }
 
     // Check if we're on a single talent page

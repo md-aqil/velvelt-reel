@@ -30,13 +30,72 @@ $myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateCh
 $myUpdateChecker->setBranch('main');
 
 /**
- * Suppress Elementor v2 editor script dependency warnings
- * These are known issues with Elementor Pro and don't affect functionality
+ * Register missing Elementor dependency scripts.
+ *
+ * Elementor's v2 editor loader (Editor_V2_Loader) does NOT register
+ * "elementor-v2-editor-controls", "elementor-v2-editor-editing-panel",
+ * and "elementor-v2-editor-props" because they are absent from the
+ * LIBS and EXTENSIONS package lists. However, both Elementor core v2
+ * packages and the "extended" variants from Pro Elements / Elementor Pro
+ * declare these as dependencies. Without them, WordPress triggers
+ * _doing_it_wrong() during dependency resolution.
+ *
+ * Additionally, Elementor's WebCli module (priority 5 on wp_enqueue_scripts)
+ * registers "elementor-web-cli" with a dependency on "elementor-vendors-redux",
+ * but Common App registers "elementor-vendors-redux" at priority 9 — after
+ * WebCli's registration. This race condition means "elementor-vendors-redux"
+ * is missing when dependency resolution runs.
+ *
+ * CRITICAL: Elementor's Editor::enqueue_scripts() resets the global
+ * $wp_scripts (new WP_Scripts) at wp_enqueue_scripts priority 999999.
+ * Hooks on admin_enqueue_scripts / wp_enqueue_scripts run BEFORE the reset
+ * and their registrations are wiped. We must hook on Elementor's own
+ * editor hooks, which fire AFTER the reset.
  */
-function suppress_elementor_v2_warnings() {
-    remove_action('admin_notices', 'wp_admin_notice_doing_it_wrong');
+function ensure_elementor_dependencies() {
+    $missing = [
+        'elementor-v2-editor-controls'       => [],
+        'elementor-v2-editor-editing-panel'  => [],
+        'elementor-v2-editor-props'          => [],
+        'elementor-vendors-redux'            => ['react', 'react-dom'],
+    ];
+
+    foreach ($missing as $handle => $deps) {
+        if (!wp_script_is($handle, 'registered')) {
+            wp_register_script(
+                $handle,
+                get_stylesheet_directory_uri() . '/js/elementor-v2-placeholder.js',
+                $deps,
+                '6.9.1',
+                true
+            );
+        }
+    }
+
+    // Ensure elementor-vendors-redux points to the real Elementor JS if available.
+    if (defined('ELEMENTOR_ASSETS_URL')) {
+        $real_js = ELEMENTOR_ASSETS_URL . 'js/vendors-redux.min.js';
+        if (wp_script_is('elementor-vendors-redux', 'registered')) {
+            wp_deregister_script('elementor-vendors-redux');
+        }
+        wp_register_script(
+            'elementor-vendors-redux',
+            $real_js,
+            ['react', 'react-dom'],
+            defined('ELEMENTOR_VERSION') ? ELEMENTOR_VERSION : '6.9.1',
+            true
+        );
+    }
 }
-add_action('admin_init', 'suppress_elementor_v2_warnings', 999);
+// Fires after Elementor resets $wp_scripts and registers its own v2 scripts,
+// but before it enqueues them. This ensures the three base handles exist
+// when Pro Elements enqueues the "-extended" variants and when all_deps()
+// resolves the dependency tree.
+add_action('elementor/editor/before_enqueue_scripts', 'ensure_elementor_dependencies', 1);
+add_action('elementor/editor/v2/scripts/register', 'ensure_elementor_dependencies', 1);
+// Fallbacks for non-editor contexts
+add_action('admin_enqueue_scripts', 'ensure_elementor_dependencies', 5);
+add_action('wp_enqueue_scripts', 'ensure_elementor_dependencies', 5);
 
 /**
  * Add custom CSS to hide page header on membership-login page
@@ -1745,5 +1804,162 @@ add_filter('manage_users_custom_column', function ($output, $column_name, $user_
     }
     return $output;
 }, 10, 3);
+
+/**
+ * Retrieve the active talent profile associated with the current public token request.
+ */
+function get_public_talent_by_token() {
+    static $talent_post = null;
+    if ($talent_post !== null) {
+        return $talent_post;
+    }
+    
+    $public_token = get_query_var('public_talent_token');
+    if (empty($public_token)) {
+        $talent_post = false;
+        return false;
+    }
+    
+    $args = array(
+        'post_type' => 'talent',
+        'post_status' => 'publish',
+        'meta_query' => array(
+            array(
+                'key' => '_talent_shareable_token',
+                'value' => $public_token,
+                'compare' => '='
+            ),
+            array(
+                'key' => '_talent_public_sharing_enabled',
+                'value' => '1',
+                'compare' => '='
+            )
+        ),
+        'posts_per_page' => 1
+    );
+    
+    $query = new WP_Query($args);
+    if ($query->have_posts()) {
+        $talent_post = $query->posts[0];
+    } else {
+        $talent_post = false;
+    }
+    
+    return $talent_post;
+}
+
+/**
+ * Filter the browser document title
+ */
+add_filter('document_title_parts', function($title_parts) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        $title_parts['title'] = esc_html($talent->post_title) . ' - Portfolio';
+        $title_parts['site'] = 'The VelvetReel';
+    }
+    return $title_parts;
+});
+
+/**
+ * Filter Rank Math titles and metadata for public talent shares
+ */
+add_filter('rank_math/frontend/title', function($title) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        return esc_html($talent->post_title) . ' - Portfolio | The VelvetReel';
+    }
+    return $title;
+});
+
+add_filter('rank_math/frontend/description', function($desc) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        $excerpt = get_the_excerpt($talent);
+        if (!$excerpt) {
+            $excerpt = "View " . esc_html($talent->post_title) . "'s professional talent portfolio, photos, and resume on The VelvetReel.";
+        }
+        return esc_attr(wp_strip_all_tags($excerpt));
+    }
+    return $desc;
+});
+
+// Facebook OpenGraph tags
+add_filter('rank_math/opengraph/facebook/title', function($title) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        return esc_html($talent->post_title) . ' - Portfolio | The VelvetReel';
+    }
+    return $title;
+});
+
+add_filter('rank_math/opengraph/facebook/description', function($desc) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        $excerpt = get_the_excerpt($talent);
+        if (!$excerpt) {
+            $excerpt = "View " . esc_html($talent->post_title) . "'s professional talent portfolio, photos, and resume on The VelvetReel.";
+        }
+        return esc_attr(wp_strip_all_tags($excerpt));
+    }
+    return $desc;
+});
+
+add_filter('rank_math/opengraph/facebook/image', function($img) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        $img_id = get_post_thumbnail_id($talent->ID);
+        if ($img_id) {
+            $img_url = wp_get_attachment_image_url($img_id, 'large');
+            if ($img_url) {
+                return $img_url;
+            }
+        }
+    }
+    return $img;
+});
+
+// Twitter cards tags
+add_filter('rank_math/opengraph/twitter/title', function($title) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        return esc_html($talent->post_title) . ' - Portfolio | The VelvetReel';
+    }
+    return $title;
+});
+
+add_filter('rank_math/opengraph/twitter/description', function($desc) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        $excerpt = get_the_excerpt($talent);
+        if (!$excerpt) {
+            $excerpt = "View " . esc_html($talent->post_title) . "'s professional talent portfolio, photos, and resume on The VelvetReel.";
+        }
+        return esc_attr(wp_strip_all_tags($excerpt));
+    }
+    return $desc;
+});
+
+add_filter('rank_math/opengraph/twitter/image', function($img) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        $img_id = get_post_thumbnail_id($talent->ID);
+        if ($img_id) {
+            $img_url = wp_get_attachment_image_url($img_id, 'large');
+            if ($img_url) {
+                return $img_url;
+            }
+        }
+    }
+    return $img;
+});
+
+// Canonical URL
+add_filter('rank_math/frontend/canonical', function($canonical) {
+    $talent = get_public_talent_by_token();
+    if ($talent) {
+        return home_url('/p/' . get_query_var('public_talent_token') . '/');
+    }
+    return $canonical;
+});
 
 ?>
