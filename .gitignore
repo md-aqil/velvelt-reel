@@ -22,3 +22,21 @@ Thumbs.db
 *.tmp
 *.bak
 *~
+
+# Dependencies
+node_modules/
+plugin-update-checker-master/
+vendor/
+
+# Build output
+graphify-out/
+index.html
+
+# Test files
+test-*.php
+test-flow.js
+quick-email-test.php
+dump_profile.php
+
+# Docs
+*.md
