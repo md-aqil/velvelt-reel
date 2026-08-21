@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 define('HELLO_ELEMENTOR_CHILD_VERSION', '2.0.3');
 
 // Load the Plugin Update Checker library
-require_once get_stylesheet_directory() . '/plugin-update-checker-master/plugin-update-checker.php';
+require_once get_stylesheet_directory() . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
 
 // Initialize the updater
 $myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
