@@ -26,7 +26,6 @@ Thumbs.db
 # Dependencies
 node_modules/
 plugin-update-checker-master/
-vendor/
 
 # Build output
 graphify-out/

@@ -1,0 +1,41 @@
+<?php return array(
+    'root' => array(
+        'name' => '__root__',
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '12df45a28bd0de473b17a2846a38a827192e7780',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => true,
+    ),
+    'versions' => array(
+        '__root__' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '12df45a28bd0de473b17a2846a38a827192e7780',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'phpmailer/phpmailer' => array(
+            'pretty_version' => 'v6.10.0',
+            'version' => '6.10.0.0',
+            'reference' => 'bf74d75a1fde6beaa34a0ddae2ec5fce0f72a144',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../phpmailer/phpmailer',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'yahnis-elsts/plugin-update-checker' => array(
+            'pretty_version' => 'v5.7',
+            'version' => '5.7.0.0',
+            'reference' => '275a96a2a18d03c34c87f35cb68673c8c49ac3b1',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../yahnis-elsts/plugin-update-checker',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+    ),
+);
