@@ -1110,14 +1110,16 @@ a.contact-value:hover {
     display: flex;
     align-items: center;
     flex: 1;
-    gap: 12px;
+    gap: 16px;
     min-width: 0;
+    padding-left: 4px;
 }
 
 .velvet-search-icon {
     color: #888888;
     flex-shrink: 0;
     transition: color 0.3s ease;
+    margin-right: 4px;
 }
 
 .velvet-search-glass-pill:focus-within .velvet-search-icon {
@@ -1126,14 +1128,26 @@ a.contact-value:hover {
 
 .velvet-search-input {
     width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
+    background: transparent !important;
+    border: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
     color: #ffffff;
     font-family: 'Gantari', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-size: 15px;
     font-weight: 500;
     padding: 10px 0;
+}
+
+.velvet-search-input:focus,
+.velvet-search-input:hover,
+.velvet-search-input:active {
+    background: transparent !important;
+    border: none !important;
+    border-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .velvet-search-input::placeholder {
