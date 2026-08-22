@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
-define('HELLO_ELEMENTOR_CHILD_VERSION', '2.0.3');
+define('HELLO_ELEMENTOR_CHILD_VERSION', '2.1.0');
 
 // Load the Plugin Update Checker library
 require_once get_stylesheet_directory() . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
@@ -58,6 +58,9 @@ function ensure_elementor_dependencies() {
         'elementor-v2-editor-editing-panel'  => [],
         'elementor-v2-editor-props'          => [],
         'elementor-vendors-redux'            => ['react', 'react-dom'],
+        'imagesLoaded'                       => ['jquery'],
+        'jquery-chosen'                      => ['jquery'],
+        'jet-plugins'                        => ['jquery'],
     ];
 
     foreach ($missing as $handle => $deps) {
@@ -69,6 +72,17 @@ function ensure_elementor_dependencies() {
                 '6.9.1',
                 true
             );
+        }
+    }
+
+    // Alias imagesLoaded to WP core imagesloaded script if registered
+    if (wp_script_is('imagesloaded', 'registered') && !wp_script_is('imagesLoaded', 'registered')) {
+        $wp_scripts = wp_scripts();
+        if (isset($wp_scripts->registered['imagesloaded'])) {
+            $src = $wp_scripts->registered['imagesloaded']->src;
+            $deps = $wp_scripts->registered['imagesloaded']->deps;
+            $ver = $wp_scripts->registered['imagesloaded']->ver;
+            wp_register_script('imagesLoaded', $src, $deps, $ver, true);
         }
     }
 
@@ -167,6 +181,22 @@ require_once get_stylesheet_directory() . '/includes/draft-views.php';
 
 // Role fields loader functionality
 require_once get_stylesheet_directory() . '/includes/role-fields-consistent.php';
+
+// Security hardening and newsletter AJAX handler
+require_once get_stylesheet_directory() . '/includes/security-hardening.php';
+
+// Custom high-performance video hero slider
+require_once get_stylesheet_directory() . '/includes/hero-slider.php';
+
+// Custom high-performance talent grid component
+require_once get_stylesheet_directory() . '/includes/talent-grid.php';
+
+// Custom Testimonials CPT
+require_once get_stylesheet_directory() . '/includes/testimonials-cpt.php';
+
+// Custom premium testimonials slider component
+require_once get_stylesheet_directory() . '/includes/testimonials-slider.php';
+
 
 
 

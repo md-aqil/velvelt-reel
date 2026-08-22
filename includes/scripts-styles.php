@@ -30,6 +30,33 @@ function custom_enqueue_scripts() {
         'isUserLoggedIn' => is_user_logged_in() ? 1 : 0
     ]);
 
+    // Enqueue Hero Video Slider JS
+    wp_enqueue_script(
+        'velvet-hero-slider-js',
+        get_stylesheet_directory_uri() . '/js/hero-slider.js',
+        array(),
+        HELLO_ELEMENTOR_CHILD_VERSION,
+        true
+    );
+
+    // Enqueue Talent Grid Filter JS
+    wp_enqueue_script(
+        'velvet-talent-grid-js',
+        get_stylesheet_directory_uri() . '/js/talent-grid.js',
+        array(),
+        HELLO_ELEMENTOR_CHILD_VERSION,
+        true
+    );
+
+    // Enqueue Testimonials Slider JS
+    wp_enqueue_script(
+        'velvet-testimonials-slider-js',
+        get_stylesheet_directory_uri() . '/js/testimonials-slider.js',
+        array(),
+        HELLO_ELEMENTOR_CHILD_VERSION,
+        true
+    );
+
     // Debug: Log enqueued scripts
     if (defined('WP_DEBUG') && WP_DEBUG) {
         global $wp_scripts;

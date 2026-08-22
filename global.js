@@ -198,15 +198,62 @@ function initFormEnhancements() {
 function initMobileMenuToggle() {
     try {
         const menuToggle = document.querySelector('.mobile-menu-toggle');
+        const menuClose = document.querySelector('.mobile-menu-close');
         const mainMenu = document.querySelector('.main-navigation');
+        const overlay = document.querySelector('.mobile-menu-overlay');
 
-        if (menuToggle && mainMenu) {
-            menuToggle.addEventListener('click', function() {
-                mainMenu.classList.toggle('active');
-                menuToggle.classList.toggle('active');
+        function openMenu() {
+            if (mainMenu) mainMenu.classList.add('active');
+            if (menuToggle) {
+                menuToggle.classList.add('active');
+                menuToggle.setAttribute('aria-expanded', 'true');
+            }
+            if (overlay) overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
 
-                const expanded = menuToggle.getAttribute('aria-expanded') === 'true' || false;
-                menuToggle.setAttribute('aria-expanded', !expanded);
+        function closeMenu() {
+            if (mainMenu) mainMenu.classList.remove('active');
+            if (menuToggle) {
+                menuToggle.classList.remove('active');
+                menuToggle.setAttribute('aria-expanded', 'false');
+            }
+            if (overlay) overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (mainMenu && mainMenu.classList.contains('active')) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            });
+        }
+
+        if (menuClose) {
+            menuClose.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeMenu();
+            });
+        }
+
+        if (overlay) {
+            overlay.addEventListener('click', closeMenu);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mainMenu && mainMenu.classList.contains('active')) {
+                closeMenu();
+            }
+        });
+
+        if (mainMenu) {
+            const navLinks = mainMenu.querySelectorAll('a');
+            navLinks.forEach(function(link) {
+                link.addEventListener('click', closeMenu);
             });
         }
     } catch (error) {

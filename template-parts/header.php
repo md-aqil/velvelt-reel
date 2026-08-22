@@ -35,6 +35,8 @@ $header_nav_menu = wp_nav_menu( [
 			<span class="hamburger-bar"></span>
 		</button>
 
+		<div id="mobile-menu-overlay" class="mobile-menu-overlay"></div>
+
 		<?php if ( $header_nav_menu ) : ?>
 			<nav id="site-navigation" class="main-navigation" aria-label="<?php esc_attr_e( 'Main menu', 'hello-elementor-child' ); ?>">
 				<?php echo $header_nav_menu; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
