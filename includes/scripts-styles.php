@@ -57,6 +57,15 @@ function custom_enqueue_scripts() {
         true
     );
 
+    // Enqueue Rotating Title JS
+    wp_enqueue_script(
+        'velvet-rotating-title-js',
+        get_stylesheet_directory_uri() . '/js/rotating-title.js',
+        array(),
+        HELLO_ELEMENTOR_CHILD_VERSION,
+        true
+    );
+
     // Debug: Log enqueued scripts
     if (defined('WP_DEBUG') && WP_DEBUG) {
         global $wp_scripts;

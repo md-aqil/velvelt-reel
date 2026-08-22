@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
-define('HELLO_ELEMENTOR_CHILD_VERSION', '2.1.1');
+define('HELLO_ELEMENTOR_CHILD_VERSION', '2.1.2');
 
 // Load the Plugin Update Checker library
 require_once get_stylesheet_directory() . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
@@ -196,6 +196,9 @@ require_once get_stylesheet_directory() . '/includes/testimonials-cpt.php';
 
 // Custom premium testimonials slider component
 require_once get_stylesheet_directory() . '/includes/testimonials-slider.php';
+
+// Custom rotating title animation component
+require_once get_stylesheet_directory() . '/includes/rotating-title.php';
 
 
 
