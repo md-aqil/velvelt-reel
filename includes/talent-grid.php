@@ -108,23 +108,32 @@ function velvet_talent_grid_shortcode( $atts ) {
 				<h2 class="velvet-talent-heading"><?php echo esc_html( $atts['title'] ); ?></h2>
 			<?php endif; ?>
 
-			<!-- Search Bar UI (Search by Name/Role + Search by Country) -->
+			<!-- Glassmorphism Search Bar UI -->
 			<div class="velvet-talent-search-bar">
-				<div class="velvet-search-input-wrap">
-					<input type="text" id="velvet-talent-search-input" class="velvet-search-input" placeholder="Search For Talents by Name/Role" autocomplete="off" />
+				<div class="velvet-search-glass-pill">
+					<div class="velvet-search-input-wrap">
+						<svg class="velvet-search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="15" height="15" fill="currentColor"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.1-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0s208 93.1 208 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></svg>
+						<input type="text" id="velvet-talent-search-input" class="velvet-search-input" placeholder="Search For Talents by Name/Role..." autocomplete="off" />
+					</div>
+
+					<div class="velvet-search-divider"></div>
+
+					<div class="velvet-search-country-wrap">
+						<select id="velvet-talent-country-select" class="velvet-country-select">
+							<option value="all">Country</option>
+							<?php foreach ( $countries as $c_slug => $c_name ) : ?>
+								<option value="<?php echo esc_attr( $c_slug ); ?>"><?php echo esc_html( $c_name ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<span class="velvet-select-arrow">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="10" height="10" fill="currentColor"><path d="M143 352.3L7 216.3c-9.4-9.4-9.4-24.6 0-33.9l22.6-22.6c9.4-9.4 24.6-9.4 33.9 0l96.4 96.4 96.4-96.4c9.4-9.4 24.6-9.4 33.9 0l22.6 22.6c9.4 9.4 9.4 24.6 0 33.9l-136 136c-9.2 9.4-24.4 9.4-33.8 0z"/></svg>
+						</span>
+					</div>
+
+					<button type="button" id="velvet-talent-search-btn" class="velvet-search-btn" aria-label="Search">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.1-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0s208 93.1 208 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></svg>
+					</button>
 				</div>
-				<div class="velvet-search-country-wrap">
-					<select id="velvet-talent-country-select" class="velvet-country-select">
-						<option value="all">Country</option>
-						<?php foreach ( $countries as $c_slug => $c_name ) : ?>
-							<option value="<?php echo esc_attr( $c_slug ); ?>"><?php echo esc_html( $c_name ); ?></option>
-						<?php endforeach; ?>
-					</select>
-					<span class="velvet-select-arrow">▼</span>
-				</div>
-				<button type="button" id="velvet-talent-search-btn" class="velvet-search-btn" aria-label="Search">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="16" height="16" fill="currentColor"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.1-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0s208 93.1 208 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"/></svg>
-				</button>
 			</div>
 
 			<!-- Category Filter Buttons -->
