@@ -10,6 +10,26 @@ document.addEventListener('DOMContentLoaded', function() {
     let autoplayTimer = null;
     const intervalTime = 7000; // 7 seconds
 
+    // Inline Hero Title Word Rotating Animation
+    const heroWords = slider.querySelectorAll('.velvet-hero-word');
+    if (heroWords.length > 1) {
+        let wordIndex = 0;
+        setInterval(() => {
+            const currentW = heroWords[wordIndex];
+            wordIndex = (wordIndex + 1) % heroWords.length;
+            const nextW = heroWords[wordIndex];
+
+            currentW.classList.remove('is-active');
+            currentW.classList.add('is-out');
+
+            setTimeout(() => {
+                currentW.classList.remove('is-out');
+            }, 600);
+
+            nextW.classList.add('is-active');
+        }, 2200);
+    }
+
     function goToSlide(index) {
         if (index < 0) {
             index = slides.length - 1;
