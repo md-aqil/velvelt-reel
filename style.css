@@ -7,7 +7,7 @@ Description: Hello Elementor Child is a child theme of Hello Elementor, created 
 Author: Elementor Team
 Author URI: https://elementor.com/
 Template: hello-elementor
-Version: 2.3.0
+Version: 2.3.1
 Text Domain: hello-elementor-child
 License: GNU General Public License v3 or later.
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -1812,14 +1812,22 @@ button:hover {
 }
 
 .custom-theme-header .user-profile-capsule {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 100px;
-    padding: 6px 14px;
+    padding: 6px 16px;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.custom-theme-header .user-profile-capsule:hover {
+    border-color: rgba(223, 29, 61, 0.5);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .custom-theme-header .user-profile-link {
@@ -1833,6 +1841,16 @@ button:hover {
     text-decoration: none;
 }
 
+.custom-theme-header .user-profile-link .dropdown-chevron {
+    color: #a1a1aa;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.custom-theme-header .user-profile-capsule:hover .dropdown-chevron {
+    transform: rotate(180deg);
+    color: #DF1D3D;
+}
+
 .custom-theme-header .user-avatar-icon {
     width: 24px;
     height: 24px;
@@ -1842,6 +1860,63 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Velvet Profile Hover Dropdown */
+.custom-theme-header .velvet-profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 190px;
+    background: rgba(14, 14, 18, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 8px 0;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 1000;
+}
+
+.custom-theme-header .user-profile-capsule:hover .velvet-profile-dropdown,
+.custom-theme-header .user-profile-capsule:focus-within .velvet-profile-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-theme-header .velvet-profile-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    color: #e4e4e7;
+    font-family: 'Gantari', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.custom-theme-header .velvet-profile-dropdown a:hover {
+    background: rgba(223, 29, 61, 0.15);
+    color: #ffffff;
+    padding-left: 22px;
+}
+
+.custom-theme-header .velvet-profile-dropdown a.logout-dropdown-item {
+    color: #ef4444;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin-top: 4px;
+    padding-top: 10px;
+}
+
+.custom-theme-header .velvet-profile-dropdown a.logout-dropdown-item:hover {
+    background: rgba(239, 68, 68, 0.15);
 }
 
 .custom-theme-header .logout-link {
@@ -1918,6 +1993,10 @@ button:hover {
     background-color: #DF1D3D;
     box-shadow: 0 0 10px rgba(223, 29, 61, 0.8);
     transition: width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.custom-theme-header .mobile-menu-toggle {
+    display: none !important;
 }
 
 .custom-theme-header .main-navigation a:hover::after,
@@ -2084,5 +2163,146 @@ button:hover {
             padding: 7px 14px;
             font-size: 11px;
         }
+    }
+}
+
+/* ==========================================================================
+   Simple Membership Profile Page Premium Redesign (/membership-profile)
+   ========================================================================== */
+.swpm-edit-profile-container,
+#swpm-profile-edit,
+.swpm-profile-head,
+.swpm-profile-edit-custom {
+    max-width: 680px;
+    margin: 40px auto;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    box-sizing: border-box;
+}
+
+.swpm-edit-profile-container h3,
+#swpm-profile-edit h3,
+.swpm-profile-head h3,
+.swpm-edit-profile-container legend {
+    font-family: 'Gantari', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 24px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 14px;
+}
+
+.swpm-edit-profile-form table,
+.swpm-form-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 14px;
+}
+
+.swpm-form-table td,
+.swpm-form-table th,
+.swpm-edit-profile-form tr {
+    padding: 6px 0;
+    vertical-align: middle;
+    color: #e4e4e7;
+    font-family: 'Gantari', sans-serif;
+    font-size: 14px;
+}
+
+.swpm-form-table th,
+.swpm-form-table td:first-child,
+.swpm-edit-profile-form label {
+    font-weight: 600;
+    color: #a1a1aa;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.swpm-edit-profile-form input[type="text"],
+.swpm-edit-profile-form input[type="email"],
+.swpm-edit-profile-form input[type="password"],
+.swpm-edit-profile-form select,
+.swpm-edit-profile-form textarea,
+.swpm-form-field {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'Gantari', sans-serif;
+    font-size: 14px;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.swpm-edit-profile-form input:focus,
+.swpm-form-field:focus {
+    border-color: #DF1D3D;
+    box-shadow: 0 0 15px rgba(223, 29, 61, 0.3);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.swpm-edit-profile-form input[type="submit"],
+.swpm-edit-profile-submit,
+input.swpm-edit-profile-submit {
+    background: #DF1D3D !important;
+    color: #ffffff !important;
+    font-family: 'Gantari', sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 14px 32px !important;
+    border: none !important;
+    border-radius: 100px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 18px rgba(223, 29, 61, 0.4) !important;
+    transition: all 0.3s ease !important;
+    margin-top: 20px !important;
+    width: 100% !important;
+}
+
+.swpm-edit-profile-form input[type="submit"]:hover {
+    background: #FF2145 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(255, 33, 69, 0.5) !important;
+}
+
+/* Mobile Responsiveness for Membership Profile */
+@media (max-width: 640px) {
+    .swpm-edit-profile-container,
+    #swpm-profile-edit {
+        padding: 24px 18px;
+        margin: 20px 12px;
+        border-radius: 16px;
+    }
+
+    .swpm-form-table,
+    .swpm-form-table tbody,
+    .swpm-form-table tr,
+    .swpm-form-table td,
+    .swpm-form-table th {
+        display: block;
+        width: 100%;
+    }
+
+    .swpm-form-table tr {
+        margin-bottom: 14px;
+    }
+
+    .swpm-form-table th,
+    .swpm-form-table td:first-child {
+        margin-bottom: 6px;
+        font-size: 13px;
     }
 }
