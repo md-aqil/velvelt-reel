@@ -1399,42 +1399,110 @@ textarea {
         width: 100%;
     }
 
+    /* Mobile Progress Steps Pill Stepper Redesign */
     .progress-steps {
         order: 3;
         width: 100%;
         display: flex;
+        align-items: center;
+        gap: 10px;
         overflow-x: auto;
-        overflow-y: visible;
+        overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 15px;
-        margin-top: 20px;
-        scrollbar-width: thin;
-        scrollbar-color: var(--sidebar-text-muted) var(--sidebar-active-bg);
+        padding: 10px 12px;
+        margin-top: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        box-sizing: border-box;
+        scrollbar-width: none;
     }
 
     .progress-steps::-webkit-scrollbar {
-        height: 4px;
-    }
-
-    .progress-steps::-webkit-scrollbar-track {
-        background: var(--sidebar-active-bg);
-        border-radius: 2px;
-    }
-
-    .progress-steps::-webkit-scrollbar-thumb {
-        background: var(--sidebar-text-muted);
-        border-radius: 2px;
+        display: none;
     }
 
     .step {
-        flex-direction: column;
-        text-align: center;
-        padding: 10px;
-        min-width: 120px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        min-width: auto;
+        border-radius: 100px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .step-number {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        margin-bottom: 0;
+    }
+
+    .step-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #a1a1aa;
+        white-space: nowrap;
+        transition: color 0.3s ease;
     }
 
     .step-subtitle {
         display: none;
+    }
+
+    /* Active Step Highlighting */
+    .step.active {
+        background: linear-gradient(135deg, #DF1D3D 0%, #FF2145 100%);
+        border-color: #DF1D3D;
+        box-shadow: 0 4px 15px rgba(223, 29, 61, 0.4);
+        transform: translateY(-1px);
+    }
+
+    .step.active .step-number {
+        background: #ffffff;
+        color: #DF1D3D;
+        font-weight: 800;
+    }
+
+    .step.active .step-title {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    /* Completed Step Highlighting */
+    .step.completed,
+    .step.is-done {
+        background: rgba(0, 166, 81, 0.15);
+        border-color: rgba(0, 166, 81, 0.4);
+    }
+
+    .step.completed .step-number,
+    .step.is-done .step-number {
+        background: #00a651;
+        color: #ffffff;
+    }
+
+    .step.completed .step-title,
+    .step.is-done .step-title {
+        color: #00a651;
     }
 
     .progress-bar-container {
@@ -2457,7 +2525,7 @@ body .form-container .form-group input[name="country"] {
 @media (max-width: 480px) {
     /* --- Form Main --- */
     .form-main {
-        padding: 20px 12px;
+        padding: 20px 20px !important;
     }
 
     /* --- Headings --- */

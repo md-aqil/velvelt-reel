@@ -28,7 +28,7 @@ function velvet_hero_slider_shortcode() {
 			'title'       => 'YOUR STORY DESERVES THE PERFECT CAST',
 			'description' => 'From fresh faces to seasoned artists, we bring creative visions to life with the right people.',
 			'button_text' => 'CREATE PORTFOLIO',
-			'button_url'  => home_url( '/sign-up/' ),
+			'button_url'  => home_url( '/talent/' ),
 		],
 		[
 			'video'       => home_url( '/wp-content/uploads/2025/10/5098913-hd_1280_720_60fps.mp4' ),

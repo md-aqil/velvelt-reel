@@ -209,7 +209,10 @@ function initMobileMenuToggle() {
                 menuToggle.setAttribute('aria-expanded', 'true');
             }
             if (overlay) overlay.classList.add('active');
+            document.body.classList.add('menu-open');
+            document.documentElement.classList.add('menu-open');
             document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
         }
 
         function closeMenu() {
@@ -219,7 +222,10 @@ function initMobileMenuToggle() {
                 menuToggle.setAttribute('aria-expanded', 'false');
             }
             if (overlay) overlay.classList.remove('active');
+            document.body.classList.remove('menu-open');
+            document.documentElement.classList.remove('menu-open');
             document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
         }
 
         if (menuToggle) {
