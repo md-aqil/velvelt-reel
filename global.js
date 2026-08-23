@@ -201,6 +201,18 @@ function initMobileMenuToggle() {
         const menuClose = document.querySelector('.mobile-menu-close');
         const mainMenu = document.querySelector('.main-navigation');
         const overlay = document.querySelector('.mobile-menu-overlay');
+        const siteHeader = document.getElementById('site-header');
+
+        // Sticky Header Backdrop Darken on Scroll
+        if (siteHeader) {
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 30) {
+                    siteHeader.classList.add('is-scrolled');
+                } else {
+                    siteHeader.classList.remove('is-scrolled');
+                }
+            }, { passive: true });
+        }
 
         function openMenu() {
             if (mainMenu) mainMenu.classList.add('active');

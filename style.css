@@ -7,7 +7,7 @@ Description: Hello Elementor Child is a child theme of Hello Elementor, created 
 Author: Elementor Team
 Author URI: https://elementor.com/
 Template: hello-elementor
-Version: 2.2.0
+Version: 2.3.0
 Text Domain: hello-elementor-child
 License: GNU General Public License v3 or later.
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -1761,70 +1761,127 @@ button:hover {
     border-color: transparent;
 }
 
+.site-header.custom-theme-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    background: rgba(10, 10, 12, 0.72);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.site-header.custom-theme-header.is-scrolled {
+    background: rgba(5, 5, 6, 0.92);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border-bottom-color: rgba(223, 29, 61, 0.25);
+}
+
 .site-header.custom-theme-header .header-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 2rem;
-    padding: 0.4rem 20px;
-    max-width: 1200px;
+    padding: 0.75rem 24px;
+    max-width: 1280px;
     margin: 0 auto;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .custom-theme-header .site-branding .site-title a {
-    font-weight: 300;
-    color: #fff;
-}
-
-.custom-theme-header .user-menu {
-    display: flex;
-    align-items: center;
-}
-
-.custom-theme-header .user-menu a {
+    font-family: 'Gantari', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
     color: #fff;
     text-decoration: none;
-    font-weight: 300;
-    font-size: 1rem;
-    padding: 0.25rem 0.5rem;
-    transition: color 0.3s ease;
+    letter-spacing: 1px;
 }
 
-.custom-theme-header .user-menu a:hover {
-    color: #b2122d;
+.custom-theme-header .site-branding .site-title .brand-text-red {
+    color: #DF1D3D;
 }
 
-.custom-theme-header .user-menu .user-profile-link {
-    white-space: nowrap;
+.custom-theme-header .velvet-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.custom-theme-header .user-profile-capsule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 100px;
+    padding: 6px 14px;
+    backdrop-filter: blur(10px);
+}
+
+.custom-theme-header .user-profile-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffffff;
+    font-family: 'Gantari', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.custom-theme-header .user-avatar-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #DF1D3D;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-theme-header .logout-link {
+    color: #a1a1aa;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s ease;
+    padding: 2px;
+}
+
+.custom-theme-header .logout-link:hover {
+    color: #DF1D3D;
+}
+
+.custom-theme-header .velvet-header-btn.velvet-btn-cta {
+    display: inline-flex;
+    align-items: center;
+    background: #DF1D3D;
+    color: #ffffff;
+    font-family: 'Gantari', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 9px 20px;
+    border-radius: 100px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(223, 29, 61, 0.35);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.custom-theme-header .velvet-header-btn.velvet-btn-cta:hover {
+    background: #FF2145;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 33, 69, 0.45);
 }
 
 .custom-theme-header .site-branding .custom-logo-link img {
-    max-height: 50px;
+    max-height: 44px;
     width: auto;
     height: auto;
-}
-
-.custom-theme-header .mobile-menu-toggle {
-    display: none;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 32px;
-    height: 26px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    z-index: 1001;
-}
-
-.custom-theme-header .mobile-menu-toggle .hamburger-bar {
-    display: block;
-    width: 100%;
-    height: 3px;
-    background-color: #fff;
-    border-radius: 3px;
-    transition: all 0.3s ease;
 }
 
 .custom-theme-header .main-navigation ul {
@@ -1832,21 +1889,23 @@ button:hover {
     list-style: none;
     margin: 0;
     padding: 0;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 .custom-theme-header .main-navigation a {
-    color: #fff;
+    color: #e4e4e7;
+    font-family: 'Gantari', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
     text-decoration: none;
-    font-weight: 300;
-    font-size: 1rem;
-    padding: 0.5rem 0;
-    transition: color 0.3s ease;
+    padding: 6px 0;
     position: relative;
+    transition: color 0.3s ease;
 }
 
-.custom-theme-header .main-navigation a:hover {
-    color: #b2122d;
+.custom-theme-header .main-navigation a:hover,
+.custom-theme-header .main-navigation .current-menu-item > a {
+    color: #ffffff;
 }
 
 .custom-theme-header .main-navigation a::after {
@@ -1856,57 +1915,70 @@ button:hover {
     left: 0;
     width: 0;
     height: 2px;
-    background-color: #b2122d;
-    transition: width 0.3s ease;
+    background-color: #DF1D3D;
+    box-shadow: 0 0 10px rgba(223, 29, 61, 0.8);
+    transition: width 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.custom-theme-header .main-navigation a:hover::after {
+.custom-theme-header .main-navigation a:hover::after,
+.custom-theme-header .main-navigation .current-menu-item > a::after {
     width: 100%;
 }
 
-/* Mobile responsive */
+/* Mobile Responsive Drawer Styling */
 @media (max-width: 768px) {
     .custom-theme-header .site-branding .custom-logo-link img {
         max-height: 36px;
     }
 
     .site-header.custom-theme-header .header-inner {
-        justify-content: flex-start;
-        gap: 0.75rem;
-        padding: 0.5rem 16px;
-    }
-
-    .custom-theme-header .user-menu {
-        order: 2;
-        margin-left: auto;
+        padding: 0.6rem 16px;
     }
 
     .custom-theme-header .mobile-menu-toggle {
         display: flex;
-        order: 3;
-        width: 36px;
-        height: 32px;
-        gap: 6px;
-        padding: 4px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        width: 38px;
+        height: 38px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 8px;
         z-index: 10000;
         position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .custom-theme-header .mobile-menu-toggle.active {
+        background: rgba(223, 29, 61, 0.15);
+        border-color: #DF1D3D;
     }
 
     .custom-theme-header .mobile-menu-toggle .hamburger-bar {
-        height: 3px;
+        display: block;
+        width: 100%;
+        height: 2px;
         background-color: #ffffff;
+        border-radius: 2px;
+        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
     .custom-theme-header .mobile-menu-toggle.active .hamburger-bar:nth-child(1) {
-        transform: rotate(45deg) translate(6px, 6px);
+        transform: translateY(7px) rotate(45deg);
+        background-color: #DF1D3D;
     }
 
     .custom-theme-header .mobile-menu-toggle.active .hamburger-bar:nth-child(2) {
         opacity: 0;
+        transform: translateX(-10px);
     }
 
     .custom-theme-header .mobile-menu-toggle.active .hamburger-bar:nth-child(3) {
-        transform: rotate(-45deg) translate(6px, -6px);
+        transform: translateY(-7px) rotate(-45deg);
+        background-color: #DF1D3D;
     }
 
     .custom-theme-header .mobile-menu-overlay {
@@ -1916,8 +1988,8 @@ button:hover {
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(4px);
+        background-color: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(8px);
         z-index: 9998;
         opacity: 0;
         transition: opacity 0.3s ease;
@@ -1933,16 +2005,19 @@ button:hover {
         position: fixed;
         top: 0;
         right: -100%;
-        width: 80%;
+        width: 82%;
         max-width: 360px;
         height: 100vh;
-        background-color: #0b0b0b;
-        backdrop-filter: blur(20px);
+        height: 100dvh;
+        background-color: rgba(14, 14, 16, 0.96);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
         overflow-y: auto;
         transition: right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         z-index: 9999;
-        box-shadow: -4px 0 25px rgba(0, 0, 0, 0.6);
+        box-shadow: -8px 0 30px rgba(0, 0, 0, 0.7);
         border-left: 1px solid rgba(255, 255, 255, 0.1);
+        box-sizing: border-box;
     }
 
     .custom-theme-header .main-navigation.active {
@@ -1952,7 +2027,7 @@ button:hover {
     .custom-theme-header .main-navigation ul {
         flex-direction: column;
         gap: 0;
-        padding: 70px 24px 40px;
+        padding: 75px 24px 40px;
     }
 
     .custom-theme-header .main-navigation li {
@@ -1966,7 +2041,7 @@ button:hover {
     .custom-theme-header .main-navigation a {
         padding: 16px 0;
         color: #ffffff;
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 500;
         display: block;
         position: relative;
@@ -1979,7 +2054,7 @@ button:hover {
         left: 0;
         width: 0;
         height: 2px;
-        background-color: #b2122d;
+        background-color: #DF1D3D;
         transition: width 0.3s ease;
     }
 
@@ -1993,21 +2068,21 @@ button:hover {
         }
 
         .site-header.custom-theme-header .header-inner {
-            padding: 0.5rem 12px;
+            padding: 0.5rem 14px;
         }
 
         .custom-theme-header .main-navigation ul {
-            padding: 70px 16px 40px;
+            padding: 70px 20px 40px;
         }
 
         .custom-theme-header .main-navigation a {
             padding: 14px 0;
-            font-size: 17px;
+            font-size: 16px;
         }
 
-        .custom-theme-header .user-menu a {
-            padding: 0.35rem 0.6rem;
-            font-size: 0.9rem;
+        .custom-theme-header .velvet-header-btn.velvet-btn-cta {
+            padding: 7px 14px;
+            font-size: 11px;
         }
     }
 }
