@@ -868,14 +868,14 @@ a.contact-value:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 110px 24px 70px;
+    padding: 160px 24px 70px;
     text-align: center;
     box-sizing: border-box;
 }
 
 .velvet-slide-inner {
     max-width: 920px;
-    margin: 0 auto;
+    margin: 20px auto 0;
     display: flex;
     flex-direction: column;
     align-items: center;
