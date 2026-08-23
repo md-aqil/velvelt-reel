@@ -24,7 +24,7 @@ function velvet_hero_slider_shortcode() {
 			'description'    => 'We connect visionary projects with extraordinary talents in fashion and film.',
 			'primary_btn'    => [
 				'text' => 'EXPLORE TALENTS',
-				'url'  => home_url( '/talent/' ),
+				'url'  => home_url( '/all-talents/' ),
 			],
 			'secondary_btn'  => [
 				'text' => 'JOIN AS TALENT',
@@ -39,11 +39,11 @@ function velvet_hero_slider_shortcode() {
 			'description'    => 'From fresh faces to seasoned artists, we bring creative visions to life with the right people.',
 			'primary_btn'    => [
 				'text' => 'CREATE PORTFOLIO',
-				'url'  => home_url( '/talent/' ),
+				'url'  => home_url( '/sign-up/' ),
 			],
 			'secondary_btn'  => [
 				'text' => 'EXPLORE TALENTS',
-				'url'  => home_url( '/talent/' ),
+				'url'  => home_url( '/all-talents/' ),
 			],
 		],
 		[
