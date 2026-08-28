@@ -102,32 +102,11 @@ class Talent_Submission_Controller {
     }
     
     /**
-     * Check if user has talent access based on membership plan
+     * Check if user has talent access
+     * Allows any logged-in user with simple login to access talent submission
      */
     private function has_talent_access() {
-        // Define plan levels
-        $portfolio_plan_level = defined('PORTFOLIO_PLAN_LEVEL') ? PORTFOLIO_PLAN_LEVEL : 2;
-        $portfolio_plan_upgrade = defined('PORTFOLIO_PLAN_LEVEL_UPGRADE') ? PORTFOLIO_PLAN_LEVEL_UPGRADE : 3;
-        $free_plan_level = defined('FREE_PLAN_LEVEL') ? FREE_PLAN_LEVEL : 4;
-        
-        // Ensure user's plan tracking is properly initialized
-        if (function_exists('ensure_user_plan_tracking')) {
-            ensure_user_plan_tracking();
-        }
-        
-        // Migrate current level for backward compatibility
-        if (function_exists('migrate_user_current_level_to_plans')) {
-            migrate_user_current_level_to_plans();
-        }
-        
-        // Check for any of the allowed plans
-        if (function_exists('has_membership_plan')) {
-            return has_membership_plan($portfolio_plan_level) || 
-                   has_membership_plan($portfolio_plan_upgrade) || 
-                   has_membership_plan($free_plan_level);
-        }
-        
-        return false;
+        return is_user_logged_in();
     }
     
     /**

@@ -219,7 +219,7 @@ if ($has_access) {
                 <header class="talent-header-card">
                     <div class="talent-photo">
                         <?php if (has_post_thumbnail()): ?>
-                            <?php the_post_thumbnail('large'); ?>
+                            <?php the_post_thumbnail('large', array('alt' => get_the_title() . ' - ' . ucwords(str_replace('-', ' ', $role)) . ' Portfolio Photo')); ?>
                         <?php else: ?>
                             <div class="talent-photo-placeholder">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
@@ -303,13 +303,25 @@ if ($has_access) {
                 <!-- Biography Section -->
                 <?php if (get_the_content()): ?>
                     <section class="talent-biography">
-                        <h3 class="section-title">Biography</h3>
+                        <h3 class="section-title"><?php the_title(); ?> - Biography</h3>
                         <div class="biography-content">
                             <?php the_content(); ?>
                         </div>
                     </section>
                     <hr class="soft-divider">
                 <?php endif; ?>
+
+                <!-- Table of Contents -->
+                <nav class="talent-toc">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <?php if ($has_physical_attributes): ?><li><a href="#physical-attributes">Physical Attributes</a></li><?php endif; ?>
+                        <?php if (!empty($fashion_categories)): ?><li><a href="#fashion-categories">Fashion Categories</a></li><?php endif; ?>
+                        <?php if (!empty($notable_works)): ?><li><a href="#experience">Experience</a></li><?php endif; ?>
+                        <?php if ($education): ?><li><a href="#education">Education & Training</a></li><?php endif; ?>
+                        <?php if ($portfolio_items): ?><li><a href="#portfolio">Portfolio Gallery</a></li><?php endif; ?>
+                    </ul>
+                </nav>
     
                 <!-- Details Grid -->
                 <section class="talent-details-grid">
@@ -323,8 +335,8 @@ if ($has_access) {
                         ?>
                         
                         <?php if ($has_physical_attributes): ?>
-                        <div class="details-section">
-                            <h3 class="section-title">Physical Attributes</h3>
+                        <div class="details-section" id="physical-attributes">
+                            <h3 class="section-title"><?php the_title(); ?> - Physical Attributes</h3>
                             <ul class="details-list">
                                 <?php if ($height): ?>
                                     <li><strong>Height:</strong> 
@@ -387,8 +399,8 @@ if ($has_access) {
                         </div>
     
                         <?php if (!empty($fashion_categories) && is_array($fashion_categories)): ?>
-                            <div class="details-section">
-                                <h3 class="section-title">Fashion Categories</h3>
+                            <div class="details-section" id="fashion-categories">
+                                <h3 class="section-title"><?php the_title(); ?> - Fashion Categories</h3>
                                 <div class="text-chips-container">
                                     <?php foreach ($fashion_categories as $category): ?>
                                         <span class="text-chip"><?php echo esc_html($category); ?></span>
@@ -398,8 +410,8 @@ if ($has_access) {
                         <?php endif; ?>
     
                         <?php if (!empty($notable_works) && is_array($notable_works)): ?>
-                            <div class="details-section experience-section">
-                                <h3 class="section-title">Experience</h3>
+                            <div class="details-section experience-section" id="experience">
+                                <h3 class="section-title"><?php the_title(); ?> - Experience & Notable Works</h3>
                                 <?php if ($years_active): ?>
                                     <p class="years-active"><strong>Years Active:</strong> <?php echo esc_html($years_active); ?></p>
                                 <?php endif; ?>
@@ -451,8 +463,8 @@ if ($has_access) {
                         <?php endif; ?>
 
                         <?php if ($education): ?>
-                            <div class="details-section">
-                                <h3 class="section-title">Education & Training</h3>
+                            <div class="details-section" id="education">
+                                <h3 class="section-title"><?php the_title(); ?> - Education & Training</h3>
                                 <p class="education-text"><?php echo nl2br(esc_html($education)); ?></p>
                             </div>
                         <?php endif; ?>
@@ -487,8 +499,8 @@ if ($has_access) {
     
                     </div>
                     <div class="details-right-column">
-                        <div class="details-section">
-                            <h3 class="section-title">Portfolio</h3>
+                        <div class="details-section" id="portfolio">
+                            <h3 class="section-title"><?php the_title(); ?> - Portfolio Gallery</h3>
                             <?php if (!empty($portfolio_items) && is_array($portfolio_items)): ?>
                                 <div class="portfolio-gallery">
                                     <?php 
@@ -526,6 +538,82 @@ if ($has_access) {
                 </section>
     
             </div>
+            
+            <!-- Related Talents Section (Internal Links for SEO) -->
+            <section class="related-talents">
+                <h3 class="section-title">More <?php echo esc_html(ucwords(str_replace('-', ' ', $role))); ?>s Like <?php the_title(); ?></h3>
+                <div class="related-talents-grid">
+                    <?php
+                    $related_args = array(
+                        'post_type' => 'talent',
+                        'posts_per_page' => 4,
+                        'post__not_in' => array($post_id),
+                        'meta_query' => array(
+                            array(
+                                'key' => '_talent_role',
+                                'value' => $role,
+                                'compare' => '='
+                            )
+                        )
+                    );
+                    $related_query = new WP_Query($related_args);
+                    if ($related_query->have_posts()):
+                        while ($related_query->have_posts()): $related_query->the_post();
+                    ?>
+                        <a href="<?php the_permalink(); ?>" class="related-talent-card">
+                            <div class="related-talent-photo">
+                                <?php if (has_post_thumbnail()): ?>
+                                    <?php the_post_thumbnail('medium', array('alt' => get_the_title() . ' - Talent Profile')); ?>
+                                <?php else: ?>
+                                    <div class="talent-photo-placeholder">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <h4><?php the_title(); ?></h4>
+                            <?php 
+                            $related_role = get_post_meta(get_the_ID(), '_talent_role', true);
+                            if ($related_role): 
+                            ?>
+                                <p><?php echo esc_html(ucwords(str_replace('-', ' ', $related_role))); ?></p>
+                            <?php endif; ?>
+                        </a>
+                    <?php 
+                        endwhile;
+                    else:
+                        $fallback_args = array(
+                            'post_type' => 'talent',
+                            'posts_per_page' => 4,
+                            'post__not_in' => array($post_id)
+                        );
+                        $fallback_query = new WP_Query($fallback_args);
+                        while ($fallback_query->have_posts()): $fallback_query->the_post();
+                    ?>
+                        <a href="<?php the_permalink(); ?>" class="related-talent-card">
+                            <div class="related-talent-photo">
+                                <?php if (has_post_thumbnail()): ?>
+                                    <?php the_post_thumbnail('medium', array('alt' => get_the_title() . ' - Talent Profile')); ?>
+                                <?php else: ?>
+                                    <div class="talent-photo-placeholder">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <h4><?php the_title(); ?></h4>
+                        </a>
+                    <?php 
+                        endwhile;
+                    endif;
+                    wp_reset_postdata();
+                    ?>
+                </div>
+            </section>
             
             <!-- Admin Share Section -->
             <?php 

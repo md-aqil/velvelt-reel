@@ -188,11 +188,10 @@ $wp_query = $user_talent_query;
                 <?php
             endif;
 
-            $edit_url = add_query_arg('talent_id', $first_talent_post->ID, home_url('/edit-talent-profile/'));
-            echo '<a href="' . esc_url($edit_url) . '" class="btn-create-portfolio">Edit Portfolio</a>';
+            // Note: If user already has a portfolio, action buttons (Edit/View) are shown directly on the portfolio card below.
         endif;
     else :
-        echo '<a href="' . esc_url(home_url('/talent-registration')) . '" class="btn-create-portfolio">Create Your Portfolio</a>';
+        // Note: Creation CTA button is displayed in the empty state card below when no portfolio exists.
     endif;
     ?>
 </header>
@@ -207,6 +206,12 @@ $wp_query = $user_talent_query;
                 $saved_to_lists = (int) get_post_meta(get_the_ID(), '_talent_saved_to_lists', true);
                 $profile_clicks = (int) get_post_meta(get_the_ID(), '_talent_profile_clicks', true);
                 ?>
+                <?php
+                $card_img_url = function_exists('get_talent_profile_image_url') ? get_talent_profile_image_url(get_the_ID()) : get_the_post_thumbnail_url(get_the_ID(), 'medium_large');
+                if (!$card_img_url) {
+                    $card_img_url = get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg';
+                }
+                ?>
                 <div class="talent-card">
                     <div class="talent-card-header">
                         <?php if (get_post_status() === 'publish'): ?>
@@ -217,6 +222,9 @@ $wp_query = $user_talent_query;
                             ?>
                             <span class="status-badge <?php echo esc_attr($status_class); ?>"><span class="status-dot"></span><?php echo esc_html(ucfirst(get_post_status())); ?></span>
                         <?php endif; ?>
+                    </div>
+                    <div class="talent-card-image">
+                        <img src="<?php echo esc_url($card_img_url); ?>" alt="<?php the_title_attribute(); ?>" loading="lazy" />
                     </div>
                     <div class="talent-card-body">
                         <h3 class="talent-role"><?php echo esc_html(ucwords(str_replace('-', ' ', $role))); ?></h3>
@@ -248,8 +256,25 @@ $wp_query = $user_talent_query;
             ?>
         <?php else: ?>
             <div class="no-talent-profiles">
-                <p><?php esc_html_e('No talent profiles found.', 'hello-elementor-child'); ?></p>
-                <a href="<?php echo esc_url(home_url('/talent-registration')); ?>" class="btn-create-portfolio">Create Your Portfolio</a>
+                <div class="no-talent-card">
+                    <div class="no-talent-icon-wrapper">
+                        <div class="no-talent-icon-glow"></div>
+                        <div class="no-talent-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="no-talent-title"><?php esc_html_e('No Talent Profiles Found', 'hello-elementor-child'); ?></h2>
+                    <p class="no-talent-description">
+                        <?php esc_html_e('You haven\'t created a talent portfolio yet. Build your portfolio to showcase your creative work, experience, and get discovered by industry professionals.', 'hello-elementor-child'); ?>
+                    </p>
+                    <a href="<?php echo esc_url(home_url('/talent-registration')); ?>" class="btn-create-portfolio btn-create-portfolio-empty">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="12" y1="12" x2="16" y2="12"></line></svg>
+                        <?php esc_html_e('Create Your Portfolio', 'hello-elementor-child'); ?>
+                    </a>
+                </div>
             </div>
         <?php endif; ?>
     </div>

@@ -145,4 +145,33 @@ if (isset($args['values']) && is_array($args['values'])) {
             placeholder="e.g. English, Spanish, French" required />
         <small class="hint">Please separate multiple languages with commas</small>
     </div>
+
+    <!-- SEO Hint Box -->
+    <div class="seo-hint-box">
+        <h4><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> SEO Tips for Better Ranking</h4>
+        <ul>
+            <li><strong>Focus Keyword:</strong> Use "Your Name + Role" (e.g., "Gangadhar Azmeera Actor")</li>
+            <li><strong>Bio Length:</strong> Write at least 600 words about your experience</li>
+            <li><strong>Alt Text:</strong> Add descriptive alt text to your images</li>
+            <li><strong>External Links:</strong> Add IMDb, portfolio, or press links</li>
+        </ul>
+        <small>These tips help your profile rank higher in search results.</small>
+    </div>
+
+    <!-- SEO Focus Keyword Field -->
+    <div class="form-group full-width">
+        <label for="focusKeyword">Focus Keyword (for SEO)</label>
+        <input type="text" id="focusKeyword" name="focusKeyword"
+            value="<?php echo isset($values['focusKeyword']) ? esc_attr($values['focusKeyword']) : ''; ?>"
+            placeholder="e.g., Gangadhar Azmeera Actor">
+        <small class="hint">This keyword helps your profile rank in search results. Use: Your Name + Your Role</small>
+    </div>
+
+    <!-- Bio/Biography Field -->
+    <div class="form-group full-width">
+        <label for="biography">Biography <span class="required">*</span></label>
+        <textarea id="biography" name="biography" rows="6" maxlength="5000"
+            placeholder="Tell us about your background, experience, achievements, and what makes you unique..." required><?php echo isset($values['biography']) ? esc_textarea($values['biography']) : ''; ?></textarea>
+        <small class="hint"><strong>SEO Tip:</strong> Write at least 600 words. Include your focus keyword naturally in the first paragraph and throughout the text.</small>
+    </div>
 </div>

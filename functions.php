@@ -30,6 +30,74 @@ $myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateCh
 $myUpdateChecker->setBranch('main');
 
 /**
+ * SEO Hooks for Talent Single Pages
+ */
+add_action('wp_head', 'vr_talent_seo_meta_tags', 1);
+function vr_talent_seo_meta_tags() {
+    if (!is_singular('talent')) return;
+    
+    $post_id = get_the_ID();
+    $title = get_the_title($post_id);
+    $role = get_post_meta($post_id, '_talent_role', true);
+    $state = get_post_meta($post_id, '_talent_state', true);
+    $country = get_post_meta($post_id, '_talent_country', true);
+    $location = ($state && $country) ? "{$state}, {$country}" : ($state ?: $country);
+    $content = get_post_field('post_content', $post_id);
+    
+    $focus_keyword = $title . ' ' . ucwords(str_replace('-', ' ', $role));
+    
+    $seo_title = $title . ' - ' . ucwords(str_replace('-', ' ', $role)) . ' in ' . ($location ?: 'India') . ' | The VelvetReel';
+    
+    $bio_text = strip_tags($content);
+    if (empty($bio_text)) {
+        $bio_text = $title . ' is a ' . ucwords(str_replace('-', ' ', $role)) . ' based in ' . ($location ?: 'India') . '.';
+    }
+    $meta_description = substr($bio_text, 0, 155);
+    
+    echo '<meta name="description" content="' . esc_attr($meta_description) . '">' . "\n";
+    echo '<meta name="keywords" content="' . esc_attr($focus_keyword) . ', ' . esc_attr(ucwords(str_replace('-', ' ', $role))) . ', actor, talent, The VelvetReel">' . "\n";
+    echo '<meta property="og:title" content="' . esc_attr($seo_title) . '">' . "\n";
+    echo '<meta property="og:description" content="' . esc_attr($meta_description) . '">' . "\n";
+    echo '<meta property="og:type" content="profile">' . "\n";
+    echo '<meta property="og:url" content="' . esc_url(get_permalink($post_id)) . '">' . "\n";
+    echo '<meta name="twitter:title" content="' . esc_attr($seo_title) . '">' . "\n";
+    echo '<meta name="twitter:description" content="' . esc_attr($meta_description) . '">' . "\n";
+    
+    if (has_post_thumbnail($post_id)) {
+        $thumbnail_url = get_the_post_thumbnail_url($post_id, 'large');
+        if ($thumbnail_url) {
+            echo '<meta property="og:image" content="' . esc_url($thumbnail_url) . '">' . "\n";
+            echo '<meta name="twitter:image" content="' . esc_url($thumbnail_url) . '">' . "\n";
+        }
+    }
+    
+    echo '<title>' . esc_html($seo_title) . '</title>' . "\n";
+}
+
+add_filter('document_title_parts', 'vr_talent_document_title');
+function vr_talent_document_title($title) {
+    if (!is_singular('talent')) return $title;
+    
+    $post_id = get_the_ID();
+    $name = get_the_title($post_id);
+    $role = get_post_meta($post_id, '_talent_role', true);
+    $state = get_post_meta($post_id, '_talent_state', true);
+    $country = get_post_meta($post_id, '_talent_country', true);
+    $location = ($state && $country) ? "{$state}, {$country}" : ($state ?: $country);
+    
+    $title['title'] = $name . ' - ' . ucwords(str_replace('-', ' ', $role));
+    $title['site'] = 'The VelvetReel';
+    $title['tagline'] = '';
+    
+    return $title;
+}
+
+add_filter('document_title_separator', 'vr_talent_title_separator');
+function vr_talent_title_separator($sep) {
+    return '|';
+}
+
+/**
  * Register missing Elementor dependency scripts.
  *
  * Elementor's v2 editor loader (Editor_V2_Loader) does NOT register
@@ -1994,5 +2062,84 @@ add_filter('rank_math/frontend/canonical', function($canonical) {
     }
     return $canonical;
 });
+
+/**
+ * Get talent profile image URL with fallback to portfolio image or default avatar SVG
+ *
+ * @param int $post_id
+ * @param string $size
+ * @return string
+ */
+if (!function_exists('get_talent_profile_image_url')) {
+    function get_talent_profile_image_url($post_id, $size = 'medium_large') {
+        $post_id = (int) $post_id;
+        if ($post_id <= 0) {
+            return get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg';
+        }
+
+        // 1. Try featured image (headshot/profile photo)
+        $image_url = get_the_post_thumbnail_url($post_id, $size);
+        if ($image_url) {
+            return $image_url;
+        }
+
+        // 2. Try headshot/profile photo meta fields
+        $headshot_meta = get_post_meta($post_id, '_talent_headshot', true);
+        if (!$headshot_meta) {
+            $headshot_meta = get_post_meta($post_id, '_talent_profile_photo', true);
+        }
+        if ($headshot_meta) {
+            if (is_numeric($headshot_meta) && (int) $headshot_meta > 0) {
+                $url = wp_get_attachment_image_url((int) $headshot_meta, $size);
+                if ($url) return $url;
+            } elseif (is_string($headshot_meta) && filter_var($headshot_meta, FILTER_VALIDATE_URL)) {
+                return esc_url_raw($headshot_meta);
+            }
+        }
+
+        // 3. Try first image from portfolio meta (_talent_portfolio)
+        $portfolio_meta = get_post_meta($post_id, '_talent_portfolio', true);
+        if (is_string($portfolio_meta)) {
+            $decoded = json_decode($portfolio_meta, true);
+            if (is_array($decoded)) {
+                $portfolio_meta = $decoded;
+            }
+        }
+
+        if (is_array($portfolio_meta) && !empty($portfolio_meta)) {
+            foreach ($portfolio_meta as $item) {
+                if (is_numeric($item) && (int) $item > 0) {
+                    $url = wp_get_attachment_image_url((int) $item, $size);
+                    if ($url) return $url;
+                } elseif (is_array($item) && !empty($item['id'])) {
+                    $url = wp_get_attachment_image_url((int) $item['id'], $size);
+                    if ($url) return $url;
+                } elseif (is_array($item) && !empty($item['url'])) {
+                    return esc_url_raw($item['url']);
+                } elseif (is_string($item) && filter_var($item, FILTER_VALIDATE_URL)) {
+                    return esc_url_raw($item);
+                }
+            }
+        }
+
+        // 4. Search for any media attachments associated with this talent post
+        $attachments = get_posts(array(
+            'post_type'      => 'attachment',
+            'posts_per_page' => 1,
+            'post_parent'    => $post_id,
+            'post_mime_type' => 'image',
+            'orderby'        => 'menu_order ID',
+            'order'          => 'ASC'
+        ));
+
+        if (!empty($attachments) && isset($attachments[0]->ID)) {
+            $url = wp_get_attachment_image_url($attachments[0]->ID, $size);
+            if ($url) return $url;
+        }
+
+        // 5. Default fallback avatar SVG
+        return get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg';
+    }
+}
 
 ?>

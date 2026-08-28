@@ -37,7 +37,7 @@ function velvet_testimonials_slider_shortcode( $atts ) {
 			$post_id    = get_the_ID();
 			$avatar_url = get_the_post_thumbnail_url( $post_id, 'thumbnail' );
 			if ( ! $avatar_url ) {
-				$avatar_url = home_url( '/wp-content/uploads/2025/11/856f47707399f5ed0e22af6918c4ec16-scaled.jpg' );
+				$avatar_url = get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg';
 			}
 
 			$testimonials[] = [
@@ -59,28 +59,28 @@ function velvet_testimonials_slider_shortcode( $atts ) {
 				'name'   => 'Christina',
 				'role'   => 'Dancer',
 				'rating' => 5,
-				'avatar' => home_url( '/wp-content/uploads/2025/11/856f47707399f5ed0e22af6918c4ec16-scaled.jpg' ),
+				'avatar' => get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg',
 			],
 			[
 				'quote'  => 'I love how simple it is to update my reels and get genuine casting calls—no noise, just real opportunities from top brands and producers.',
 				'name'   => 'Michela',
 				'role'   => 'Actor',
 				'rating' => 5,
-				'avatar' => home_url( '/wp-content/uploads/2025/11/856f47707399f5ed0e22af6918c4ec16-scaled.jpg' ),
+				'avatar' => get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg',
 			],
 			[
 				'quote'  => 'The VelvetReel has completely changed how I’m seen in the industry. I’m getting approached for serious projects instead of random, mismatched auditions.',
 				'name'   => 'Leyla',
 				'role'   => 'Fashion Model & Actor',
 				'rating' => 5,
-				'avatar' => home_url( '/wp-content/uploads/2025/11/856f47707399f5ed0e22af6918c4ec16-scaled.jpg' ),
+				'avatar' => get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg',
 			],
 			[
 				'quote'  => 'As a director, finding authentic talent used to take weeks. VelvetReel allowed us to cast our lead within 48 hours. Absolute game changer.',
 				'name'   => 'David Ross',
 				'role'   => 'Filmmaker & Producer',
 				'rating' => 5,
-				'avatar' => home_url( '/wp-content/uploads/2025/11/856f47707399f5ed0e22af6918c4ec16-scaled.jpg' ),
+				'avatar' => get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg',
 			],
 		];
 	}

@@ -48,11 +48,12 @@ function velvet_talent_grid_shortcode( $atts ) {
 		$permalink  = get_permalink();
 		$raw_role   = get_post_meta( $post_id, '_talent_role', true );
 		$country    = get_post_meta( $post_id, '_talent_country', true );
-		$image_url  = get_the_post_thumbnail_url( $post_id, 'medium_large' );
+		$image_url  = function_exists( 'get_talent_profile_image_url' ) 
+			? get_talent_profile_image_url( $post_id, 'medium_large' ) 
+			: get_the_post_thumbnail_url( $post_id, 'medium_large' );
 
-		// Fallback image if featured image is missing
 		if ( ! $image_url ) {
-			$image_url = home_url( '/wp-content/uploads/2025/11/856f47707399f5ed0e22af6918c4ec16-scaled.jpg' );
+			$image_url = get_stylesheet_directory_uri() . '/assets/images/default-talent-avatar.svg';
 		}
 
 		// Verification badge detection

@@ -2707,3 +2707,177 @@ body .form-container .form-group input[name="country"] {
         font-size: 12px;
     }
 }
+
+/* Table of Contents */
+.talent-toc {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 24px 0;
+}
+
+.talent-toc h4 {
+    color: #fff;
+    font-size: 16px;
+    margin: 0 0 12px 0;
+}
+
+.talent-toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+}
+
+.talent-toc li {
+    margin: 0;
+}
+
+.talent-toc a {
+    color: #b2122d;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.talent-toc a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* Related Talents Section */
+.related-talents {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid #333;
+}
+
+.related-talents .section-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.related-talents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.related-talent-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.related-talent-card:hover {
+    border-color: #b2122d;
+    transform: translateY(-3px);
+}
+
+.related-talent-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 12px;
+}
+
+.related-talent-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.related-talent-photo .talent-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: #2c2c2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+
+.related-talent-card h4 {
+    color: #fff;
+    font-size: 14px;
+    margin: 0 0 4px 0;
+}
+
+.related-talent-card p {
+    color: #aaa;
+    font-size: 12px;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .related-talents-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .talent-toc ul {
+        flex-direction: column;
+        gap: 6px;
+    }
+}
+
+/* SEO Hint Box in Forms */
+.seo-hint-box {
+    background: rgba(178, 18, 45, 0.08);
+    border: 1px solid rgba(178, 18, 45, 0.3);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.seo-hint-box h4 {
+    color: #fff;
+    font-size: 15px;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.seo-hint-box h4 svg {
+    color: #b2122d;
+    flex-shrink: 0;
+}
+
+.seo-hint-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px 0;
+}
+
+.seo-hint-box li {
+    color: #ccc;
+    font-size: 13px;
+    padding: 6px 0;
+    padding-left: 20px;
+    position: relative;
+}
+
+.seo-hint-box li::before {
+    content: '✓';
+    color: #4CAF50;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.seo-hint-box li strong {
+    color: #fff;
+}
+
+.seo-hint-box small {
+    color: #888;
+    font-size: 12px;
+}
