@@ -2881,3 +2881,654 @@ body .form-container .form-group input[name="country"] {
     color: #888;
     font-size: 12px;
 }
+
+/* ==========================================================================
+   VELVETREEL CORE THEME FORM SYSTEM (Standard across all project forms)
+   ========================================================================== */
+
+:root {
+    --vr-form-bg: #09090b;
+    --vr-form-card-bg: linear-gradient(160deg, #18181b 0%, #121214 100%);
+    --vr-form-border: rgba(255, 255, 255, 0.08);
+    --vr-form-border-focus: #DF1D3D;
+    --vr-form-input-bg: #0d0d10;
+    --vr-form-input-border: rgba(255, 255, 255, 0.12);
+    --vr-form-text: #f4f4f5;
+    --vr-form-text-muted: #a1a1aa;
+    --vr-form-primary: #DF1D3D;
+    --vr-form-primary-hover: #ff2247;
+    --vr-form-radius: 12px;
+    --vr-form-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.velvet-form-page {
+    background-color: #000000;
+    min-height: 80vh;
+    padding: 40px 16px 80px;
+    color: #ffffff;
+    font-family: 'Gantari', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.velvet-form-container {
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+.velvet-form-header {
+    margin-bottom: 28px;
+    text-align: left;
+}
+
+.velvet-form-header .velvet-form-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(223, 29, 61, 0.12);
+    color: #DF1D3D;
+    border: 1px solid rgba(223, 29, 61, 0.3);
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.velvet-form-header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.velvet-form-header h1 svg,
+.velvet-form-header h1 i {
+    color: #DF1D3D;
+}
+
+.velvet-form-header p {
+    color: #a1a1aa;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Steps Indicator */
+.velvet-form-steps {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+}
+
+.velvet-form-step-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #71717a;
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+}
+
+.velvet-form-step-item.active {
+    color: #ffffff;
+}
+
+.velvet-form-step-item.completed {
+    color: #DF1D3D;
+}
+
+.velvet-form-step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #27272a;
+    color: #a1a1aa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.velvet-form-step-item.active .velvet-form-step-num {
+    background: #DF1D3D;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(223, 29, 61, 0.6);
+}
+
+.velvet-form-step-item.completed .velvet-form-step-num {
+    background: rgba(223, 29, 61, 0.2);
+    color: #DF1D3D;
+    border: 1px solid #DF1D3D;
+}
+
+/* Main Form Card */
+.velvet-form-card {
+    background: linear-gradient(160deg, #18181b 0%, #121214 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.velvet-form-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #DF1D3D 0%, #ff4b6e 50%, #DF1D3D 100%);
+}
+
+/* Form Controls */
+.velvet-form-group {
+    margin-bottom: 24px;
+}
+
+.velvet-form-group:last-child {
+    margin-bottom: 0;
+}
+
+.velvet-form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #e4e4e7;
+    margin-bottom: 8px;
+    letter-spacing: 0.2px;
+}
+
+.velvet-form-label svg,
+.velvet-form-label i {
+    color: #DF1D3D;
+    font-size: 13px;
+}
+
+.velvet-form-label .required {
+    color: #DF1D3D;
+    margin-left: 2px;
+}
+
+.velvet-input,
+.velvet-textarea,
+.velvet-select {
+    width: 100%;
+    background-color: #0d0d10;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 15px;
+    font-family: inherit;
+    padding: 14px 18px;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.25s ease;
+}
+
+.velvet-input:hover,
+.velvet-textarea:hover,
+.velvet-select:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: #111115;
+}
+
+.velvet-input:focus,
+.velvet-textarea:focus,
+.velvet-select:focus {
+    border-color: #DF1D3D;
+    background-color: #121216;
+    box-shadow: 0 0 0 3px rgba(223, 29, 61, 0.22);
+}
+
+.velvet-input::placeholder,
+.velvet-textarea::placeholder {
+    color: #52525b;
+}
+
+.velvet-textarea {
+    resize: vertical;
+    min-height: 140px;
+    line-height: 1.6;
+}
+
+.velvet-select {
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23a1a1aa' viewBox='0 0 16 16'%3E%3Cpath d='M8 11.5l-6-6h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 18px center;
+    padding-right: 48px;
+}
+
+.velvet-select option {
+    background-color: #18181b;
+    color: #ffffff;
+    padding: 10px;
+}
+
+.velvet-form-hint {
+    font-size: 13px;
+    color: #71717a;
+    margin-top: 7px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.velvet-form-hint svg,
+.velvet-form-hint i {
+    color: #a1a1aa;
+    font-size: 12px;
+}
+
+/* Choice Tiles / Category Grid */
+.velvet-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+.velvet-choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    padding: 20px 14px;
+    background: #0e0e12;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    color: #d4d4d8;
+    position: relative;
+    user-select: none;
+}
+
+.velvet-choice-card:hover {
+    border-color: rgba(223, 29, 61, 0.5);
+    background: #141419;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.velvet-choice-card input[type="radio"],
+.velvet-choice-card input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.velvet-choice-card.selected,
+.velvet-choice-card:has(input:checked) {
+    border-color: #DF1D3D;
+    background: rgba(223, 29, 61, 0.08);
+    box-shadow: 0 0 0 1px #DF1D3D, 0 6px 20px rgba(223, 29, 61, 0.2);
+    color: #ffffff;
+}
+
+.velvet-choice-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a1a1aa;
+    font-size: 18px;
+    transition: all 0.25s ease;
+}
+
+.velvet-choice-card:hover .velvet-choice-icon {
+    color: #DF1D3D;
+    background: rgba(223, 29, 61, 0.15);
+}
+
+.velvet-choice-card.selected .velvet-choice-icon,
+.velvet-choice-card:has(input:checked) .velvet-choice-icon {
+    background: #DF1D3D;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(223, 29, 61, 0.4);
+}
+
+.velvet-choice-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* File Dropzone & Preview */
+.velvet-dropzone {
+    border: 2px dashed rgba(255, 255, 255, 0.16);
+    background: #0d0d10;
+    border-radius: 14px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.velvet-dropzone:hover,
+.velvet-dropzone.dragover {
+    border-color: #DF1D3D;
+    background: rgba(223, 29, 61, 0.04);
+}
+
+.velvet-dropzone-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: rgba(223, 29, 61, 0.1);
+    color: #DF1D3D;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.velvet-dropzone-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.velvet-dropzone-desc {
+    font-size: 13px;
+    color: #71717a;
+}
+
+.velvet-file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.velvet-image-preview-box {
+    display: none;
+    margin-top: 14px;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    max-height: 260px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.velvet-image-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.velvet-preview-remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.velvet-preview-remove-btn:hover {
+    background: #DF1D3D;
+    border-color: #DF1D3D;
+}
+
+/* Form Action Buttons */
+.velvet-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.velvet-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 100px;
+    padding: 14px 34px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(223, 29, 61, 0.35);
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.velvet-btn-primary:hover {
+    background: linear-gradient(135deg, #ff2a4e 0%, #DF1D3D 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(223, 29, 61, 0.5);
+    color: #ffffff;
+}
+
+.velvet-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #e4e4e7;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 100px;
+    padding: 13px 26px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.velvet-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+/* Modals (Payment & Success) */
+.velvet-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.velvet-modal-card {
+    background: linear-gradient(160deg, #18181b 0%, #0f0f11 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+}
+
+.velvet-modal-close-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #a1a1aa;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.velvet-modal-close-btn:hover {
+    background: #DF1D3D;
+    color: #ffffff;
+    border-color: #DF1D3D;
+}
+
+.velvet-modal-icon-badge {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.velvet-modal-icon-badge.success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 2px solid rgba(34, 197, 94, 0.3);
+}
+
+.velvet-modal-icon-badge.payment {
+    background: rgba(223, 29, 61, 0.15);
+    color: #DF1D3D;
+    border: 2px solid rgba(223, 29, 61, 0.3);
+}
+
+.velvet-modal-card h2 {
+    font-size: 24px;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.velvet-modal-card p {
+    color: #a1a1aa;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+}
+
+/* Alert Boxes */
+.velvet-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.velvet-alert.error {
+    background: rgba(223, 29, 61, 0.12);
+    border: 1px solid rgba(223, 29, 61, 0.3);
+    color: #fca5a5;
+}
+
+.velvet-alert.info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
+}
+
+.velvet-alert.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    color: #86efac;
+}
+
+/* Responsive adjustments for Core Form */
+@media (max-width: 768px) {
+    .velvet-form-page {
+        padding: 24px 12px 60px;
+    }
+
+    .velvet-form-card {
+        padding: 24px 18px;
+        border-radius: 16px;
+    }
+
+    .velvet-choice-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .velvet-choice-card {
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+        padding: 14px 16px;
+    }
+
+    .velvet-choice-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+
+    .velvet-form-steps {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .velvet-form-actions {
+        flex-direction: column;
+    }
+
+    .velvet-btn-primary,
+    .velvet-btn-secondary {
+        width: 100%;
+    }
+}

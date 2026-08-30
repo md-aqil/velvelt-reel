@@ -282,6 +282,28 @@ function display_advertisement_meta_box($post) {
     $status = get_post_meta($post->ID, '_advertisement_status', true);
     $interests = get_post_meta($post->ID, '_advertisement_interests', true);
     $interest_dates = get_post_meta($post->ID, '_advertisement_interest_dates', true);
+
+    // Audience targeting values
+    $target_domains = get_post_meta($post->ID, '_target_domains', true);
+    $target_domain = is_array($target_domains) ? reset($target_domains) : $target_domains;
+    $target_roles = get_post_meta($post->ID, '_target_roles', true);
+    $target_role = is_array($target_roles) ? reset($target_roles) : $target_roles;
+    $target_gender = get_post_meta($post->ID, '_target_gender', true);
+    $target_age_group = get_post_meta($post->ID, '_target_age_group', true);
+    $target_location = get_post_meta($post->ID, '_target_location', true);
+    if (empty($target_location)) {
+        $target_location = $location;
+    }
+
+    $notifications_sent = get_post_meta($post->ID, '_advertisement_notifications_sent', true);
+    $notifications_count = get_post_meta($post->ID, '_advertisement_notifications_count', true);
+
+    // Calculate matching talents count if function exists
+    $matched_talents_count = 0;
+    if (function_exists('velvet_get_matching_talents_for_ad')) {
+        $matches = velvet_get_matching_talents_for_ad($post->ID);
+        $matched_talents_count = count($matches);
+    }
     
     // Ensure they're arrays
     if (!is_array($interests)) {
@@ -300,6 +322,10 @@ function display_advertisement_meta_box($post) {
             <a href="#advt-tab-details" class="advt-nav-tab <?php echo $active_tab === 'details' ? 'advt-nav-tab-active' : ''; ?>">
                 <?php _e('Details', 'hello-elementor-child'); ?>
             </a>
+            <a href="#advt-tab-targeting" class="advt-nav-tab <?php echo $active_tab === 'targeting' ? 'advt-nav-tab-active' : ''; ?>">
+                <?php _e('Audience Targeting & Alerts', 'hello-elementor-child'); ?>
+                <span class="advt-badge" style="background:#22c55e; color:#fff;"><?php echo $matched_talents_count; ?> matches</span>
+            </a>
             <a href="#advt-tab-interests" class="advt-nav-tab <?php echo $active_tab === 'interests' ? 'advt-nav-tab-active' : ''; ?>">
                 <?php _e('Interests', 'hello-elementor-child'); 
                 if (!empty($interests)) {
@@ -309,6 +335,7 @@ function display_advertisement_meta_box($post) {
             </a>
         </h2>
         
+        <!-- Tab 1: Details -->
         <div id="advt-tab-details" class="advt-tab-content <?php echo $active_tab === 'details' ? 'advt-active' : ''; ?>">
             <table class="form-table">
                 <tr>
@@ -344,6 +371,7 @@ function display_advertisement_meta_box($post) {
                     </th>
                     <td>
                         <input type="email" name="advertisement_contact_email" id="advertisement_contact_email" value="<?php echo esc_attr($contact_email); ?>" class="regular-text" />
+                        <p class="description"><?php _e('Advertiser contact email where member interest notifications are delivered.', 'hello-elementor-child'); ?></p>
                     </td>
                 </tr>
                 <tr>
@@ -380,7 +408,107 @@ function display_advertisement_meta_box($post) {
                 </tr>
             </table>
         </div>
+
+        <!-- Tab 2: Audience Targeting & Alerts -->
+        <div id="advt-tab-targeting" class="advt-tab-content <?php echo $active_tab === 'targeting' ? 'advt-active' : ''; ?>">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #b2122d;">🎯 <?php _e('Automated Notification Engine', 'hello-elementor-child'); ?></h3>
+                <p><?php _e('When this advertisement is published, VelvetReel automatically sends targeted HTML email notifications to all active, opted-in talent profiles matching the criteria below.', 'hello-elementor-child'); ?></p>
+                
+                <p>
+                    <strong><?php _e('Audience Match Status:', 'hello-elementor-child'); ?></strong> 
+                    <span style="display: inline-block; padding: 4px 10px; background: #e0f2fe; color: #0369a1; border-radius: 4px; font-weight: bold;">
+                        <?php echo $matched_talents_count; ?> <?php _e('Eligible Talent Profiles currently match', 'hello-elementor-child'); ?>
+                    </span>
+                </p>
+
+                <?php if ($notifications_sent) : ?>
+                    <p style="color: #15803d;">
+                        ✓ <?php printf(__('Last notifications sent on <strong>%s</strong> to <strong>%d</strong> talents.', 'hello-elementor-child'), date('M j, Y g:i A', $notifications_sent), intval($notifications_count)); ?>
+                    </p>
+                <?php else : ?>
+                    <p style="color: #64748b;">
+                        ⏳ <?php _e('Notifications have not been sent yet. They will automatically trigger when post status becomes Published.', 'hello-elementor-child'); ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+
+            <table class="form-table">
+                <tr>
+                    <th scope="row">
+                        <label for="target_domain"><?php _e('Target Discipline / Domain', 'hello-elementor-child'); ?></label>
+                    </th>
+                    <td>
+                        <select name="target_domain" id="target_domain" class="regular-text">
+                            <option value=""><?php _e('All Disciplines / Open', 'hello-elementor-child'); ?></option>
+                            <option value="Fashion & Design" <?php selected($target_domain, 'Fashion & Design'); ?>>Fashion & Design</option>
+                            <option value="Film & Creative Arts" <?php selected($target_domain, 'Film & Creative Arts'); ?>>Film & Creative Arts</option>
+                            <option value="Talent Coach" <?php selected($target_domain, 'Talent Coach'); ?>>Talent Coach / Trainer</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="target_role"><?php _e('Target Specific Role', 'hello-elementor-child'); ?></label>
+                    </th>
+                    <td>
+                        <input type="text" name="target_role" id="target_role" value="<?php echo esc_attr($target_role); ?>" class="regular-text" placeholder="e.g. Actor/Actress, Fashion Model, Director, Stylist, etc." />
+                        <p class="description"><?php _e('Leave blank to match all talents in the discipline, or specify a role like Fashion Model or Actor.', 'hello-elementor-child'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="target_gender"><?php _e('Target Gender', 'hello-elementor-child'); ?></label>
+                    </th>
+                    <td>
+                        <select name="target_gender" id="target_gender">
+                            <option value="all" <?php selected($target_gender, 'all'); ?>><?php _e('All / Any Gender', 'hello-elementor-child'); ?></option>
+                            <option value="female" <?php selected($target_gender, 'female'); ?>><?php _e('Female', 'hello-elementor-child'); ?></option>
+                            <option value="male" <?php selected($target_gender, 'male'); ?>><?php _e('Male', 'hello-elementor-child'); ?></option>
+                            <option value="non-binary" <?php selected($target_gender, 'non-binary'); ?>><?php _e('Non-Binary / Other', 'hello-elementor-child'); ?></option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="target_age_group"><?php _e('Target Age Group', 'hello-elementor-child'); ?></label>
+                    </th>
+                    <td>
+                        <select name="target_age_group" id="target_age_group">
+                            <option value="all" <?php selected($target_age_group, 'all'); ?>><?php _e('All Age Groups', 'hello-elementor-child'); ?></option>
+                            <option value="Under 18" <?php selected($target_age_group, 'Under 18'); ?>>Under 18 / Teens</option>
+                            <option value="18-25" <?php selected($target_age_group, '18-25'); ?>>18 - 25 Years</option>
+                            <option value="26-35" <?php selected($target_age_group, '26-35'); ?>>26 - 35 Years</option>
+                            <option value="36-50" <?php selected($target_age_group, '36-50'); ?>>36 - 50 Years</option>
+                            <option value="50+" <?php selected($target_age_group, '50+'); ?>>50+ Years</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="target_location"><?php _e('Target Location Match', 'hello-elementor-child'); ?></label>
+                    </th>
+                    <td>
+                        <input type="text" name="target_location" id="target_location" value="<?php echo esc_attr($target_location); ?>" class="regular-text" placeholder="e.g. Mumbai or Maharashtra or Remote" />
+                        <p class="description"><?php _e('Leave blank for all locations.', 'hello-elementor-child'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <label for="force_resend_notifications"><?php _e('Resend Notifications', 'hello-elementor-child'); ?></label>
+                    </th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="force_resend_notifications" id="force_resend_notifications" value="1" />
+                            <strong><?php _e('Resend email notifications to matching audience upon saving', 'hello-elementor-child'); ?></strong>
+                        </label>
+                        <p class="description"><?php _e('By default, duplicate notifications are prevented when saving or updating. Check this box only if you want to broadcast this classified again.', 'hello-elementor-child'); ?></p>
+                    </td>
+                </tr>
+            </table>
+        </div>
         
+        <!-- Tab 3: Interests -->
         <div id="advt-tab-interests" class="advt-tab-content <?php echo $active_tab === 'interests' ? 'advt-active' : ''; ?>">
             <?php
             echo '<div class="advertisement-interests-metabox">';
@@ -448,11 +576,11 @@ function display_advertisement_meta_box($post) {
             border: 1px solid #ccc;
             border-bottom: none;
             padding: 8px 15px;
-            margin-right: 3px;
-            cursor: pointer;
             text-decoration: none;
-            color: #333;
+            color: #555;
             display: inline-block;
+            margin-right: 5px;
+            border-radius: 3px 3px 0 0;
         }
         .advt-metabox-tabs .advt-nav-tab:hover {
             background: #e0e0e0;
@@ -460,23 +588,24 @@ function display_advertisement_meta_box($post) {
         .advt-metabox-tabs .advt-nav-tab-active {
             background: #fff;
             border-bottom: 1px solid #fff;
+            color: #000;
+            font-weight: bold;
             margin-bottom: -1px;
-            padding-bottom: 9px;
         }
         .advt-metabox-tabs .advt-tab-content {
             display: none;
-            padding: 15px 0;
+            padding: 10px 0;
         }
         .advt-metabox-tabs .advt-tab-content.advt-active {
             display: block;
         }
         .advt-metabox-tabs .advt-badge {
-            background: #d63638;
-            color: white;
-            border-radius: 10px;
+            background: #b2122d;
+            color: #fff;
             padding: 2px 6px;
+            border-radius: 10px;
             font-size: 11px;
-            margin-left: 5px;
+            font-weight: normal;
         }
         .advt-metabox-tabs .no-interests {
             padding: 20px;
@@ -494,7 +623,7 @@ function display_advertisement_meta_box($post) {
             border-left: 4px solid #2199e8;
         }
         .advt-metabox-tabs .interests-table {
-            margin-top: 10px;
+            margin-top: 15px;
         }
         .advt-metabox-tabs .interests-table th {
             background: #f1f1f1;
@@ -556,9 +685,11 @@ function save_advertisement_meta_box($post_id) {
     
     // Mark as new when published
     $post = get_post($post_id);
-    if ($post->post_status === 'publish') {
+    if ($post && $post->post_status === 'publish') {
         update_post_meta($post_id, '_advertisement_is_new', '1');
-        update_post_meta($post_id, '_advertisement_published_date', current_time('mysql'));
+        if (!get_post_meta($post_id, '_advertisement_published_date', true)) {
+            update_post_meta($post_id, '_advertisement_published_date', current_time('mysql'));
+        }
     }
     
     // Save fields
@@ -588,6 +719,30 @@ function save_advertisement_meta_box($post_id) {
     
     if (isset($_POST['advertisement_deadline'])) {
         update_post_meta($post_id, '_advertisement_deadline', sanitize_text_field($_POST['advertisement_deadline']));
+    }
+
+    // Save Audience Targeting Fields
+    if (isset($_POST['target_domain'])) {
+        $dom = sanitize_text_field($_POST['target_domain']);
+        update_post_meta($post_id, '_target_domains', !empty($dom) ? array($dom) : array());
+    }
+    if (isset($_POST['target_role'])) {
+        $role = sanitize_text_field($_POST['target_role']);
+        update_post_meta($post_id, '_target_roles', !empty($role) ? array($role) : array());
+    }
+    if (isset($_POST['target_gender'])) {
+        update_post_meta($post_id, '_target_gender', sanitize_text_field($_POST['target_gender']));
+    }
+    if (isset($_POST['target_age_group'])) {
+        update_post_meta($post_id, '_target_age_group', sanitize_text_field($_POST['target_age_group']));
+    }
+    if (isset($_POST['target_location'])) {
+        update_post_meta($post_id, '_target_location', sanitize_text_field($_POST['target_location']));
+    }
+
+    // Check if explicit resend was requested
+    if (!empty($_POST['force_resend_notifications']) && function_exists('velvet_send_targeted_classified_notifications')) {
+        velvet_send_targeted_classified_notifications($post_id, true);
     }
 }
 add_action('save_post', 'save_advertisement_meta_box');

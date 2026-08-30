@@ -956,8 +956,32 @@ body.single-advertisement {
                     }
                     
                     $interests = get_post_meta($advertisement_id, '_advertisement_interests', true);
+                    if (!is_array($interests)) {
+                        $interests = array();
+                    }
+
+                    // Handle payment success return to register interest & send emails
+                    if ($is_logged_in && isset($_GET['payment']) && $_GET['payment'] === 'success') {
+                        $user_id = $current_user->ID;
+                        if (!in_array($user_id, $interests) && $user_id != get_post_field('post_author', $advertisement_id)) {
+                            $interests[] = $user_id;
+                            update_post_meta($advertisement_id, '_advertisement_interests', $interests);
+                            
+                            $interest_dates = get_post_meta($advertisement_id, '_advertisement_interest_dates', true);
+                            if (!is_array($interest_dates)) {
+                                $interest_dates = array();
+                            }
+                            $interest_dates[$user_id] = current_time('mysql');
+                            update_post_meta($advertisement_id, '_advertisement_interest_dates', $interest_dates);
+
+                            if (function_exists('velvet_send_interest_notifications')) {
+                                velvet_send_interest_notifications($advertisement_id, $user_id);
+                            }
+                        }
+                    }
+
                     $has_expressed_interest = false;
-                    if ($is_logged_in && is_array($interests) && in_array($current_user->ID, $interests)) {
+                    if ($is_logged_in && in_array($current_user->ID, $interests)) {
                         $has_expressed_interest = true;
                     }
                     

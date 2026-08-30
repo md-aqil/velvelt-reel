@@ -227,75 +227,23 @@ function ajax_express_advertisement_interest() {
     }
     // Ensure we're using user_id as the array key with datetime as value
     $interest_dates[$user_id] = current_time('mysql');
-    update_post_meta($advertisement_id, '_advertisement_interest_dates', $interest_dates);
-    
-    // Get advertisement title and author
-    $advertisement_title = get_the_title($advertisement_id);
-    $advertisement_url = get_permalink($advertisement_id);
-    
-    // Get user details
-    $user_username = $current_user->user_login;
-    $user_firstname = $current_user->first_name;
-    $user_lastname = $current_user->last_name;
-    $user_fullname = $current_user->display_name;
-    $user_email = $current_user->user_email;
-    
-    // Get phone number from user meta
-    $user_phone = get_user_meta($user_id, 'phone_number', true);
-    if (empty($user_phone)) {
-        $user_phone = get_user_meta($user_id, 'phone', true);
+    // Dispatch branded notifications to advertiser, applicant confirmation, and admin
+    if (function_exists('velvet_send_interest_notifications')) {
+        velvet_send_interest_notifications($advertisement_id, $user_id);
+    } else {
+        // Fallback email dispatch
+        $advertisement_title = get_the_title($advertisement_id);
+        $advertisement_url   = get_permalink($advertisement_id);
+        $advertisement_owner = get_userdata($advertisement_author);
+        $owner_email         = $advertisement_owner ? $advertisement_owner->user_email : get_option('admin_email');
+        $subject             = 'New Interest Expressed - ' . get_bloginfo('name');
+        $message             = "A user ({$current_user->display_name}) has expressed interest in your classified: {$advertisement_title}\n\nView listing: {$advertisement_url}";
+        $headers             = ['Content-Type: text/plain; charset=UTF-8', 'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'];
+        wp_mail($owner_email, $subject, $message, $headers);
     }
-    if (empty($user_phone)) {
-        $user_phone = get_user_meta($user_id, 'user_phone', true);
-    }
-    if (empty($user_phone)) {
-        $user_phone = 'Not provided';
-    }
-    
-    // Get advertisement author details
-    $advertisement_owner = get_userdata($advertisement_author);
-    $owner_email = $advertisement_owner->user_email;
-    $owner_name = $advertisement_owner->display_name;
-    
-    // Send email notification to advertisement owner
-    $subject = 'New Interest Expressed - ' . get_bloginfo('name');
-    $message = "Hello {$owner_name},\n\n";
-    $message .= "A user has expressed interest in your advertisement: {$advertisement_title}\n\n";
-    $message .= "Interested User Details:\n";
-    $message .= "- Username: {$user_username}\n";
-    $message .= "- First Name: {$user_firstname}\n";
-    $message .= "- Last Name: {$user_lastname}\n";
-    $message .= "- Full Name: {$user_fullname}\n";
-    $message .= "- Email: {$user_email}\n";
-    $message .= "- Phone: {$user_phone}\n\n";
-    $message .= "View your advertisement: {$advertisement_url}\n\n";
-    $message .= "This is an automated notification from " . get_bloginfo('name');
-    
-    $headers = ['Content-Type: text/plain; charset=UTF-8', 'From: ' . get_bloginfo('name') . ' <' . get_option('admin_email') . '>'];
-    
-    // Send email to advertisement owner
-    wp_mail($owner_email, $subject, $message, $headers);
-    
-    // Also notify admin
-    $admin_email = get_option('admin_email');
-    $admin_subject = '[Admin Notification] New Interest Expressed - ' . get_bloginfo('name');
-    $admin_message = "Admin Notification - New Interest Expressed\n\n";
-    $admin_message .= "Advertisement: {$advertisement_title}\n";
-    $admin_message .= "Advertisement ID: {$advertisement_id}\n";
-    $admin_message .= "Advertisement URL: {$advertisement_url}\n\n";
-    $admin_message .= "Interested User Details:\n";
-    $admin_message .= "- Username: {$user_username}\n";
-    $admin_message .= "- First Name: {$user_firstname}\n";
-    $admin_message .= "- Last Name: {$user_lastname}\n";
-    $admin_message .= "- Full Name: {$user_fullname}\n";
-    $admin_message .= "- Email: {$user_email}\n";
-    $admin_message .= "- Phone: {$user_phone}\n\n";
-    $admin_message .= "Advertisement Owner: {$owner_name} ({$owner_email})\n";
-    
-    wp_mail($admin_email, $admin_subject, $admin_message, $headers);
     
     wp_send_json_success([
-        'message' => 'Thank you for your interest! The advertiser has been notified.',
+        'message' => 'Thank you for your interest! The advertiser has been notified and a confirmation email has been sent to you.',
         'interests_count' => count($existing_interests)
     ]);
     

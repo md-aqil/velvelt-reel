@@ -7,7 +7,7 @@ Description: Hello Elementor Child is a child theme of Hello Elementor, created 
 Author: Elementor Team
 Author URI: https://elementor.com/
 Template: hello-elementor
-Version: 2.3.2
+Version: 2.4.0
 Text Domain: hello-elementor-child
 License: GNU General Public License v3 or later.
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -2114,7 +2114,7 @@ button:hover {
 }
 
 .custom-theme-header .mobile-menu-toggle {
-    display: none !important;
+    display: none;
 }
 
 .custom-theme-header .main-navigation a:hover::after,
@@ -2122,10 +2122,10 @@ button:hover {
     width: 100%;
 }
 
-/* Mobile Responsive Drawer Styling */
-@media (max-width: 768px) {
+/* Mobile & Tablet Responsive Drawer Styling */
+@media (max-width: 991px) {
     .custom-theme-header .site-branding .custom-logo-link img {
-        max-height: 36px;
+        max-height: 38px;
     }
 
     .site-header.custom-theme-header .header-inner {
@@ -2133,30 +2133,37 @@ button:hover {
     }
 
     .custom-theme-header .mobile-menu-toggle {
-        display: flex;
+        display: flex !important;
         flex-direction: column;
         justify-content: center;
+        align-items: center;
         gap: 5px;
-        width: 38px;
-        height: 38px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 8px;
         cursor: pointer;
         padding: 8px;
         z-index: 10000;
         position: relative;
         transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .custom-theme-header .mobile-menu-toggle:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(223, 29, 61, 0.5);
     }
 
     .custom-theme-header .mobile-menu-toggle.active {
-        background: rgba(223, 29, 61, 0.15);
+        background: rgba(223, 29, 61, 0.2);
         border-color: #DF1D3D;
     }
 
     .custom-theme-header .mobile-menu-toggle .hamburger-bar {
         display: block;
-        width: 100%;
+        width: 22px;
         height: 2px;
         background-color: #ffffff;
         border-radius: 2px;
@@ -2185,8 +2192,9 @@ button:hover {
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: rgba(0, 0, 0, 0.75);
+        background-color: rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         z-index: 9998;
         opacity: 0;
         transition: opacity 0.3s ease;
@@ -2206,13 +2214,13 @@ button:hover {
         max-width: 360px;
         height: 100vh;
         height: 100dvh;
-        background-color: rgba(14, 14, 16, 0.96);
+        background-color: rgba(14, 14, 16, 0.98);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         overflow-y: auto;
         transition: right 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         z-index: 9999;
-        box-shadow: -8px 0 30px rgba(0, 0, 0, 0.7);
+        box-shadow: -8px 0 30px rgba(0, 0, 0, 0.8);
         border-left: 1px solid rgba(255, 255, 255, 0.1);
         box-sizing: border-box;
     }
@@ -2258,29 +2266,29 @@ button:hover {
     .custom-theme-header .main-navigation a:hover::after {
         width: 100%;
     }
+}
 
-    @media (max-width: 480px) {
-        .custom-theme-header .site-branding .custom-logo-link img {
-            max-height: 32px;
-        }
+@media (max-width: 480px) {
+    .custom-theme-header .site-branding .custom-logo-link img {
+        max-height: 32px;
+    }
 
-        .site-header.custom-theme-header .header-inner {
-            padding: 0.5rem 14px;
-        }
+    .site-header.custom-theme-header .header-inner {
+        padding: 0.5rem 14px;
+    }
 
-        .custom-theme-header .main-navigation ul {
-            padding: 70px 20px 40px;
-        }
+    .custom-theme-header .main-navigation ul {
+        padding: 70px 20px 40px;
+    }
 
-        .custom-theme-header .main-navigation a {
-            padding: 14px 0;
-            font-size: 16px;
-        }
+    .custom-theme-header .main-navigation a {
+        padding: 14px 0;
+        font-size: 16px;
+    }
 
-        .custom-theme-header .velvet-header-btn.velvet-btn-cta {
-            padding: 7px 14px;
-            font-size: 11px;
-        }
+    .custom-theme-header .velvet-header-btn.velvet-btn-cta {
+        padding: 7px 12px;
+        font-size: 11px;
     }
 }
 

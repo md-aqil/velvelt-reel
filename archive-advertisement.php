@@ -323,18 +323,181 @@ $is_super_admin = is_super_admin(); // Super Admin has full access
     <?php endif; ?>
 </section>
 
-<!-- CTA Section -->
-<section class="cta-section">
-    <h2>Ready to Post Your Ad?</h2>
-    <p>Reach thousands of potential customers in our community</p>
-    <?php
-    if ($can_post_ad) {
-        echo '<a href="' . esc_url(home_url('/classified-create')) . '" class="btn-cta-primary">Post Your Ad Now</a>';
-    } else {
-        echo '<a href="' . esc_url(home_url('/membership-join/')) . '" class="btn-cta-primary">Get Started</a>';
-    }
-    ?>
+<!-- CTA Section with Clear Posting Conditions -->
+<section class="cta-section" id="classified-cta">
+    <div class="cta-card-inner">
+        <div class="cta-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            VelvetReel Classifieds Network
+        </div>
+        
+        <h2>Ready to Post Your Classified Ad?</h2>
+        <p class="cta-tagline">Reach thousands of actors, directors, technicians, and production companies in our creative community.</p>
+
+        <?php if ($can_post_ad): ?>
+            <!-- User is Logged in AND has active Ad privileges -->
+            <div class="cta-status-box active-plan">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span><strong>Active Membership Verified:</strong> You have classified publishing access enabled.</span>
+            </div>
+
+            <div class="cta-actions-group">
+                <a href="<?php echo esc_url(home_url('/classified-create')); ?>" class="btn-cta-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Post Your Ad Now
+                </a>
+                <button type="button" class="btn-cta-outline" onclick="openAdConditionsModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Posting Guidelines
+                </button>
+            </div>
+
+        <?php elseif (is_user_logged_in()): ?>
+            <!-- User is Logged in BUT lacks qualifying Ad plan -->
+            <div class="cta-condition-alert">
+                <div class="condition-alert-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <strong>Membership Requirement:</strong>
+                </div>
+                <p>Posting classified ads requires an active <strong>6-Month Plan</strong>, <strong>1-Year Plan</strong>, or dedicated <strong>Advertisement Plan</strong>. Your current membership does not include ad publishing privileges.</p>
+            </div>
+
+            <div class="cta-actions-group">
+                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                    Upgrade Plan to Post Ads
+                </a>
+                <button type="button" class="btn-cta-outline" onclick="openAdConditionsModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    View Plan Conditions & Rules
+                </button>
+            </div>
+
+        <?php else: ?>
+            <!-- User is Logged OUT -->
+            <div class="cta-condition-alert">
+                <div class="condition-alert-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <strong>Who can post ads?</strong>
+                </div>
+                <p>Classified posting is open to verified members with an active <strong>6-Month</strong>, <strong>1-Year</strong>, or <strong>Advertisement Membership Plan</strong>.</p>
+            </div>
+
+            <div class="cta-actions-group">
+                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                    Join Membership / View Plans
+                </a>
+                <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="btn-cta-secondary">
+                    Sign In to Your Account
+                </a>
+                <button type="button" class="btn-cta-outline" onclick="openAdConditionsModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    Posting Conditions
+                </button>
+            </div>
+        <?php endif; ?>
+    </div>
 </section>
+
+<!-- Interactive Posting Conditions & Guidelines Modal -->
+<div class="ad-conditions-modal-backdrop" id="adConditionsModal">
+    <div class="ad-conditions-modal-card">
+        <button type="button" class="ad-conditions-modal-close" onclick="closeAdConditionsModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+
+        <div class="conditions-modal-header">
+            <div class="conditions-icon-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
+            <h3>Classified Posting Conditions</h3>
+            <p>Everything you need to know before publishing an advertisement on VelvetReel.</p>
+        </div>
+
+        <div class="conditions-list">
+            <div class="condition-item">
+                <div class="condition-num">1</div>
+                <div class="condition-body">
+                    <h4>Eligible Membership Tier</h4>
+                    <p>Ad posting is enabled for users subscribed to the <strong>6-Month Plan</strong>, <strong>1-Year Plan</strong>, or the <strong>Advertisement Plan</strong>. Free or standard portfolio plans require an upgrade to publish.</p>
+                </div>
+            </div>
+
+            <div class="condition-item">
+                <div class="condition-num">2</div>
+                <div class="condition-body">
+                    <h4>Supported Categories</h4>
+                    <p>Listings must belong to one of our three industry verticals: <strong>Casting Calls</strong> (actors, models, dancers), <strong>Crew Calls</strong> (directors, cinematographers, crew), or <strong>Rentals</strong> (cameras, lighting, gear, studios).</p>
+                </div>
+            </div>
+
+            <div class="condition-item">
+                <div class="condition-num">3</div>
+                <div class="condition-body">
+                    <h4>15-Day Featured Visibility</h4>
+                    <p>Each submitted listing remains live and featured across the classified archive and search results for a full <strong>15 days</strong>, with renewal options upon expiry.</p>
+                </div>
+            </div>
+
+            <div class="condition-item">
+                <div class="condition-num">4</div>
+                <div class="condition-body">
+                    <h4>Review & Moderation</h4>
+                    <p>All posts are reviewed by our team prior to public display to ensure community safety, anti-spam protection, and authentic project contacts.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="conditions-modal-actions">
+            <?php if ($can_post_ad): ?>
+                <a href="<?php echo esc_url(home_url('/classified-create')); ?>" class="btn-cta-primary" style="width: 100%; text-align: center;">
+                    Post Your Ad Now
+                </a>
+            <?php elseif (is_user_logged_in()): ?>
+                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary" style="width: 100%; text-align: center;">
+                    View & Upgrade Membership Plans
+                </a>
+            <?php else: ?>
+                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary">
+                    Join Membership & Plans
+                </a>
+                <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="btn-cta-secondary">
+                    Sign In
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAdConditionsModal() {
+    var modal = document.getElementById('adConditionsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeAdConditionsModal() {
+    var modal = document.getElementById('adConditionsModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('adConditionsModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeAdConditionsModal();
+            }
+        });
+    }
+});
+</script>
 
 </main>
 
@@ -940,41 +1103,340 @@ $is_super_admin = is_super_admin(); // Super Admin has full access
         transform: translateY(-2px);
     }
 
-    /* CTA Section */
+    /* Enhanced CTA Section */
     .cta-section {
-        background: linear-gradient(180deg, #0a0a0a 0%, #050505 100%);
+        background: #000000;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 60px 5%;
+        position: relative;
+    }
+
+    .cta-card-inner {
+        max-width: 840px;
+        margin: 0 auto;
+        background: linear-gradient(160deg, #18181b 0%, #101012 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 40px 30px;
         text-align: center;
-        border-top: 1px solid #1a1a1a;
-        padding: 40px 5%;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-card-inner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #DF1D3D 0%, #ff4b6e 50%, #DF1D3D 100%);
+    }
+
+    .cta-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(223, 29, 61, 0.12);
+        color: #DF1D3D;
+        border: 1px solid rgba(223, 29, 61, 0.3);
+        padding: 5px 14px;
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 14px;
     }
 
     .cta-section h2 {
-        color: #fff;
-        font-size: 1.6rem;
-        margin-bottom: 10px;
+        color: #ffffff;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 8px;
     }
 
-    .cta-section p {
-        color: #666;
+    .cta-tagline {
+        color: #a1a1aa;
+        font-size: 15px;
+        line-height: 1.6;
         margin-bottom: 20px;
-        font-size: 1rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .cta-status-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-size: 14px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .cta-status-box.active-plan {
+        background: rgba(34, 197, 94, 0.12);
+        border: 1px solid rgba(34, 197, 94, 0.25);
+        color: #86efac;
+    }
+
+    .cta-status-box.active-plan svg {
+        color: #22c55e;
+        flex-shrink: 0;
+    }
+
+    .cta-condition-alert {
+        background: rgba(223, 29, 61, 0.08);
+        border: 1px solid rgba(223, 29, 61, 0.25);
+        border-radius: 14px;
+        padding: 18px 24px;
+        margin: 16px auto 24px;
+        max-width: 700px;
+        text-align: left;
+    }
+
+    .condition-alert-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #DF1D3D;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .cta-condition-alert p {
+        color: #d4d4d8;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .cta-condition-alert strong {
+        color: #ffffff;
+    }
+
+    .cta-actions-group {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
     }
 
     .btn-cta-primary {
-        display: inline-block;
-        background: linear-gradient(135deg, #b2122d 0%, #df1d3d 100%);
-        color: #fff;
-        padding: 16px 45px;
-        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%);
+        color: #ffffff;
+        padding: 13px 28px;
+        border-radius: 100px;
         text-decoration: none;
-        font-weight: 600;
-        font-size: 16px;
-        transition: all 0.3s ease;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 6px 20px rgba(223, 29, 61, 0.35);
+        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        border: none;
+        cursor: pointer;
     }
 
     .btn-cta-primary:hover {
-        background: linear-gradient(135deg, #df1d3d 0%, #ff4d6d 100%);
+        background: linear-gradient(135deg, #ff2a4e 0%, #DF1D3D 100%);
         transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(223, 29, 61, 0.5);
+        color: #ffffff;
+    }
+
+    .btn-cta-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        padding: 13px 24px;
+        border-radius: 100px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        transition: all 0.25s ease;
+    }
+
+    .btn-cta-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+    }
+
+    .btn-cta-outline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        background: transparent;
+        color: #a1a1aa;
+        padding: 12px 20px;
+        border-radius: 100px;
+        font-weight: 600;
+        font-size: 13px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+    .btn-cta-outline:hover {
+        color: #ffffff;
+        border-color: rgba(223, 29, 61, 0.5);
+        background: rgba(223, 29, 61, 0.06);
+    }
+
+    /* Posting Conditions Modal */
+    .ad-conditions-modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 999999;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .ad-conditions-modal-card {
+        background: linear-gradient(160deg, #18181b 0%, #0d0d10 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 22px;
+        padding: 36px;
+        max-width: 580px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+        text-align: left;
+    }
+
+    .ad-conditions-modal-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #a1a1aa;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .ad-conditions-modal-close:hover {
+        background: #DF1D3D;
+        color: #ffffff;
+        border-color: #DF1D3D;
+    }
+
+    .conditions-modal-header {
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .conditions-icon-badge {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(223, 29, 61, 0.12);
+        color: #DF1D3D;
+        border: 2px solid rgba(223, 29, 61, 0.3);
+        margin: 0 auto 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .conditions-modal-header h3 {
+        color: #ffffff;
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 6px 0;
+    }
+
+    .conditions-modal-header p {
+        color: #a1a1aa;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .conditions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .condition-item {
+        display: flex;
+        gap: 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 14px 16px;
+    }
+
+    .condition-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(223, 29, 61, 0.15);
+        color: #DF1D3D;
+        font-weight: 700;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .condition-body h4 {
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 4px 0;
+    }
+
+    .condition-body p {
+        color: #a1a1aa;
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    .condition-body strong {
+        color: #ffffff;
+    }
+
+    .conditions-modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
     }
 
     /* Responsive Design */

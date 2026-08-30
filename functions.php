@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
-define('HELLO_ELEMENTOR_CHILD_VERSION', '2.3.2');
+define('HELLO_ELEMENTOR_CHILD_VERSION', '2.4.0');
 
 // Load the Plugin Update Checker library
 require_once get_stylesheet_directory() . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
@@ -268,10 +268,17 @@ require_once get_stylesheet_directory() . '/includes/testimonials-slider.php';
 // Custom rotating title animation component
 require_once get_stylesheet_directory() . '/includes/rotating-title.php';
 
+// Classified notifications and targeted email engine
+require_once get_stylesheet_directory() . '/includes/classified-notifications.php';
 
+// Contact us form handler, anti-spam and auto-acknowledgement engine
+require_once get_stylesheet_directory() . '/includes/contact-form-handler.php';
 
+// New-member welcome & staged portfolio/subscription reminders automation
+require_once get_stylesheet_directory() . '/includes/member-onboarding-automation.php';
 
-
+// Email Automation Sandbox & Live Preview Tool
+require_once get_stylesheet_directory() . '/includes/admin-email-preview.php';
 
 /**
  * Create Advertisement Submission page on theme activation
@@ -332,11 +339,37 @@ add_action('after_switch_theme', 'create_classified_pricing_page');
 
 
 /**
+ * Create Verify Email page if not exists
+ */
+function create_verify_email_page() {
+    $page_exists = get_page_by_path('verify-email');
+    if (!$page_exists) {
+        $page_data = array(
+            'post_title'    => 'Verify Email',
+            'post_name'     => 'verify-email',
+            'post_content'  => '',
+            'post_status'   => 'publish',
+            'post_type'     => 'page',
+            'page_template' => 'page-verify-email.php'
+        );
+        $page_id = wp_insert_post($page_data);
+        if ($page_id && !is_wp_error($page_id)) {
+            update_post_meta($page_id, '_wp_page_template', 'page-verify-email.php');
+        }
+    } else {
+        update_post_meta($page_exists->ID, '_wp_page_template', 'page-verify-email.php');
+    }
+}
+add_action('after_switch_theme', 'create_verify_email_page');
+add_action('init', 'create_verify_email_page');
+
+/**
  * Flush rewrite rules after theme activation to ensure custom URLs work
  */
 function classified_page_flush_rewrite_rules() {
     create_classified_pricing_page();
     create_advertisement_submission_page();
+    create_verify_email_page();
     flush_rewrite_rules();
 }
 add_action('after_switch_theme', 'classified_page_flush_rewrite_rules');
