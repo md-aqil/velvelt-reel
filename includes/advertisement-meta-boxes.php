@@ -489,7 +489,7 @@ function display_advertisement_meta_box($post) {
                         <label for="target_location"><?php _e('Target Location Match', 'hello-elementor-child'); ?></label>
                     </th>
                     <td>
-                        <input type="text" name="target_location" id="target_location" value="<?php echo esc_attr($target_location); ?>" class="regular-text" placeholder="e.g. Mumbai or Maharashtra or Remote" />
+                        <input type="text" name="target_location" id="target_location" value="<?php echo esc_attr($target_location); ?>" class="regular-text" placeholder="e.g. 101 Hudson St., Jersey City, NJ 07304 or Remote" />
                         <p class="description"><?php _e('Leave blank for all locations.', 'hello-elementor-child'); ?></p>
                     </td>
                 </tr>

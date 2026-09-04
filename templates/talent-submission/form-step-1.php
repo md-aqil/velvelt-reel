@@ -47,7 +47,7 @@ if (isset($args['values']) && is_array($args['values'])) {
         <div class="form-group">
             <label for="city">State <span class="required">*</span></label>
             <input type="text" id="city" name="city"
-                value="<?php echo isset($values['city']) ? esc_attr($values['city']) : ''; ?>" placeholder="Maharashtra"
+                value="<?php echo isset($values['city']) ? esc_attr($values['city']) : ''; ?>" placeholder="e.g. New Jersey"
                 required>
         </div>
         <div class="form-group">

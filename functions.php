@@ -46,11 +46,11 @@ function vr_talent_seo_meta_tags() {
     
     $focus_keyword = $title . ' ' . ucwords(str_replace('-', ' ', $role));
     
-    $seo_title = $title . ' - ' . ucwords(str_replace('-', ' ', $role)) . ' in ' . ($location ?: 'India') . ' | The VelvetReel';
+    $seo_title = $title . ' - ' . ucwords(str_replace('-', ' ', $role)) . ' in ' . ($location ?: 'New Jersey, USA') . ' | The VelvetReel';
     
     $bio_text = strip_tags($content);
     if (empty($bio_text)) {
-        $bio_text = $title . ' is a ' . ucwords(str_replace('-', ' ', $role)) . ' based in ' . ($location ?: 'India') . '.';
+        $bio_text = $title . ' is a ' . ucwords(str_replace('-', ' ', $role)) . ' based in ' . ($location ?: 'New Jersey, USA') . '.';
     }
     $meta_description = substr($bio_text, 0, 155);
     
@@ -483,44 +483,9 @@ function handle_classified_create_redirect() {
             exit;
         }
 
-        // Check if user has advertisement plan
-        $has_access = false;
-
-        // Include access control functions if not already included
-        if (!function_exists('has_membership_plan')) {
-            require_once get_stylesheet_directory() . '/includes/access-control.php';
-        }
-
-        // Ensure user's plan tracking is properly initialized
-        ensure_user_plan_tracking();
-
-        // Also migrate current level to plans for backward compatibility
-        migrate_user_current_level_to_plans();
-
-        // Define the plans that have access to create classified ads
-        $plans_with_ad_access = [
-            SIX_MONTH_PLAN_LEVEL,  // 6-month plan
-            ONE_YEAR_PLAN_LEVEL,   // 1-year plan
-            ADVERTISEMENT_PLAN_LEVEL  // Original advertisement plan (level 5)
-        ];
-        
-        // Check if user has any of the plans with ad access
-        foreach ($plans_with_ad_access as $plan_level) {
-            if (has_membership_plan($plan_level)) {
-                $has_access = true;
-                break; // Exit early if any qualifying plan is found
-            }
-        }
-
-        // If user has access, redirect to submit-advertisement page
-        if ($has_access) {
-            wp_redirect(home_url('/submit-advertisement'));
-            exit;
-        } else {
-            // If user doesn't have access, stay on this page to show payment options
-            // The page template will handle showing the payment options
-            return;
-        }
+        // Direct all logged in users to the advertisement submission page
+        wp_redirect(home_url('/submit-advertisement/'));
+        exit;
     }
 }
 add_action('template_redirect', 'handle_classified_create_redirect');

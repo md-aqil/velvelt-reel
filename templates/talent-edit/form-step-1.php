@@ -46,7 +46,7 @@ $state = $controller->get_state();
     <div class="form-row">
         <div class="form-group">
             <label for="city">State <span class="required">*</span></label>
-            <input type="text" id="city" name="city" placeholder="Maharashtra"
+            <input type="text" id="city" name="city" placeholder="e.g. New Jersey"
                 value="<?php echo esc_attr($controller->get('state')); ?>" required>
         </div>
         <div class="form-group">

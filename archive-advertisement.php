@@ -23,21 +23,7 @@ if (!function_exists('velvet_get_category_svg')) {
 }
 ?>
 
-<?php
-$can_post_ad = false;
-if (!function_exists('has_membership_plan')) {
-    require_once get_stylesheet_directory() . '/includes/access-control.php';
-}
-ensure_user_plan_tracking();
-migrate_user_current_level_to_plans();
-$plans_with_ad_access = [SIX_MONTH_PLAN_LEVEL, ONE_YEAR_PLAN_LEVEL, ADVERTISEMENT_PLAN_LEVEL];
-foreach ($plans_with_ad_access as $plan_level) {
-    if (has_membership_plan($plan_level)) {
-        $can_post_ad = true;
-        break;
-    }
-}
-?>
+
 
 <!-- Hero Section with Search Box -->
 <section class="classifieds-hero">
@@ -276,12 +262,14 @@ $is_super_admin = is_super_admin(); // Super Admin has full access
                             </div>
                             <div class="ad-meta">
                                 <span class="ad-date"><i class="far fa-clock"></i> <?php echo get_the_date('M d, Y'); ?></span>
-                                <span class="ad-location"><i class="fas fa-map-marker-alt"></i>
-                                    <?php
-                                    $location = get_post_meta(get_the_ID(), 'ad_location', true);
-                                    echo $location ? esc_html($location) : 'N/A';
-                                    ?>
-                                </span>
+                                <?php
+                                $location = get_post_meta(get_the_ID(), 'ad_location', true);
+                                if (empty($location)) {
+                                    $location = get_post_meta(get_the_ID(), '_advertisement_location', true);
+                                }
+                                if (!empty($location)) : ?>
+                                    <span class="ad-location"><i class="fas fa-map-marker-alt"></i> <?php echo esc_html($location); ?></span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </article>
@@ -323,181 +311,37 @@ $is_super_admin = is_super_admin(); // Super Admin has full access
     <?php endif; ?>
 </section>
 
-<!-- CTA Section with Clear Posting Conditions -->
+<!-- CTA Section -->
 <section class="cta-section" id="classified-cta">
     <div class="cta-card-inner">
         <div class="cta-badge">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            VelvetReel Classifieds Network
+            The VelvetReel Classifieds Network
         </div>
         
         <h2>Ready to Post Your Classified Ad?</h2>
         <p class="cta-tagline">Reach thousands of actors, directors, technicians, and production companies in our creative community.</p>
 
-        <?php if ($can_post_ad): ?>
-            <!-- User is Logged in AND has active Ad privileges -->
-            <div class="cta-status-box active-plan">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                <span><strong>Active Membership Verified:</strong> You have classified publishing access enabled.</span>
-            </div>
-
+        <?php if (is_user_logged_in()): ?>
             <div class="cta-actions-group">
-                <a href="<?php echo esc_url(home_url('/classified-create')); ?>" class="btn-cta-primary">
+                <a href="<?php echo esc_url(home_url('/submit-advertisement/')); ?>" class="btn-cta-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     Post Your Ad Now
                 </a>
-                <button type="button" class="btn-cta-outline" onclick="openAdConditionsModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    Posting Guidelines
-                </button>
             </div>
-
-        <?php elseif (is_user_logged_in()): ?>
-            <!-- User is Logged in BUT lacks qualifying Ad plan -->
-            <div class="cta-condition-alert">
-                <div class="condition-alert-header">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    <strong>Membership Requirement:</strong>
-                </div>
-                <p>Posting classified ads requires an active <strong>6-Month Plan</strong>, <strong>1-Year Plan</strong>, or dedicated <strong>Advertisement Plan</strong>. Your current membership does not include ad publishing privileges.</p>
-            </div>
-
-            <div class="cta-actions-group">
-                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-                    Upgrade Plan to Post Ads
-                </a>
-                <button type="button" class="btn-cta-outline" onclick="openAdConditionsModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    View Plan Conditions & Rules
-                </button>
-            </div>
-
         <?php else: ?>
-            <!-- User is Logged OUT -->
-            <div class="cta-condition-alert">
-                <div class="condition-alert-header">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    <strong>Who can post ads?</strong>
-                </div>
-                <p>Classified posting is open to verified members with an active <strong>6-Month</strong>, <strong>1-Year</strong>, or <strong>Advertisement Membership Plan</strong>.</p>
-            </div>
-
             <div class="cta-actions-group">
-                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
-                    Join Membership / View Plans
+                <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="btn-cta-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                    Sign In to Post an Ad
                 </a>
-                <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="btn-cta-secondary">
-                    Sign In to Your Account
+                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-secondary">
+                    Sign Up Free
                 </a>
-                <button type="button" class="btn-cta-outline" onclick="openAdConditionsModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                    Posting Conditions
-                </button>
             </div>
         <?php endif; ?>
     </div>
 </section>
-
-<!-- Interactive Posting Conditions & Guidelines Modal -->
-<div class="ad-conditions-modal-backdrop" id="adConditionsModal">
-    <div class="ad-conditions-modal-card">
-        <button type="button" class="ad-conditions-modal-close" onclick="closeAdConditionsModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-
-        <div class="conditions-modal-header">
-            <div class="conditions-icon-badge">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            </div>
-            <h3>Classified Posting Conditions</h3>
-            <p>Everything you need to know before publishing an advertisement on VelvetReel.</p>
-        </div>
-
-        <div class="conditions-list">
-            <div class="condition-item">
-                <div class="condition-num">1</div>
-                <div class="condition-body">
-                    <h4>Eligible Membership Tier</h4>
-                    <p>Ad posting is enabled for users subscribed to the <strong>6-Month Plan</strong>, <strong>1-Year Plan</strong>, or the <strong>Advertisement Plan</strong>. Free or standard portfolio plans require an upgrade to publish.</p>
-                </div>
-            </div>
-
-            <div class="condition-item">
-                <div class="condition-num">2</div>
-                <div class="condition-body">
-                    <h4>Supported Categories</h4>
-                    <p>Listings must belong to one of our three industry verticals: <strong>Casting Calls</strong> (actors, models, dancers), <strong>Crew Calls</strong> (directors, cinematographers, crew), or <strong>Rentals</strong> (cameras, lighting, gear, studios).</p>
-                </div>
-            </div>
-
-            <div class="condition-item">
-                <div class="condition-num">3</div>
-                <div class="condition-body">
-                    <h4>15-Day Featured Visibility</h4>
-                    <p>Each submitted listing remains live and featured across the classified archive and search results for a full <strong>15 days</strong>, with renewal options upon expiry.</p>
-                </div>
-            </div>
-
-            <div class="condition-item">
-                <div class="condition-num">4</div>
-                <div class="condition-body">
-                    <h4>Review & Moderation</h4>
-                    <p>All posts are reviewed by our team prior to public display to ensure community safety, anti-spam protection, and authentic project contacts.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="conditions-modal-actions">
-            <?php if ($can_post_ad): ?>
-                <a href="<?php echo esc_url(home_url('/classified-create')); ?>" class="btn-cta-primary" style="width: 100%; text-align: center;">
-                    Post Your Ad Now
-                </a>
-            <?php elseif (is_user_logged_in()): ?>
-                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary" style="width: 100%; text-align: center;">
-                    View & Upgrade Membership Plans
-                </a>
-            <?php else: ?>
-                <a href="<?php echo esc_url(home_url('/membership-join/')); ?>" class="btn-cta-primary">
-                    Join Membership & Plans
-                </a>
-                <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="btn-cta-secondary">
-                    Sign In
-                </a>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-
-<script>
-function openAdConditionsModal() {
-    var modal = document.getElementById('adConditionsModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-}
-
-function closeAdConditionsModal() {
-    var modal = document.getElementById('adConditionsModal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    var modal = document.getElementById('adConditionsModal');
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                closeAdConditionsModal();
-            }
-        });
-    }
-});
-</script>
 
 </main>
 

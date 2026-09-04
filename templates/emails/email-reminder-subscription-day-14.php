@@ -49,7 +49,7 @@ include get_stylesheet_directory() . '/templates/emails/email-header.php';
             <table border="0" cellpadding="0" cellspacing="0" style="margin: auto;">
                 <tr>
                     <td align="center" bgcolor="#DF1D3D" style="border-radius: 8px; background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); background-image: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%);">
-                        <a href="<?php echo esc_url(!empty($upgrade_url) ? $upgrade_url : home_url('/membership-login/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; text-decoration: none; border-radius: 8px;">
+                        <a href="<?php echo esc_url(!empty($upgrade_url) ? $upgrade_url : home_url('/membership-join/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; text-decoration: none; border-radius: 8px;">
                             Activate My Membership &rarr;
                         </a>
                     </td>

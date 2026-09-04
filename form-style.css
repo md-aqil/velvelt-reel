@@ -2957,30 +2957,45 @@ body .form-container .form-group input[name="country"] {
     margin: 0;
 }
 
-/* Steps Indicator */
+/* 2-Step Navigation Tabs */
 .velvet-form-steps {
     display: flex;
     align-items: center;
     gap: 16px;
     margin-top: 24px;
-    padding: 14px 20px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 12px;
+    padding: 8px 12px;
+    background: #141418;
+    border: 1px solid #282834;
+    border-radius: 14px;
 }
 
 .velvet-form-step-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #71717a;
-    font-size: 13px;
+    gap: 12px;
+    color: #8e8e9f;
+    font-size: 14px;
     font-weight: 600;
     flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s ease;
+    font-family: inherit;
+}
+
+.velvet-form-step-item:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .velvet-form-step-item.active {
     color: #ffffff;
+    background: rgba(223, 29, 61, 0.12);
+    border: 1px solid rgba(223, 29, 61, 0.3);
 }
 
 .velvet-form-step-item.completed {
@@ -2988,23 +3003,24 @@ body .form-container .form-group input[name="country"] {
 }
 
 .velvet-form-step-num {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: #27272a;
+    background: #23232c;
     color: #a1a1aa;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
-    transition: all 0.3s ease;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
 }
 
 .velvet-form-step-item.active .velvet-form-step-num {
     background: #DF1D3D;
     color: #ffffff;
-    box-shadow: 0 0 12px rgba(223, 29, 61, 0.6);
+    box-shadow: 0 0 14px rgba(223, 29, 61, 0.6);
 }
 
 .velvet-form-step-item.completed .velvet-form-step-num {
@@ -3015,11 +3031,11 @@ body .form-container .form-group input[name="country"] {
 
 /* Main Form Card */
 .velvet-form-card {
-    background: linear-gradient(160deg, #18181b 0%, #121214 100%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(165deg, #18181e 0%, #111116 100%);
+    border: 1px solid #282834;
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
     position: relative;
     overflow: hidden;
 }
@@ -3034,13 +3050,19 @@ body .form-container .form-group input[name="country"] {
     background: linear-gradient(90deg, #DF1D3D 0%, #ff4b6e 50%, #DF1D3D 100%);
 }
 
-/* Form Controls */
-.velvet-form-group {
-    margin-bottom: 24px;
+/* Step Panes */
+.velvet-step-pane {
+    animation: fadeInStep 0.3s ease;
 }
 
-.velvet-form-group:last-child {
-    margin-bottom: 0;
+@keyframes fadeInStep {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form Controls & High-Contrast Inputs */
+.velvet-form-group {
+    margin-bottom: 22px;
 }
 
 .velvet-form-label {
@@ -3048,8 +3070,8 @@ body .form-container .form-group input[name="country"] {
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    font-weight: 600;
-    color: #e4e4e7;
+    font-weight: 700;
+    color: #ffffff;
     margin-bottom: 8px;
     letter-spacing: 0.2px;
 }
@@ -3057,7 +3079,8 @@ body .form-container .form-group input[name="country"] {
 .velvet-form-label svg,
 .velvet-form-label i {
     color: #DF1D3D;
-    font-size: 13px;
+    font-size: 14px;
+    flex-shrink: 0;
 }
 
 .velvet-form-label .required {
@@ -3069,36 +3092,39 @@ body .form-container .form-group input[name="country"] {
 .velvet-textarea,
 .velvet-select {
     width: 100%;
-    background-color: #0d0d10;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: #141419;
+    border: 1.5px solid #383848;
     border-radius: 12px;
     color: #ffffff;
     font-size: 15px;
+    font-weight: 500;
     font-family: inherit;
     padding: 14px 18px;
     outline: none;
     box-sizing: border-box;
-    transition: all 0.25s ease;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .velvet-input:hover,
 .velvet-textarea:hover,
 .velvet-select:hover {
-    border-color: rgba(255, 255, 255, 0.25);
-    background-color: #111115;
+    border-color: #55556a;
+    background-color: #171720;
 }
 
 .velvet-input:focus,
 .velvet-textarea:focus,
 .velvet-select:focus {
     border-color: #DF1D3D;
-    background-color: #121216;
-    box-shadow: 0 0 0 3px rgba(223, 29, 61, 0.22);
+    background-color: #1a1a24;
+    box-shadow: 0 0 0 3px rgba(223, 29, 61, 0.25);
+    color: #ffffff;
 }
 
 .velvet-input::placeholder,
 .velvet-textarea::placeholder {
-    color: #52525b;
+    color: #9494a3;
+    font-weight: 400;
 }
 
 .velvet-textarea {
@@ -3110,21 +3136,22 @@ body .form-container .form-group input[name="country"] {
 .velvet-select {
     appearance: none;
     cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23a1a1aa' viewBox='0 0 16 16'%3E%3Cpath d='M8 11.5l-6-6h12z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%23ffffff' viewBox='0 0 16 16'%3E%3Cpath d='M8 11.5l-6-6h12z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 18px center;
     padding-right: 48px;
 }
 
-.velvet-select option {
-    background-color: #18181b;
+.velvet-select option,
+.velvet-select optgroup {
+    background-color: #18181f;
     color: #ffffff;
     padding: 10px;
 }
 
 .velvet-form-hint {
     font-size: 13px;
-    color: #71717a;
+    color: #9ca3af;
     margin-top: 7px;
     display: flex;
     align-items: center;
@@ -3135,6 +3162,12 @@ body .form-container .form-group input[name="country"] {
 .velvet-form-hint i {
     color: #a1a1aa;
     font-size: 12px;
+}
+
+.velvet-grid-2col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
 }
 
 /* Choice Tiles / Category Grid */
@@ -3152,25 +3185,24 @@ body .form-container .form-group input[name="country"] {
     text-align: center;
     gap: 10px;
     padding: 20px 14px;
-    background: #0e0e12;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #141419;
+    border: 1.5px solid #383848;
     border-radius: 14px;
     cursor: pointer;
     transition: all 0.25s ease;
-    color: #d4d4d8;
+    color: #e4e4e7;
     position: relative;
     user-select: none;
 }
 
 .velvet-choice-card:hover {
-    border-color: rgba(223, 29, 61, 0.5);
-    background: #141419;
+    border-color: rgba(223, 29, 61, 0.6);
+    background: #1a1a22;
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
-.velvet-choice-card input[type="radio"],
-.velvet-choice-card input[type="checkbox"] {
+.velvet-choice-card input[type="radio"] {
     position: absolute;
     opacity: 0;
     pointer-events: none;
@@ -3179,8 +3211,8 @@ body .form-container .form-group input[name="country"] {
 .velvet-choice-card.selected,
 .velvet-choice-card:has(input:checked) {
     border-color: #DF1D3D;
-    background: rgba(223, 29, 61, 0.08);
-    box-shadow: 0 0 0 1px #DF1D3D, 0 6px 20px rgba(223, 29, 61, 0.2);
+    background: rgba(223, 29, 61, 0.12);
+    box-shadow: 0 0 0 1px #DF1D3D, 0 8px 24px rgba(223, 29, 61, 0.25);
     color: #ffffff;
 }
 
@@ -3188,7 +3220,7 @@ body .form-container .form-group input[name="country"] {
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    background: #22222b;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3211,13 +3243,55 @@ body .form-container .form-group input[name="country"] {
 
 .velvet-choice-title {
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 700;
+}
+
+/* Audience Match Box */
+.velvet-audience-match-box {
+    background: #14141a;
+    border: 1.5px solid #2d2d3c;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.velvet-audience-match-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.velvet-audience-icon-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(223, 29, 61, 0.15);
+    color: #DF1D3D;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.velvet-audience-title {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.velvet-audience-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #a1a1aa;
+    line-height: 1.5;
 }
 
 /* File Dropzone & Preview */
 .velvet-dropzone {
-    border: 2px dashed rgba(255, 255, 255, 0.16);
-    background: #0d0d10;
+    border: 2px dashed #424254;
+    background: #141419;
     border-radius: 14px;
     padding: 30px 20px;
     text-align: center;
@@ -3229,7 +3303,7 @@ body .form-container .form-group input[name="country"] {
 .velvet-dropzone:hover,
 .velvet-dropzone.dragover {
     border-color: #DF1D3D;
-    background: rgba(223, 29, 61, 0.04);
+    background: rgba(223, 29, 61, 0.05);
 }
 
 .velvet-dropzone-icon {
@@ -3237,7 +3311,7 @@ body .form-container .form-group input[name="country"] {
     height: 52px;
     margin: 0 auto 12px;
     border-radius: 50%;
-    background: rgba(223, 29, 61, 0.1);
+    background: rgba(223, 29, 61, 0.12);
     color: #DF1D3D;
     display: flex;
     align-items: center;
@@ -3247,14 +3321,14 @@ body .form-container .form-group input[name="country"] {
 
 .velvet-dropzone-title {
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     color: #ffffff;
     margin-bottom: 4px;
 }
 
 .velvet-dropzone-desc {
     font-size: 13px;
-    color: #71717a;
+    color: #9ca3af;
 }
 
 .velvet-file-input {
@@ -3273,8 +3347,8 @@ body .form-container .form-group input[name="country"] {
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    max-height: 260px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    max-height: 280px;
+    border: 1.5px solid #383848;
 }
 
 .velvet-image-preview-box img {
@@ -3286,14 +3360,14 @@ body .form-container .form-group input[name="country"] {
 
 .velvet-preview-remove-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.75);
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.8);
     color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 50%;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3307,6 +3381,319 @@ body .form-container .form-group input[name="country"] {
     border-color: #DF1D3D;
 }
 
+/* STEP 2: In-Page Review & Membership Layout */
+.velvet-review-container {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.velvet-review-summary-card {
+    background: #14141a;
+    border: 1.5px solid #2e2e3e;
+    border-radius: 16px;
+    padding: 28px;
+}
+
+.velvet-review-card-header {
+    margin-bottom: 20px;
+}
+
+.velvet-review-badge {
+    display: inline-block;
+    background: rgba(223, 29, 61, 0.15);
+    color: #ff4d6d;
+    border: 1px solid rgba(223, 29, 61, 0.3);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.velvet-review-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.35;
+}
+
+.velvet-review-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    padding: 16px;
+    background: #0f0f13;
+    border: 1px solid #252530;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.velvet-review-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.velvet-review-meta-label {
+    font-size: 12px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.velvet-review-meta-value {
+    font-size: 14px;
+    color: #ffffff;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.velvet-review-tags-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.velvet-review-tag {
+    background: #1e1e28;
+    color: #d4d4d8;
+    border: 1px solid #333344;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.velvet-review-section-heading {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.velvet-review-description-wrap {
+    margin-bottom: 20px;
+}
+
+.velvet-review-description-text {
+    background: #0f0f13;
+    border: 1px solid #252530;
+    border-radius: 12px;
+    padding: 18px;
+    font-size: 14px;
+    color: #e4e4e7;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+.velvet-review-image-preview {
+    margin-top: 20px;
+}
+
+.velvet-review-image-preview img {
+    max-height: 240px;
+    border-radius: 12px;
+    border: 1px solid #333344;
+    object-fit: cover;
+}
+
+/* Membership & Publishing Plan Cards */
+.velvet-membership-publishing-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.velvet-membership-status-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1.5px solid rgba(34, 197, 94, 0.3);
+    border-radius: 16px;
+}
+
+.velvet-status-badge-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.velvet-publishing-plan-box {
+    background: linear-gradient(160deg, #1b1b22 0%, #121217 100%);
+    border: 1.5px solid rgba(223, 29, 61, 0.35);
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.velvet-plan-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #282834;
+}
+
+.velvet-plan-eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    color: #DF1D3D;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.velvet-plan-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+}
+
+.velvet-plan-price {
+    font-size: 32px;
+    font-weight: 900;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.velvet-plan-price .velvet-currency {
+    font-size: 20px;
+    color: #DF1D3D;
+    margin-right: 2px;
+    vertical-align: top;
+}
+
+.velvet-plan-perks {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.velvet-plan-perks li {
+    font-size: 14px;
+    color: #d4d4d8;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.velvet-plan-perks .perk-check {
+    color: #DF1D3D;
+    font-weight: 900;
+    font-size: 16px;
+}
+
+.velvet-plan-checkout-wrap {
+    margin-bottom: 16px;
+}
+
+.velvet-plan-checkout-wrap .wp-stripe-checkout-button,
+.velvet-plan-checkout-wrap button {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    padding: 16px 28px !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    border-radius: 100px !important;
+    background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    cursor: pointer !important;
+    box-shadow: 0 8px 24px rgba(223, 29, 61, 0.4) !important;
+    transition: all 0.3s ease !important;
+}
+
+.velvet-plan-checkout-wrap .wp-stripe-checkout-button:hover,
+.velvet-plan-checkout-wrap button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 30px rgba(223, 29, 61, 0.6) !important;
+}
+
+.velvet-secure-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #8e8e9f;
+}
+
+.velvet-secure-badge svg {
+    color: #22c55e;
+}
+
+.velvet-step2-action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+/* Success State Box */
+.velvet-success-state-box {
+    text-align: center;
+    padding: 30px 10px;
+}
+
+.velvet-success-icon-badge {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 2px solid rgba(34, 197, 94, 0.3);
+}
+
+.velvet-success-state-box h2 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 12px 0;
+}
+
+.velvet-success-state-box p {
+    font-size: 15px;
+    color: #a1a1aa;
+    line-height: 1.6;
+    max-width: 540px;
+    margin: 0 auto 28px;
+}
+
+.velvet-success-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 /* Form Action Buttons */
 .velvet-form-actions {
     display: flex;
@@ -3315,7 +3702,7 @@ body .form-container .form-group input[name="country"] {
     gap: 14px;
     margin-top: 35px;
     padding-top: 25px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid #282834;
 }
 
 .velvet-btn-primary {
@@ -3351,9 +3738,9 @@ body .form-container .form-group input[name="country"] {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.06);
+    background: #1c1c24;
     color: #e4e4e7;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1.5px solid #383848;
     border-radius: 100px;
     padding: 13px 26px;
     font-size: 14px;
@@ -3364,99 +3751,9 @@ body .form-container .form-group input[name="country"] {
 }
 
 .velvet-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
+    background: #252530;
+    border-color: #55556a;
     color: #ffffff;
-}
-
-/* Modals (Payment & Success) */
-.velvet-modal-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-.velvet-modal-card {
-    background: linear-gradient(160deg, #18181b 0%, #0f0f11 100%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 24px;
-    padding: 40px;
-    max-width: 500px;
-    width: 100%;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
-}
-
-.velvet-modal-close-btn {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #a1a1aa;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.velvet-modal-close-btn:hover {
-    background: #DF1D3D;
-    color: #ffffff;
-    border-color: #DF1D3D;
-}
-
-.velvet-modal-icon-badge {
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    margin: 0 auto 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
-}
-
-.velvet-modal-icon-badge.success {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
-    border: 2px solid rgba(34, 197, 94, 0.3);
-}
-
-.velvet-modal-icon-badge.payment {
-    background: rgba(223, 29, 61, 0.15);
-    color: #DF1D3D;
-    border: 2px solid rgba(223, 29, 61, 0.3);
-}
-
-.velvet-modal-card h2 {
-    font-size: 24px;
-    color: #ffffff;
-    margin: 0 0 10px 0;
-    font-weight: 700;
-}
-
-.velvet-modal-card p {
-    color: #a1a1aa;
-    font-size: 14px;
-    line-height: 1.6;
-    margin: 0 0 24px 0;
 }
 
 /* Alert Boxes */
@@ -3472,19 +3769,19 @@ body .form-container .form-group input[name="country"] {
 
 .velvet-alert.error {
     background: rgba(223, 29, 61, 0.12);
-    border: 1px solid rgba(223, 29, 61, 0.3);
+    border: 1px solid rgba(223, 29, 61, 0.35);
     color: #fca5a5;
 }
 
 .velvet-alert.info {
     background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.25);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     color: #93c5fd;
 }
 
 .velvet-alert.success {
     background: rgba(34, 197, 94, 0.1);
-    border: 1px solid rgba(34, 197, 94, 0.25);
+    border: 1px solid rgba(34, 197, 94, 0.3);
     color: #86efac;
 }
 
@@ -3519,11 +3816,12 @@ body .form-container .form-group input[name="country"] {
 
     .velvet-form-steps {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+        align-items: stretch;
+        gap: 8px;
     }
 
-    .velvet-form-actions {
+    .velvet-form-actions,
+    .velvet-step2-action-btns {
         flex-direction: column;
     }
 

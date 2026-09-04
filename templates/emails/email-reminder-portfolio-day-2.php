@@ -52,7 +52,7 @@ include get_stylesheet_directory() . '/templates/emails/email-header.php';
 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px;">
     <tr>
         <td align="center">
-            <a href="<?php echo esc_url(!empty($profile_edit_url) ? $profile_edit_url : home_url('/submit-talent/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); background-image: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); text-decoration: none; border-radius: 8px;">
+            <a href="<?php echo esc_url(!empty($profile_edit_url) ? $profile_edit_url : home_url('/talent/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); background-image: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); text-decoration: none; border-radius: 8px;">
                 Complete My Profile in 3 Minutes &rarr;
             </a>
         </td>

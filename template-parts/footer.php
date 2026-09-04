@@ -59,8 +59,6 @@ if (!defined('ABSPATH')) {
 				<div class="velvet-footer-heading-line"></div>
 				<ul class="velvet-footer-menu">
 					<li><a href="<?php echo esc_url(home_url('/about-us/')); ?>">About Us</a></li>
-					<li><a href="<?php echo esc_url(home_url('/clients/')); ?>" class="highlight-link">Clients</a>
-					</li>
 					<li><a href="<?php echo esc_url(home_url('/blog/')); ?>">Blog</a></li>
 					<li><a href="<?php echo esc_url(home_url('/contact-us/')); ?>">Contact Us</a></li>
 					<li><a href="<?php echo esc_url(home_url('/scam-alert/')); ?>">Scam Alert</a></li>

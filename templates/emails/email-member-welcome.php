@@ -104,7 +104,7 @@ include get_stylesheet_directory() . '/templates/emails/email-header.php';
             <table border="0" cellpadding="0" cellspacing="0">
                 <tr>
                     <td align="center" bgcolor="#DF1D3D" style="border-radius: 8px; background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); background-image: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%);">
-                        <a href="<?php echo esc_url(!empty($profile_edit_url) ? $profile_edit_url : home_url('/submit-talent/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px;">
+                        <a href="<?php echo esc_url(!empty($profile_edit_url) ? $profile_edit_url : home_url('/talent/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; text-decoration: none; border-radius: 8px; letter-spacing: 0.5px;">
                             Complete Your Portfolio Profile Now &rarr;
                         </a>
                     </td>

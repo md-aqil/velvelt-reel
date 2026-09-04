@@ -716,6 +716,11 @@ function handle_talent_submission() {
         )
     );
 
+    // --- Trigger Portfolio Unverified Email Notification ---
+    if (function_exists('velvet_send_portfolio_unverified_email')) {
+        velvet_send_portfolio_unverified_email(get_current_user_id(), $post_id);
+    }
+
     // --- Redirect after submission ---
     // Redirect to talent archive page after successful submission
     $redirect_url = get_post_type_archive_link('talent');

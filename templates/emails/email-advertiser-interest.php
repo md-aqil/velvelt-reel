@@ -66,35 +66,9 @@ include get_stylesheet_directory() . '/templates/emails/email-header.php';
                 <tr>
                     <td style="padding-top: 16px;">
                         <table border="0" cellpadding="0" cellspacing="0" width="100%">
-                            <?php if (!empty($applicant_email)) : ?>
-                            <tr>
-                                <td style="padding: 6px 0; font-size: 14px; color: #a1a1aa !important; width: 35%;">
-                                    <strong style="color: #ffffff !important;">Email:</strong>
-                                </td>
-                                <td style="padding: 6px 0; font-size: 14px; color: #e4e4e7 !important;">
-                                    <a href="mailto:<?php echo esc_attr($applicant_email); ?>" style="color: #DF1D3D !important;">
-                                        <?php echo esc_html($applicant_email); ?>
-                                    </a>
-                                </td>
-                            </tr>
-                            <?php endif; ?>
-
-                            <?php if (!empty($applicant_phone) && $applicant_phone !== 'Not provided') : ?>
-                            <tr>
-                                <td style="padding: 6px 0; font-size: 14px; color: #a1a1aa !important;">
-                                    <strong style="color: #ffffff !important;">Phone:</strong>
-                                </td>
-                                <td style="padding: 6px 0; font-size: 14px; color: #e4e4e7 !important;">
-                                    <a href="tel:<?php echo esc_attr($applicant_phone); ?>" style="color: #ffffff !important; text-decoration: none;">
-                                        <?php echo esc_html($applicant_phone); ?>
-                                    </a>
-                                </td>
-                            </tr>
-                            <?php endif; ?>
-
                             <?php if (!empty($applicant_location)) : ?>
                             <tr>
-                                <td style="padding: 6px 0; font-size: 14px; color: #a1a1aa !important;">
+                                <td style="padding: 6px 0; font-size: 14px; color: #a1a1aa !important; width: 35%;">
                                     <strong style="color: #ffffff !important;">Location:</strong>
                                 </td>
                                 <td style="padding: 6px 0; font-size: 14px; color: #e4e4e7 !important;">
@@ -166,7 +140,7 @@ include get_stylesheet_directory() . '/templates/emails/email-header.php';
 </table>
 
 <p style="margin: 0; font-size: 13px; color: #a1a1aa !important; text-align: center; line-height: 1.5;">
-    You can get in touch with <?php echo esc_html($applicant_name); ?> directly using the contact information provided above.
+    You can review <?php echo esc_html($applicant_name); ?>'s complete portfolio profile and work reels using the button above.
 </p>
 
 <?php

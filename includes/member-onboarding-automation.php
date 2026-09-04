@@ -48,6 +48,27 @@ function velvet_is_talent_profile_complete($user_id) {
 }
 
 /**
+ * Get talent profile post ID for a user
+ *
+ * @param int $user_id
+ * @return int|bool
+ */
+function velvet_get_user_talent_id($user_id) {
+    if (!$user_id) {
+        return false;
+    }
+
+    $talent_posts = get_posts(array(
+        'post_type'      => 'talent',
+        'author'         => $user_id,
+        'post_status'    => array('publish', 'pending', 'draft'),
+        'posts_per_page' => 1,
+    ));
+
+    return !empty($talent_posts) ? $talent_posts[0]->ID : false;
+}
+
+/**
  * Check if a user has an active paid subscription or approval
  *
  * @param int $user_id
@@ -134,7 +155,7 @@ function velvet_send_welcome_email($user_id) {
         'member_name'      => $member_name,
         'member_username'  => $user->user_login,
         'member_email'     => $user->user_email,
-        'profile_edit_url' => home_url('/submit-talent/'),
+        'profile_edit_url' => home_url('/talent/'),
         'classifieds_url'  => get_post_type_archive_link('advertisement'),
         'unsubscribe_url'  => function_exists('velvet_get_unsubscribe_url') ? velvet_get_unsubscribe_url($user_id) : home_url('/'),
     );
@@ -171,6 +192,78 @@ function velvet_on_user_registered_hook($user_id) {
 add_action('user_register', 'velvet_on_user_registered_hook', 10, 1);
 
 /**
+ * Send Portfolio Created (Verification Pending) Email
+ *
+ * @param int $user_id
+ * @param int $talent_id
+ * @return bool
+ */
+function velvet_send_portfolio_unverified_email($user_id, $talent_id = 0) {
+    $user = get_userdata($user_id);
+    if (!$user || empty($user->user_email)) {
+        return false;
+    }
+
+    // Check unsubscribe suppression
+    if (get_user_meta($user_id, '_velvet_notifications_optout', true)) {
+        return false;
+    }
+
+    // Find talent post if not passed
+    if (!$talent_id) {
+        $talent_id = velvet_get_user_talent_id($user_id);
+    }
+
+    // If profile has already paid approval, don't send unverified email
+    if ($talent_id && get_post_meta($talent_id, '_talent_has_paid_approval', true)) {
+        return false;
+    }
+
+    // Duplicate prevention check
+    if (get_user_meta($user_id, '_velvet_portfolio_unverified_email_sent', true)) {
+        return false;
+    }
+
+    $member_name  = !empty($user->display_name) ? $user->display_name : (!empty($user->first_name) ? $user->first_name : $user->user_login);
+    $talent_title = $talent_id ? get_the_title($talent_id) : '';
+
+    $template_args = array(
+        'member_name'      => $member_name,
+        'talent_title'     => $talent_title,
+        'verification_url' => home_url('/talent/'),
+        'fee_amount'       => '$5',
+        'unsubscribe_url'  => function_exists('velvet_get_unsubscribe_url') ? velvet_get_unsubscribe_url($user_id) : home_url('/'),
+    );
+
+    $html_content = velvet_render_email_template('email-portfolio-unverified.php', $template_args);
+    $subject      = 'Your VelvetReel Portfolio is Created – Complete Verification to Publish';
+
+    $sent = velvet_send_email($user->user_email, $subject, $html_content);
+
+    if ($sent) {
+        update_user_meta($user_id, '_velvet_portfolio_unverified_email_sent', time());
+    }
+
+    return $sent;
+}
+
+/**
+ * Hook when a talent post is created or inserted
+ */
+function velvet_on_talent_post_created_hook($post_id, $post, $update) {
+    if ($update || wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
+        return;
+    }
+    if ($post->post_type !== 'talent') {
+        return;
+    }
+    if ($post->post_author) {
+        velvet_send_portfolio_unverified_email((int)$post->post_author, (int)$post_id);
+    }
+}
+add_action('wp_insert_post', 'velvet_on_talent_post_created_hook', 10, 3);
+
+/**
  * Main Staged Reminder Sequence Processor
  * Evaluates all registered members and sends Day 2, Day 5, Day 10, Day 14 reminders.
  *
@@ -195,13 +288,14 @@ function velvet_process_onboarding_reminders() {
     $users      = $user_query->get_results();
 
     $stats = array(
-        'evaluated' => count($users),
-        'day_2_sent'  => 0,
-        'day_5_sent'  => 0,
-        'day_10_sent' => 0,
-        'day_14_sent' => 0,
-        'completed'   => 0,
-        'skipped'     => 0,
+        'evaluated'                 => count($users),
+        'day_2_sent'                => 0,
+        'day_5_sent'                => 0,
+        'day_10_sent'               => 0,
+        'day_14_sent'               => 0,
+        'portfolio_unverified_sent' => 0,
+        'completed'                 => 0,
+        'skipped'                   => 0,
     );
 
     if (empty($users)) {
@@ -251,7 +345,7 @@ function velvet_process_onboarding_reminders() {
         if ($days_elapsed >= 14 && !$has_subscribed && !get_user_meta($user_id, '_velvet_reminder_sent_day_14', true)) {
             $args = array(
                 'member_name'     => $member_name,
-                'upgrade_url'     => home_url('/membership-login/'),
+                'upgrade_url'     => home_url('/membership-join/'),
                 'unsubscribe_url' => $unsub_url,
             );
             $html    = velvet_render_email_template('email-reminder-subscription-day-14.php', $args);
@@ -268,7 +362,7 @@ function velvet_process_onboarding_reminders() {
         if ($days_elapsed >= 10 && !$has_subscribed && !get_user_meta($user_id, '_velvet_reminder_sent_day_10', true)) {
             $args = array(
                 'member_name'     => $member_name,
-                'upgrade_url'     => home_url('/membership-login/'),
+                'upgrade_url'     => home_url('/membership-join/'),
                 'unsubscribe_url' => $unsub_url,
             );
             $html    = velvet_render_email_template('email-reminder-subscription-day-10.php', $args);
@@ -285,7 +379,7 @@ function velvet_process_onboarding_reminders() {
         if ($days_elapsed >= 5 && !$has_profile && !get_user_meta($user_id, '_velvet_reminder_sent_day_5', true)) {
             $args = array(
                 'member_name'      => $member_name,
-                'profile_edit_url' => home_url('/submit-talent/'),
+                'profile_edit_url' => home_url('/talent/'),
                 'unsubscribe_url'  => $unsub_url,
             );
             $html    = velvet_render_email_template('email-reminder-portfolio-day-5.php', $args);
@@ -302,7 +396,7 @@ function velvet_process_onboarding_reminders() {
         if ($days_elapsed >= 2 && !$has_profile && !get_user_meta($user_id, '_velvet_reminder_sent_day_2', true)) {
             $args = array(
                 'member_name'      => $member_name,
-                'profile_edit_url' => home_url('/submit-talent/'),
+                'profile_edit_url' => home_url('/talent/'),
                 'unsubscribe_url'  => $unsub_url,
             );
             $html    = velvet_render_email_template('email-reminder-portfolio-day-2.php', $args);

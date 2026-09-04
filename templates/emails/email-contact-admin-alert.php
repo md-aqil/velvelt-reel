@@ -110,17 +110,6 @@ include get_stylesheet_directory() . '/templates/emails/email-header.php';
     </tr>
 </table>
 
-<!-- Direct Reply CTA Button -->
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 24px;">
-    <tr>
-        <td align="center">
-            <a href="mailto:<?php echo esc_attr($sender_email); ?>?subject=Re: <?php echo rawurlencode(!empty($sender_subject) ? $sender_subject : 'Your inquiry on VelvetReel'); ?>" style="display: inline-block; padding: 13px 28px; font-size: 14px; font-weight: 700; color: #ffffff !important; background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); background-image: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); text-decoration: none; border-radius: 8px;">
-                Reply Directly to <?php echo esc_html($sender_name); ?> &rarr;
-            </a>
-        </td>
-    </tr>
-</table>
-
 <?php
 include get_stylesheet_directory() . '/templates/emails/email-footer.php';
 ?>

@@ -449,6 +449,13 @@ function initGlobalComponents() {
     } catch (error) {
         console.error('Error initializing portfolio gallery:', error);
     }
+    
+    try {
+        // Initialize talent sticky quick links navigation
+        initTalentStickyNav();
+    } catch (error) {
+        console.error('Error initializing talent sticky nav:', error);
+    }
 }
 
 /**
@@ -975,6 +982,76 @@ function initPortfolioGallery() {
         
     } catch (error) {
         console.error('Error initializing portfolio gallery:', error);
+    }
+}
+
+/**
+ * Initialize talent sticky quick links navigation
+ */
+function initTalentStickyNav() {
+    try {
+        const stickyNav = document.querySelector('.talent-sticky-nav');
+        if (!stickyNav) return;
+
+        const navLinks = stickyNav.querySelectorAll('.nav-pill');
+        if (!navLinks.length) return;
+
+        // Smooth scroll with offset for sticky nav bar
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                if (!targetId || !targetId.startsWith('#')) return;
+
+                const targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    e.preventDefault();
+                    const navHeight = stickyNav.offsetHeight || 60;
+                    const elPosition = targetEl.getBoundingClientRect().top + window.pageYOffset;
+                    const offsetPosition = elPosition - navHeight - 20;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+
+                    // Update active class
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+
+        // IntersectionObserver for scroll spy
+        const sectionIds = Array.from(navLinks)
+            .map(link => link.getAttribute('href'))
+            .filter(href => href && href.startsWith('#') && href.length > 1);
+
+        const sections = sectionIds
+            .map(id => document.querySelector(id))
+            .filter(el => el !== null);
+
+        if ('IntersectionObserver' in window && sections.length) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const activeId = '#' + entry.target.id;
+                        navLinks.forEach(link => {
+                            if (link.getAttribute('href') === activeId) {
+                                link.classList.add('active');
+                            } else {
+                                link.classList.remove('active');
+                            }
+                        });
+                    }
+                });
+            }, {
+                rootMargin: '-20% 0px -65% 0px'
+            });
+
+            sections.forEach(sec => observer.observe(sec));
+        }
+    } catch (error) {
+        console.error('Error in initTalentStickyNav:', error);
     }
 }
 

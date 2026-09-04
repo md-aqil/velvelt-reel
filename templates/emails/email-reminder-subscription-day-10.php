@@ -70,7 +70,7 @@ include get_stylesheet_directory() . '/templates/emails/email-header.php';
 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px;">
     <tr>
         <td align="center">
-            <a href="<?php echo esc_url(!empty($upgrade_url) ? $upgrade_url : home_url('/membership-login/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); background-image: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); text-decoration: none; border-radius: 8px;">
+            <a href="<?php echo esc_url(!empty($upgrade_url) ? $upgrade_url : home_url('/membership-join/')); ?>" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: 700; color: #ffffff !important; background: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); background-image: linear-gradient(135deg, #DF1D3D 0%, #B2122D 100%); text-decoration: none; border-radius: 8px;">
                 Explore Membership Plans &rarr;
             </a>
         </td>
