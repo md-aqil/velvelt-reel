@@ -686,6 +686,7 @@ function initPortfolioGallery() {
         const modal = document.getElementById('portfolio-modal');
         const modalImage = document.getElementById('portfolio-modal-image');
         const modalVideo = document.getElementById('portfolio-modal-video');
+        const modalVideoPlayer = document.getElementById('portfolio-modal-player');
         const modalIframe = document.getElementById('portfolio-modal-iframe');
         const modalClose = document.querySelector('.portfolio-modal-close');
         const modalPrev = document.querySelector('.portfolio-modal-prev');
@@ -693,13 +694,8 @@ function initPortfolioGallery() {
         const modalCurrent = document.getElementById('portfolio-modal-current');
         const modalTotal = document.getElementById('portfolio-modal-total');
         
-        // Debug logging
-        console.log('Initializing portfolio gallery');
-        console.log('Portfolio items found:', portfolioItems.length);
-        console.log('Modal elements:', { modal, modalImage, modalVideo, modalIframe, modalClose, modalPrev, modalNext });
-        
-        if (!modal || !modalImage || !modalVideo || !modalIframe || !modalClose || !modalPrev || !modalNext) {
-            console.log('Some modal elements are missing, skipping initialization');
+        if (!modal || !modalImage || !modalVideo || !modalClose || !modalPrev || !modalNext) {
+            console.log('Some modal elements are missing, skipping gallery initialization');
             return;
         }
         
@@ -709,7 +705,9 @@ function initPortfolioGallery() {
         let touchEndX = 0;
         
         // Set total items count
-        modalTotal.textContent = items.length;
+        if (modalTotal) {
+            modalTotal.textContent = items.length;
+        }
         
         // Hide navigation if there's only one item
         if (items.length <= 1) {
@@ -719,8 +717,8 @@ function initPortfolioGallery() {
         
         // Open modal when clicking on a portfolio item
         items.forEach((item, index) => {
-            item.addEventListener('click', function() {
-                console.log('Portfolio item clicked, index:', index);
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
                 currentIndex = index;
                 openModal();
             });
@@ -758,112 +756,114 @@ function initPortfolioGallery() {
             if (e.target === modalImage || (modalVideo && modalVideo.contains(e.target))) {
                 touchStartX = e.changedTouches[0].screenX;
             }
-        }, false);
+        }, { passive: true });
         
         modal.addEventListener('touchend', function(e) {
             if (e.target === modalImage || (modalVideo && modalVideo.contains(e.target))) {
                 touchEndX = e.changedTouches[0].screenX;
                 handleSwipe();
             }
-        }, false);
+        }, { passive: true });
         
         function handleSwipe() {
             const swipeThreshold = 50;
-            
             if (touchStartX - touchEndX > swipeThreshold) {
-                // Swipe left - next item
                 showNextItem();
             } else if (touchEndX - touchStartX > swipeThreshold) {
-                // Swipe right - previous item
                 showPrevItem();
             }
         }
-        
-        function openModal() {
-            console.log('Opening modal with item index:', currentIndex);
-            const currentItem = items[currentIndex];
+
+        function stopVideoPlayback() {
+            if (modalVideoPlayer) {
+                try {
+                    modalVideoPlayer.pause();
+                    modalVideoPlayer.currentTime = 0;
+                    modalVideoPlayer.src = '';
+                    modalVideoPlayer.removeAttribute('src');
+                    modalVideoPlayer.load();
+                } catch (e) {}
+                modalVideoPlayer.style.display = 'none';
+            }
+            if (modalIframe) {
+                modalIframe.src = '';
+                modalIframe.style.display = 'none';
+            }
+        }
+
+        function renderModalMedia(currentItem) {
+            if (!currentItem) return;
             const itemType = currentItem.getAttribute('data-type');
-            
-            console.log('Item type:', itemType);
-            console.log('Current item:', currentItem);
-            
+
+            // Reset video players first
+            stopVideoPlayback();
+
             if (itemType === 'video') {
-                // Show video - check for attachment URL first
-                const videoUrl = currentItem.getAttribute('data-video-url');
-                
-                console.log('Video URL from data attribute:', videoUrl);
-                
+                let videoUrl = currentItem.getAttribute('data-video-url');
+                if (!videoUrl) {
+                    const innerVid = currentItem.querySelector('video');
+                    if (innerVid) {
+                        videoUrl = innerVid.src || (innerVid.querySelector('source') ? innerVid.querySelector('source').src : '');
+                    }
+                }
+                // Strip hash if needed for clean playback
                 if (videoUrl) {
-                    // This is a WordPress video attachment - use the full URL
-                    console.log('Playing video attachment');
-                    
-                    // Create HTML5 video element for WordPress attachments
-                    modalImage.style.display = 'none';
-                    modalVideo.style.display = 'flex';
-                    
-                    // Remove old content and create fresh video element
-                    modalVideo.innerHTML = '';
-                    const videoElement = document.createElement('video');
-                    videoElement.controls = true;
-                    videoElement.autoplay = true;
-                    videoElement.style.cssText = 'width: 100vh; height:80vh; object-fit: contain;';
-                    
-                    const sourceElement = document.createElement('source');
-                    sourceElement.src = videoUrl;
-                    sourceElement.type = 'video/mp4';
-                    
-                    videoElement.appendChild(sourceElement);
-                    modalVideo.appendChild(videoElement);
-                    
-                    modalVideo.style.zIndex = '10002';
-                    modalVideo.style.visibility = 'visible';
-                    
-                    // Force reload the video
-                    videoElement.load();
-                } else {
-                    // Fallback to YouTube/Vimeo
-                    const videoId = currentItem.getAttribute('data-video-id');
-                    const platform = currentItem.getAttribute('data-platform');
-                    
-                    console.log('No video URL, checking for YouTube/Vimeo');
-                    console.log('Video ID:', videoId);
-                    console.log('Platform:', platform);
-                    
-                    if (platform === 'youtube') {
-                        videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1`;
-                    } else if (platform === 'vimeo') {
-                        videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
-                    } else {
-                        // Fallback for unknown platforms - try to use the video ID directly
-                        if (videoId) {
-                            // Assume it's a Vimeo video if we have an ID but no platform
-                            videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
+                    videoUrl = videoUrl.replace(/#t=[\d\.]+$/, '');
+                }
+
+                modalImage.style.display = 'none';
+                modalImage.src = '';
+                modalVideo.style.display = 'flex';
+
+                if (videoUrl) {
+                    if (modalVideoPlayer) {
+                        modalVideoPlayer.style.display = 'block';
+                        modalVideoPlayer.src = videoUrl;
+                        modalVideoPlayer.load();
+                        var playPromise = modalVideoPlayer.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(function(err) {
+                                console.log('Autoplay prevented or waiting user interaction:', err);
+                            });
                         }
                     }
-                    
-                    if (videoUrl) {
-                        modalIframe.src = videoUrl;
-                        modalImage.style.display = 'none';
-                        modalVideo.style.display = 'flex';
-                        modalVideo.style.zIndex = '10002';
-                        modalVideo.style.visibility = 'visible';
-                    } else {
-                        console.log('No valid video URL could be constructed');
+                } else {
+                    const videoId = currentItem.getAttribute('data-video-id');
+                    const platform = currentItem.getAttribute('data-platform');
+                    let embedUrl = '';
+                    if (platform === 'youtube' && videoId) {
+                        embedUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1';
+                    } else if (platform === 'vimeo' && videoId) {
+                        embedUrl = 'https://player.vimeo.com/video/' + videoId + '?autoplay=1';
+                    } else if (videoId) {
+                        embedUrl = 'https://player.vimeo.com/video/' + videoId + '?autoplay=1';
+                    }
+
+                    if (embedUrl && modalIframe) {
+                        modalIframe.style.display = 'block';
+                        modalIframe.src = embedUrl;
                     }
                 }
             } else {
-                // Show image
-                modalImage.src = currentItem.querySelector('img').src;
-                modalImage.style.display = 'block';
                 modalVideo.style.display = 'none';
-                modalIframe.src = '';
+                const imgTag = currentItem.querySelector('img');
+                if (imgTag) {
+                    modalImage.src = imgTag.src;
+                    modalImage.style.display = 'block';
+                }
             }
+        }
+
+        function openModal() {
+            const currentItem = items[currentIndex];
+            renderModalMedia(currentItem);
             
-            modalCurrent.textContent = currentIndex + 1;
+            if (modalCurrent) {
+                modalCurrent.textContent = currentIndex + 1;
+            }
             modal.classList.add('active');
-            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            document.body.style.overflow = 'hidden';
             
-            // Show/hide navigation based on item count
             if (items.length > 1) {
                 modalPrev.style.display = 'flex';
                 modalNext.style.display = 'flex';
@@ -874,111 +874,46 @@ function initPortfolioGallery() {
         }
         
         function closeModal() {
-            console.log('Closing modal');
             modal.classList.remove('active');
-            document.body.style.overflow = ''; // Restore scrolling
-            // Reset video when closing modal
-            modalIframe.src = '';
-            // Also clear HTML5 video if present
+            document.body.style.overflow = '';
+            modalImage.src = '';
+            modalImage.style.display = 'none';
             if (modalVideo) {
-                modalVideo.innerHTML = '<iframe id="portfolio-modal-iframe" src="" frameborder="0" allow="autoplay; fullscreen; encrypted-media; accelerometer; gyroscope; picture-in-picture" allowfullscreen loading="eager"></iframe>';
+                modalVideo.style.display = 'none';
             }
+            stopVideoPlayback();
         }
         
         function showPrevItem() {
-            console.log('Showing previous item');
             currentIndex = (currentIndex - 1 + items.length) % items.length;
             updateModalItem();
         }
         
         function showNextItem() {
-            console.log('Showing next item');
             currentIndex = (currentIndex + 1) % items.length;
             updateModalItem();
         }
         
         function updateModalItem() {
-            console.log('Updating modal item to index:', currentIndex);
             const currentItem = items[currentIndex];
-            const itemType = currentItem.getAttribute('data-type');
-            
-            console.log('Item type:', itemType);
-            console.log('Current item:', currentItem);
-            
-            if (itemType === 'video') {
-                // Show video - check for attachment URL first
-                const videoUrl = currentItem.getAttribute('data-video-url');
-                
-                console.log('Video URL from data attribute:', videoUrl);
-                
-                if (videoUrl) {
-                    // This is a WordPress video attachment - use the full URL
-                    console.log('Playing video attachment');
-                    
-                    // Create HTML5 video element for WordPress attachments
-                    modalImage.style.display = 'none';
-                    modalVideo.style.display = 'flex';
-                    
-                    // Remove old content and create fresh video element
-                    modalVideo.innerHTML = '';
-                    const videoElement = document.createElement('video');
-                    videoElement.controls = true;
-                    videoElement.autoplay = true;
-                    videoElement.style.cssText = 'width: 100%; height: 100%; max-height: 80vh; object-fit: contain;';
-                    
-                    const sourceElement = document.createElement('source');
-                    sourceElement.src = videoUrl;
-                    sourceElement.type = 'video/mp4';
-                    
-                    videoElement.appendChild(sourceElement);
-                    modalVideo.appendChild(videoElement);
-                    
-                    modalVideo.style.zIndex = '10002';
-                    modalVideo.style.visibility = 'visible';
-                    
-                    // Force reload the video
-                    videoElement.load();
-                } else {
-                    // Fallback to YouTube/Vimeo
-                    const videoId = currentItem.getAttribute('data-video-id');
-                    const platform = currentItem.getAttribute('data-platform');
-                    
-                    console.log('No video URL, checking for YouTube/Vimeo');
-                    console.log('Video ID:', videoId);
-                    console.log('Platform:', platform);
-                    
-                    if (platform === 'youtube') {
-                        videoUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1`;
-                    } else if (platform === 'vimeo') {
-                        videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
-                    } else {
-                        // Fallback for unknown platforms - try to use the video ID directly
-                        if (videoId) {
-                            // Assume it's a Vimeo video if we have an ID but no platform
-                            videoUrl = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1`;
-                        }
-                    }
-                    
-                    if (videoUrl) {
-                        modalIframe.src = videoUrl;
-                        modalImage.style.display = 'none';
-                        modalVideo.style.display = 'flex';
-                        modalVideo.style.zIndex = '10002';
-                        modalVideo.style.visibility = 'visible';
-                    } else {
-                        console.log('No valid video URL could be constructed');
-                    }
-                }
-            } else {
-                // Show image
-                modalImage.src = currentItem.querySelector('img').src;
-                modalImage.style.display = 'block';
-                modalVideo.style.display = 'none';
-                modalIframe.src = '';
+            renderModalMedia(currentItem);
+            if (modalCurrent) {
+                modalCurrent.textContent = currentIndex + 1;
             }
-            
-            modalCurrent.textContent = currentIndex + 1;
         }
+
+        // Initialize video preview frames in portfolio grid
+        document.querySelectorAll('.portfolio-item.video-item video').forEach(function(vid) {
+            const initFrame = function() {
+                if (vid.currentTime === 0) {
+                    try { vid.currentTime = 0.001; } catch (e) {}
+                }
+            };
+            vid.addEventListener('loadedmetadata', initFrame);
+            if (vid.readyState >= 1) {
+                initFrame();
+            }
+        });
         
     } catch (error) {
         console.error('Error initializing portfolio gallery:', error);

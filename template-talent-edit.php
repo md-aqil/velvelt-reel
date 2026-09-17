@@ -454,13 +454,35 @@ $theme_version = $controller->get_theme_version();
             foreach ($portfolio_image_ids as $attach_id) {
                 $attach_id = intval($attach_id);
                 if ($attach_id > 0) {
-                    $mime = get_post_mime_type($attach_id);
+                    $mime = get_post_mime_type($attach_id) ?: '';
                     $is_video = $mime && strpos($mime, 'video/') === 0;
-                    $thumb_url = wp_get_attachment_image_url($attach_id, 'thumbnail');
-                    $title = get_the_title($attach_id);
-                    $filename = basename(get_attached_file($attach_id));
+                    $video_url = $is_video ? wp_get_attachment_url($attach_id) : '';
+                    $thumb_url = '';
+                    if ($is_video) {
+                        $v_thumb = get_post_meta($attach_id, '_thumbnail_id', true);
+                        if ($v_thumb) {
+                            $thumb_url = wp_get_attachment_image_url($v_thumb, 'medium') ?: '';
+                        }
+                        if (empty($thumb_url)) {
+                            $med = wp_get_attachment_image_url($attach_id, 'medium');
+                            if ($med && !preg_match('/\.(mp4|webm|mov|m4v|ogv)$/i', $med)) {
+                                $thumb_url = $med;
+                            }
+                        }
+                    } else {
+                        $thumb_url = wp_get_attachment_image_url($attach_id, 'thumbnail') ?: wp_get_attachment_url($attach_id);
+                    }
+                    $title = get_the_title($attach_id) ?: basename(get_attached_file($attach_id));
+                    $filename = basename(get_attached_file($attach_id) ?: $video_url ?: $thumb_url);
         ?>
-        existingPortfolioAttachments.push({id:<?php echo $attach_id;?>,title:<?php echo wp_json_encode($title);?>,filename:<?php echo wp_json_encode($filename);?>,thumbnail_url:<?php echo wp_json_encode($thumb_url);?>,is_video:<?php echo $is_video?'true':'false';?>});
+        existingPortfolioAttachments.push({
+            id: <?php echo $attach_id; ?>,
+            title: <?php echo wp_json_encode($title); ?>,
+            filename: <?php echo wp_json_encode($filename); ?>,
+            thumbnail_url: <?php echo wp_json_encode($thumb_url); ?>,
+            video_url: <?php echo wp_json_encode($video_url); ?>,
+            is_video: <?php echo $is_video ? 'true' : 'false'; ?>
+        });
         <?php
                 }
             }
@@ -607,15 +629,42 @@ $theme_version = $controller->get_theme_version();
                     `;
 
                     if (attachment.is_video) {
-                        item.innerHTML = `
-                            <div class="video-thumbnail-wrapper">
-                                <img src="${attachment.thumbnail_url}" alt="${escapePortfolioPreviewText(attachment.title)}">
-                                <div class="play-overlay">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
-                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        let videoMediaHtml = '';
+                        if (attachment.thumbnail_url) {
+                            videoMediaHtml = `
+                                <div class="video-thumbnail-wrapper">
+                                    <img src="${attachment.thumbnail_url}" alt="${escapePortfolioPreviewText(attachment.title)}">
+                                    <div class="play-overlay">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (attachment.video_url) {
+                            videoMediaHtml = `
+                                <div class="video-thumbnail-wrapper">
+                                    <video src="${attachment.video_url}#t=0.5" preload="metadata" muted playsinline style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video>
+                                    <div class="play-overlay">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            videoMediaHtml = `
+                                <div class="video-preview-icon" style="width:100%;height:100px;display:flex;align-items:center;justify-content:center;background:#222;border-radius:6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
                                     </svg>
                                 </div>
-                            </div>
+                            `;
+                        }
+
+                        item.innerHTML = `
+                            ${videoMediaHtml}
                             <span class="file-preview-name">${escapePortfolioPreviewText(attachment.filename)}</span>
                             ${actionControls}
                         `;
@@ -679,15 +728,43 @@ $theme_version = $controller->get_theme_version();
                         `;
 
                         if (attachment.is_video) {
-                            item.innerHTML = `
-                                <div class="video-thumbnail-wrapper">
-                                    <img src="${attachment.thumbnail_url}" alt="${escapePortfolioPreviewText(attachment.title)}">
-                                    <div class="play-overlay">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
-                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            let videoMediaHtml = '';
+                            if (attachment.thumbnail_url) {
+                                videoMediaHtml = `
+                                    <div class="video-thumbnail-wrapper">
+                                        <img src="${attachment.thumbnail_url}" alt="${escapePortfolioPreviewText(attachment.title)}">
+                                        <div class="play-overlay">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+                                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                `;
+                            } else if (attachment.video_url || attachment.full_url) {
+                                const vUrl = attachment.video_url || attachment.full_url;
+                                videoMediaHtml = `
+                                    <div class="video-thumbnail-wrapper">
+                                        <video src="${vUrl}#t=0.5" preload="metadata" muted playsinline style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video>
+                                        <div class="play-overlay">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+                                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                videoMediaHtml = `
+                                    <div class="video-preview-icon" style="width:100%;height:100px;display:flex;align-items:center;justify-content:center;background:#222;border-radius:6px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
                                         </svg>
                                     </div>
-                                </div>
+                                `;
+                            }
+
+                            item.innerHTML = `
+                                ${videoMediaHtml}
                                 <span class="file-preview-name">${escapePortfolioPreviewText(attachment.filename)}</span>
                                 ${actionControls}
                             `;
@@ -695,7 +772,7 @@ $theme_version = $controller->get_theme_version();
                             const coverChoice = 'existing:' + attachment.id;
                             const isSelected = portfolioCoverChoiceInput && portfolioCoverChoiceInput.value === coverChoice;
                             item.innerHTML = `
-                                <img src="${attachment.thumbnail_url}" alt="${escapePortfolioPreviewText(attachment.title)}">
+                                <img src="${attachment.thumbnail_url || attachment.full_url}" alt="${escapePortfolioPreviewText(attachment.title)}">
                                 <span class="file-preview-name">${escapePortfolioPreviewText(attachment.filename)}</span>
                                 <label class="portfolio-cover-option ${isSelected ? 'selected' : ''}">
                                     <input type="radio" class="portfolio-cover-radio" name="portfolio_cover_visual" value="${coverChoice}" ${isSelected ? 'checked' : ''}>

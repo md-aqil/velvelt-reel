@@ -137,76 +137,100 @@ function talent_details_meta_box_callback($post) {
                 echo '<div class="value">';
                 echo '<div class="portfolio-gallery-container">';
 
+                $val_str = '';
+                if (!empty($value)) {
+                    if (is_array($value)) {
+                        $val_str = implode(',', array_filter(array_map('intval', (array) $value)));
+                    } elseif (is_string($value)) {
+                        $val_str = $value;
+                    } elseif (is_numeric($value)) {
+                        $val_str = (string) $value;
+                    }
+                }
+
                 // Hidden input to store attachment IDs
-                echo '<input type="hidden" id="_talent_portfolio" name="_talent_portfolio" value="' . esc_attr(is_array($value) ? implode(',', $value) : $value) . '" />';
+                echo '<input type="hidden" id="_talent_portfolio" name="_talent_portfolio" value="' . esc_attr($val_str) . '" />';
+
+                echo '<style>
+                    .admin-portfolio-grid { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; min-height: 50px; }
+                    .admin-portfolio-item { position: relative; width: 120px; height: 120px; border-radius: 8px; overflow: hidden; background: #222; border: 1px solid #ccc; box-shadow: 0 2px 6px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; }
+                    .admin-portfolio-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+                    .admin-portfolio-item .admin-media-badge { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.75); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; pointer-events: none; }
+                    .admin-portfolio-item .admin-media-badge.video { background: #b2122d; }
+                    .admin-portfolio-item .admin-remove-media { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; background: #dc3545; color: #fff; border: 1px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; cursor: pointer; line-height: 1; transition: background 0.2s, transform 0.2s; }
+                    .admin-portfolio-item .admin-remove-media:hover { background: #a71d2a; transform: scale(1.15); }
+                    .admin-portfolio-controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+                    .admin-portfolio-empty-msg { color: #666; font-style: italic; padding: 10px 0; }
+                </style>';
 
                 // Gallery display area
-                echo '<div id="portfolio-gallery-preview" class="portfolio-images-container">';
+                echo '<div id="portfolio-gallery-preview" class="admin-portfolio-grid">';
+                
+                $image_ids = [];
                 if (!empty($value)) {
-                    // Handle different data formats
-                    $image_ids = [];
-                    
-                    // If value is already an array of IDs
                     if (is_array($value)) {
-                        // Flatten the array in case it contains nested arrays
-                        $image_ids = is_array($value[0]) ? array_merge(...$value) : $value;
-                    } 
-                    // If value is a comma-separated string
-                    elseif (is_string($value)) {
+                        $image_ids = is_array($value[0] ?? null) ? array_merge(...$value) : $value;
+                    } elseif (is_string($value)) {
                         $image_ids = explode(',', $value);
-                    }
-                    // If value is a single ID
-                    elseif (is_numeric($value)) {
+                    } elseif (is_numeric($value)) {
                         $image_ids = [$value];
                     }
-                    
-                    // Display each image/video
+                }
+
+                $image_ids = array_filter(array_map('intval', $image_ids));
+
+                if (!empty($image_ids)) {
                     foreach ($image_ids as $image_id) {
-                        $image_id = intval($image_id); // Ensure it's an integer
                         if ($image_id > 0) {
-                            $mime_type = get_post_mime_type($image_id);
+                            $mime_type = get_post_mime_type($image_id) ?: '';
                             $is_video = $mime_type && strpos($mime_type, 'video/') === 0;
                             
-                            // Get thumbnail URL with fallback for orphaned attachments
-                            $thumbnail_url = wp_get_attachment_image_url($image_id, 'thumbnail');
-                            if (empty($thumbnail_url)) {
-                                // Try to get from GUID as fallback
-                                global $wpdb;
-                                $guid = $wpdb->get_var($wpdb->prepare(
-                                    "SELECT guid FROM $wpdb->posts WHERE ID = %d AND post_type = 'attachment' LIMIT 1",
-                                    $image_id
-                                ));
-                                if ($guid) {
-                                    $thumbnail_url = $guid;
-                                }
-                            }
-                            
                             if ($is_video) {
-                                // For videos, try to get thumbnail or show placeholder
-                                if ($thumbnail_url) {
-                                    echo '<div class="portfolio-image-preview" style="position:relative;display:inline-block;margin:5px;">';
-                                    echo '<img src="' . esc_url($thumbnail_url) . '" alt="Portfolio video" data-id="' . esc_attr($image_id) . '" />';
-                                    echo '<span style="position:absolute;bottom:5px;right:5px;background:#dc3545;color:#fff;padding:2px 6px;font-size:10px;border-radius:3px;">VIDEO</span>';
-                                    echo '</div>';
+                                $v_thumb = get_post_meta($image_id, '_thumbnail_id', true);
+                                $thumb_url = $v_thumb ? wp_get_attachment_image_url($v_thumb, 'medium') : '';
+                                if (empty($thumb_url)) {
+                                    $med = wp_get_attachment_image_url($image_id, 'medium');
+                                    if ($med && !preg_match('/\.(mp4|webm|mov|m4v|ogv)$/i', $med)) {
+                                        $thumb_url = $med;
+                                    }
+                                }
+                                $video_src = wp_get_attachment_url($image_id);
+
+                                echo '<div class="admin-portfolio-item" data-id="' . esc_attr($image_id) . '">';
+                                if (!empty($thumb_url) && !preg_match('/\.(mp4|webm|mov|m4v|ogv)$/i', $thumb_url)) {
+                                    echo '<img src="' . esc_url($thumb_url) . '" alt="Portfolio video">';
+                                } elseif (!empty($video_src)) {
+                                    echo '<video class="admin-video-preview" src="' . esc_url($video_src) . '#t=0.5" preload="auto" muted playsinline style="width:100%;height:100%;object-fit:cover;pointer-events:none;background:#111;"></video>';
                                 } else {
-                                    echo '<div class="portfolio-image-preview" style="width:150px;height:150px;background:#333;display:inline-flex;align-items:center;justify-content:center;color:#fff;margin:5px;">VIDEO</div>';
+                                    echo '<div style="color:#aaa;font-size:12px;text-align:center;padding:5px;">🎬 Video</div>';
                                 }
+                                echo '<span class="admin-media-badge video">VIDEO</span>';
+                                echo '<button type="button" class="admin-remove-media" title="Remove media" data-id="' . esc_attr($image_id) . '">&times;</button>';
+                                echo '</div>';
                             } else {
-                                // For images, show thumbnail
-                                if ($thumbnail_url) {
-                                    echo '<img src="' . esc_url($thumbnail_url) . '" class="portfolio-image-preview" alt="Portfolio image" data-id="' . esc_attr($image_id) . '" />';
+                                $img_url = wp_get_attachment_image_url($image_id, 'medium') ?: wp_get_attachment_url($image_id);
+                                echo '<div class="admin-portfolio-item" data-id="' . esc_attr($image_id) . '">';
+                                if (!empty($img_url)) {
+                                    echo '<img src="' . esc_url($img_url) . '" alt="Portfolio image">';
                                 }
+                                echo '<span class="admin-media-badge image">IMG</span>';
+                                echo '<button type="button" class="admin-remove-media" title="Remove media" data-id="' . esc_attr($image_id) . '">&times;</button>';
+                                echo '</div>';
                             }
                         }
                     }
+                } else {
+                    echo '<span class="admin-portfolio-empty-msg">No media files currently attached. Click below to add images or videos.</span>';
                 }
                 echo '</div>';
 
                 // Add gallery management buttons
-                echo '<div style="margin-top: 15px;">';
-                echo '<button type="button" id="add-portfolio-images" class="button">Manage Portfolio Gallery</button>';
-                echo '<p class="description">Click to open WordPress Media Library and select images for the portfolio gallery.</p>';
+                echo '<div class="admin-portfolio-controls">';
+                echo '<button type="button" id="add-portfolio-images" class="button button-primary">+ Add / Select Media</button>';
+                echo '<button type="button" id="clear-portfolio-images" class="button button-secondary" ' . (empty($image_ids) ? 'style="display:none;"' : '') . '>Remove All</button>';
+                echo '<span id="admin-portfolio-count" style="color:#555;font-size:12px;margin-left:8px;">' . count($image_ids) . ' item(s)</span>';
                 echo '</div>';
+                echo '<p class="description">Select or upload images & videos for the talent portfolio gallery. Click &times; on any item to remove it.</p>';
 
                 echo '</div>';
 
@@ -215,85 +239,187 @@ function talent_details_meta_box_callback($post) {
                 <script>
                 document.addEventListener("DOMContentLoaded", function() {
                     var addButton = document.getElementById("add-portfolio-images");
+                    var clearButton = document.getElementById("clear-portfolio-images");
                     var galleryInput = document.getElementById("_talent_portfolio");
                     var galleryPreview = document.getElementById("portfolio-gallery-preview");
-                    
+                    var countSpan = document.getElementById("admin-portfolio-count");
+
+                    function setupAdminVideoThumb(vid) {
+                        if (!vid) return;
+                        function seekVideo() {
+                            try {
+                                if (vid.currentTime < 0.1) {
+                                    vid.currentTime = 0.5;
+                                }
+                            } catch (e) {}
+                        }
+                        vid.addEventListener("loadedmetadata", seekVideo);
+                        vid.addEventListener("loadeddata", seekVideo);
+                        if (vid.readyState >= 1) {
+                            seekVideo();
+                        }
+                        vid.addEventListener("seeked", function() {
+                            try {
+                                if (vid.videoWidth > 0 && vid.videoHeight > 0) {
+                                    var canvas = document.createElement("canvas");
+                                    canvas.width = vid.videoWidth;
+                                    canvas.height = vid.videoHeight;
+                                    var ctx = canvas.getContext("2d");
+                                    ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+                                    var dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+                                    if (dataUrl && dataUrl.length > 200) {
+                                        var img = document.createElement("img");
+                                        img.src = dataUrl;
+                                        img.alt = "Video thumbnail";
+                                        img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+                                        if (vid.parentNode) {
+                                            vid.parentNode.insertBefore(img, vid);
+                                            vid.remove();
+                                        }
+                                    }
+                                }
+                            } catch (e) {}
+                        });
+                    }
+
+                    function updateState() {
+                        var items = galleryPreview.querySelectorAll(".admin-portfolio-item");
+                        var ids = [];
+                        items.forEach(function(item) {
+                            var id = item.getAttribute("data-id");
+                            if (id) ids.push(parseInt(id));
+                        });
+                        galleryInput.value = ids.join(",");
+                        if (countSpan) {
+                            countSpan.textContent = ids.length + " item(s)";
+                        }
+                        if (clearButton) {
+                            clearButton.style.display = ids.length > 0 ? "inline-block" : "none";
+                        }
+                        var emptyMsg = galleryPreview.querySelector(".admin-portfolio-empty-msg");
+                        if (ids.length === 0) {
+                            if (!emptyMsg) {
+                                var span = document.createElement("span");
+                                span.className = "admin-portfolio-empty-msg";
+                                span.textContent = "No media files currently attached. Click below to add images or videos.";
+                                galleryPreview.appendChild(span);
+                            }
+                        } else {
+                            if (emptyMsg) {
+                                emptyMsg.remove();
+                            }
+                        }
+                    }
+
+                    // Delegate remove button clicks
+                    galleryPreview.addEventListener("click", function(e) {
+                        if (e.target && (e.target.classList.contains("admin-remove-media") || e.target.closest(".admin-remove-media"))) {
+                            var btn = e.target.classList.contains("admin-remove-media") ? e.target : e.target.closest(".admin-remove-media");
+                            var item = btn.closest(".admin-portfolio-item");
+                            if (item) {
+                                item.remove();
+                                updateState();
+                            }
+                        }
+                    });
+
+                    if (clearButton) {
+                        clearButton.addEventListener("click", function() {
+                            if (confirm("Are you sure you want to remove all portfolio media items?")) {
+                                galleryPreview.innerHTML = "";
+                                updateState();
+                            }
+                        });
+                    }
+
                     if (addButton) {
                         addButton.addEventListener("click", function() {
                             var frame = wp.media({
                                 title: "Select Portfolio Images & Videos",
                                 multiple: true,
                                 library: { type: ["image", "video"] },
-                                button: { text: "Use Selected Files" }
+                                button: { text: "Add Selected to Portfolio" }
                             });
-                            
+
                             frame.on("select", function() {
                                 var attachments = frame.state().get("selection").toJSON();
-                                
-                                // Get existing IDs to preserve them
-                                var existingValue = galleryInput.value;
-                                var existingIds = existingValue ? existingValue.split(",").filter(function(id) { return id.trim(); }).map(function(id) { return parseInt(id); }) : [];
-                                
-                                // Get new attachment IDs
-                                var newIds = attachments.map(function(attachment) {
-                                    return attachment.id;
-                                });
-                                
-                                // Combine existing and new IDs, removing duplicates
-                                var allIds = existingIds.concat(newIds.filter(function(id) {
-                                    return existingIds.indexOf(id) === -1;
-                                }));
-                                
-                                // Update hidden input
-                                galleryInput.value = allIds.join(",");
-                                
-                                // Update preview - append new items to existing
+                                var emptyMsg = galleryPreview.querySelector(".admin-portfolio-empty-msg");
+                                if (emptyMsg) emptyMsg.remove();
+
                                 attachments.forEach(function(attachment) {
-                                    if (attachment.type === "video") {
-                                        var div = document.createElement("div");
-                                        div.className = "portfolio-image-preview";
-                                        div.style.position = "relative";
-                                        div.style.display = "inline-block";
-                                        div.style.margin = "5px";
-                                        
-                                        if (attachment.image && attachment.image.src) {
-                                            var img = document.createElement("img");
-                                            img.src = attachment.image.src;
-                                            img.style.maxWidth = "150px";
-                                            img.style.height = "auto";
-                                            div.appendChild(img);
-                                        } else {
-                                            div.innerHTML = '<div style="width:150px;height:150px;background:#333;display:flex;align-items:center;justify-content:center;color:#fff;">VIDEO</div>';
+                                    var existing = galleryPreview.querySelector('.admin-portfolio-item[data-id="' + attachment.id + '"]');
+                                    if (!existing) {
+                                        var isVideo = attachment.type === "video";
+                                        var thumbUrl = "";
+                                        if (attachment.sizes && attachment.sizes.thumbnail) {
+                                            thumbUrl = attachment.sizes.thumbnail.url;
+                                        } else if (attachment.sizes && attachment.sizes.medium) {
+                                            thumbUrl = attachment.sizes.medium.url;
+                                        } else if (attachment.icon) {
+                                            thumbUrl = attachment.icon;
                                         }
-                                        
+
+                                        var itemDiv = document.createElement("div");
+                                        itemDiv.className = "admin-portfolio-item";
+                                        itemDiv.setAttribute("data-id", attachment.id);
+
+                                        if (isVideo) {
+                                            if (thumbUrl && !thumbUrl.match(/\.(mp4|webm|mov|m4v|ogv)$/i)) {
+                                                var img = document.createElement("img");
+                                                img.src = thumbUrl;
+                                                img.alt = "Portfolio video";
+                                                itemDiv.appendChild(img);
+                                            } else if (attachment.url) {
+                                                var vid = document.createElement("video");
+                                                vid.className = "admin-video-preview";
+                                                vid.src = attachment.url + "#t=0.5";
+                                                vid.preload = "auto";
+                                                vid.muted = true;
+                                                vid.playsInline = true;
+                                                vid.style.cssText = "width:100%;height:100%;object-fit:cover;pointer-events:none;background:#111;";
+                                                itemDiv.appendChild(vid);
+                                                setupAdminVideoThumb(vid);
+                                            } else {
+                                                var iconDiv = document.createElement("div");
+                                                iconDiv.style.cssText = "color:#aaa;font-size:12px;text-align:center;padding:5px;";
+                                                iconDiv.textContent = "🎬 Video";
+                                                itemDiv.appendChild(iconDiv);
+                                            }
+                                        } else {
+                                            var img = document.createElement("img");
+                                            img.src = thumbUrl || attachment.url;
+                                            img.alt = "Portfolio image";
+                                            itemDiv.appendChild(img);
+                                        }
+
                                         var badge = document.createElement("span");
-                                        badge.style.position = "absolute";
-                                        badge.style.bottom = "5px";
-                                        badge.style.right = "5px";
-                                        badge.style.background = "#dc3545";
-                                        badge.style.color = "#fff";
-                                        badge.style.padding = "2px 6px";
-                                        badge.style.fontSize = "10px";
-                                        badge.style.borderRadius = "3px";
-                                        badge.textContent = "VIDEO";
-                                        div.appendChild(badge);
-                                        
-                                        div.setAttribute("data-id", attachment.id);
-                                        galleryPreview.appendChild(div);
-                                    } else {
-                                        var img = document.createElement("img");
-                                        img.src = attachment.sizes.thumbnail ? attachment.sizes.thumbnail.url : attachment.url;
-                                        img.className = "portfolio-image-preview";
-                                        img.alt = "Portfolio image";
-                                        img.setAttribute("data-id", attachment.id);
-                                        galleryPreview.appendChild(img);
+                                        badge.className = "admin-media-badge " + (isVideo ? "video" : "image");
+                                        badge.textContent = isVideo ? "VIDEO" : "IMG";
+                                        itemDiv.appendChild(badge);
+
+                                        var removeBtn = document.createElement("button");
+                                        removeBtn.type = "button";
+                                        removeBtn.className = "admin-remove-media";
+                                        removeBtn.title = "Remove media";
+                                        removeBtn.innerHTML = "&times;";
+                                        removeBtn.setAttribute("data-id", attachment.id);
+                                        itemDiv.appendChild(removeBtn);
+
+                                        galleryPreview.appendChild(itemDiv);
                                     }
                                 });
+
+                                updateState();
                             });
-                            
+
                             frame.open();
                         });
                     }
+
+                    // Process existing video elements on page load
+                    galleryPreview.querySelectorAll("video").forEach(function(v) {
+                        setupAdminVideoThumb(v);
+                    });
                 });
                 </script>
                 <?php

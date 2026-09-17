@@ -994,20 +994,39 @@ function get_attachment_data_ajax() {
     
     $mime_type = get_post_mime_type($attachment_id);
     $is_video = $mime_type && strpos($mime_type, 'video/') === 0;
+    $full_url = wp_get_attachment_url($attachment_id);
+    $thumb_url = '';
+
+    if ($is_video) {
+        $v_thumb = get_post_meta($attachment_id, '_thumbnail_id', true);
+        if ($v_thumb) {
+            $thumb_url = wp_get_attachment_image_url($v_thumb, 'medium') ?: '';
+        }
+        if (empty($thumb_url)) {
+            $med = wp_get_attachment_image_url($attachment_id, 'medium');
+            if ($med && !preg_match('/\.(mp4|webm|mov|m4v|ogv)$/i', $med)) {
+                $thumb_url = $med;
+            }
+        }
+    } else {
+        $thumb_url = wp_get_attachment_image_url($attachment_id, 'thumbnail') ?: $full_url;
+    }
     
     $response = array(
         'id' => $attachment_id,
         'title' => $attachment->post_title ?: $attachment->post_name,
-        'filename' => basename($attachment->guid),
+        'filename' => basename(get_attached_file($attachment_id) ?: $full_url ?: $attachment->guid),
         'mime_type' => $mime_type,
         'is_video' => $is_video,
-        'thumbnail_url' => wp_get_attachment_image_url($attachment_id, 'thumbnail'),
-        'full_url' => wp_get_attachment_url($attachment_id)
+        'thumbnail_url' => $thumb_url,
+        'video_url' => $is_video ? $full_url : '',
+        'full_url' => $full_url
     );
     
     wp_send_json_success($response);
 }
 add_action('wp_ajax_get_attachment_data', 'get_attachment_data_ajax');
+add_action('wp_ajax_nopriv_get_attachment_data', 'get_attachment_data_ajax');
 // TEMP COMMENTED OUT - TESTING
 // add_action('wp_ajax_submit_talent_profile', 'handle_talent_submission');
 // add_action('wp_ajax_nopriv_submit_talent_profile', 'handle_talent_submission');

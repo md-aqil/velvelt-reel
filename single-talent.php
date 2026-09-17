@@ -50,10 +50,39 @@ if ($has_access) {
         $weight = get_post_meta($post_id, '_talent_weight', true);
         $weight_unit = get_post_meta($post_id, '_talent_weight_unit', true) ?: 'kg';
         $complexion = get_post_meta($post_id, '_talent_complexion', true);
-        $bust_size = get_post_meta($post_id, '_talent_bust_size', true);
         $hair_color = get_post_meta($post_id, '_talent_hair_color', true);
         $dress_size = get_post_meta($post_id, '_talent_dress_size', true);
         $shirt_size = get_post_meta($post_id, '_talent_shirt_size', true);
+
+        // --- Age ---
+        $age = get_post_meta($post_id, '_talent_age', true);
+        if (empty($age)) {
+            $author_id = get_post_field('post_author', $post_id);
+            $dob = get_post_meta($post_id, '_talent_dob', true);
+            if (empty($dob) && $author_id) {
+                $dob = get_user_meta($author_id, 'dob', true);
+                if (empty($dob)) {
+                    global $wpdb;
+                    $info_table = $wpdb->prefix . 'userinformation';
+                    $dob = $wpdb->get_var($wpdb->prepare("SELECT dob FROM $info_table WHERE user_id = %d", $author_id));
+                }
+            }
+            if (!empty($dob) && $dob !== '0000-00-00') {
+                try {
+                    $birth_date = new DateTime($dob);
+                    $now = new DateTime('today');
+                    $diff = $birth_date->diff($now)->y;
+                    if ($diff > 0) {
+                        $age = $diff;
+                    }
+                } catch (Exception $e) {
+                    // Fallback if parsing fails
+                }
+            }
+        }
+        if (empty($age)) {
+            $age = get_post_meta($post_id, '_talent_age_group', true);
+        }
     
         // Privacy settings
         $hide_email = get_post_meta($post_id, '_talent_hide_email', true);
@@ -90,15 +119,47 @@ if ($has_access) {
             return $url;
         };
 
-        // Helper function to get thumbnail URL with fallback
-        $get_thumbnail_url_fallback = function($attachment_id, $size = 'medium') use ($get_attachment_url_fallback) {
-            $url = wp_get_attachment_image_url($attachment_id, $size);
-            if (empty($url)) {
-                $url = $get_attachment_url_fallback($attachment_id);
+        // Helper function to build item
+        $build_portfolio_item = function($attachment_id) use ($get_attachment_url_fallback) {
+            $attachment_id = intval($attachment_id);
+            if ($attachment_id <= 0) {
+                return null;
             }
-            return $url;
+            $mime_type = get_post_mime_type($attachment_id) ?: '';
+            $is_video = $mime_type && strpos($mime_type, 'video/') === 0;
+            $attachment_url = $get_attachment_url_fallback($attachment_id);
+            if (empty($attachment_url)) {
+                return null;
+            }
+
+            $thumbnail_url = '';
+            if ($is_video) {
+                $thumb_id = get_post_meta($attachment_id, '_thumbnail_id', true);
+                if ($thumb_id) {
+                    $thumbnail_url = wp_get_attachment_image_url($thumb_id, 'large');
+                }
+                if (empty($thumbnail_url)) {
+                    $img = wp_get_attachment_image_url($attachment_id, 'large');
+                    if ($img && !preg_match('/\.(mp4|webm|mov|m4v|ogv)$/i', $img)) {
+                        $thumbnail_url = $img;
+                    }
+                }
+            } else {
+                $thumbnail_url = wp_get_attachment_image_url($attachment_id, 'large');
+                if (empty($thumbnail_url)) {
+                    $thumbnail_url = $attachment_url;
+                }
+            }
+
+            return [
+                'id' => $attachment_id,
+                'url' => $attachment_url,
+                'thumbnail_url' => $thumbnail_url,
+                'is_video' => $is_video,
+                'mime_type' => $mime_type
+            ];
         };
-    
+
         // Prepare portfolio items array
         $portfolio_items = [];
         if (!empty($portfolio_image_ids)) {
@@ -111,66 +172,31 @@ if ($has_access) {
                 });
                 
                 foreach ($flat_ids as $attachment_id) {
-                    $mime_type = get_post_mime_type($attachment_id);
-                    $is_video = $mime_type && strpos($mime_type, 'video/') === 0;
-                    $attachment_url = $get_attachment_url_fallback($attachment_id);
-                    $thumbnail_url = $get_thumbnail_url_fallback($attachment_id, 'large');
-                    
-                    if (!empty($attachment_url)) {
-                        $portfolio_items[] = [
-                            'id' => $attachment_id,
-                            'url' => $attachment_url,
-                            'thumbnail_url' => $thumbnail_url,
-                            'is_video' => $is_video,
-                            'mime_type' => $mime_type
-                        ];
+                    $item = $build_portfolio_item($attachment_id);
+                    if ($item) {
+                        $portfolio_items[] = $item;
                     }
                 }
             } elseif (is_string($portfolio_image_ids)) {
                 $ids = explode(',', $portfolio_image_ids);
                 foreach ($ids as $id) {
-                    $id = intval(trim($id));
-                    if ($id > 0) {
-                        $mime_type = get_post_mime_type($id);
-                        $is_video = $mime_type && strpos($mime_type, 'video/') === 0;
-                        $attachment_url = $get_attachment_url_fallback($id);
-                        $thumbnail_url = $get_thumbnail_url_fallback($id, 'large');
-                        
-                        if (!empty($attachment_url)) {
-                            $portfolio_items[] = [
-                                'id' => $id,
-                                'url' => $attachment_url,
-                                'thumbnail_url' => $thumbnail_url,
-                                'is_video' => $is_video,
-                                'mime_type' => $mime_type
-                            ];
-                        }
+                    $item = $build_portfolio_item($id);
+                    if ($item) {
+                        $portfolio_items[] = $item;
                     }
                 }
             } elseif (is_numeric($portfolio_image_ids)) {
-                $attachment_id = intval($portfolio_image_ids);
-                $mime_type = get_post_mime_type($attachment_id);
-                $is_video = $mime_type && strpos($mime_type, 'video/') === 0;
-                $attachment_url = $get_attachment_url_fallback($attachment_id);
-                $thumbnail_url = $get_thumbnail_url_fallback($attachment_id, 'large');
-                
-                if (!empty($attachment_url)) {
-                    $portfolio_items[] = [
-                        'id' => $attachment_id,
-                        'url' => $attachment_url,
-                        'thumbnail_url' => $thumbnail_url,
-                        'is_video' => $is_video,
-                        'mime_type' => $mime_type
-                    ];
+                $item = $build_portfolio_item($portfolio_image_ids);
+                if ($item) {
+                    $portfolio_items[] = $item;
                 }
             }
         }
 
         // Section Availability Flags
         $has_bio = !empty(get_the_content());
-        $has_physical_attributes = !empty($height) || !empty($weight) || !empty($complexion) || 
-                                   !empty($bust_size) || !empty($hair_color) || 
-                                   !empty($dress_size) || !empty($shirt_size);
+        $has_physical_attributes = !empty($age) || !empty($height) || !empty($weight) || !empty($complexion) || 
+                                   !empty($hair_color) || !empty($dress_size) || !empty($shirt_size);
         $has_portfolio = !empty($portfolio_items);
         $has_experience = !empty($notable_works) && is_array($notable_works);
         $has_fashion = !empty($fashion_categories) && is_array($fashion_categories);
@@ -360,6 +386,12 @@ if ($has_access) {
                                     <h3 class="card-title">Physical Stats</h3>
                                 </div>
                                 <div class="stats-grid">
+                                    <?php if (!empty($age)): ?>
+                                        <div class="stat-item">
+                                            <span class="stat-label">Age</span>
+                                            <span class="stat-value"><?php echo esc_html($age); ?></span>
+                                        </div>
+                                    <?php endif; ?>
                                     <?php if ($height): ?>
                                         <div class="stat-item">
                                             <span class="stat-label">Height</span>
@@ -376,12 +408,6 @@ if ($has_access) {
                                         <div class="stat-item">
                                             <span class="stat-label">Complexion</span>
                                             <span class="stat-value"><?php echo esc_html($complexion); ?></span>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if ($bust_size): ?>
-                                        <div class="stat-item">
-                                            <span class="stat-label">Bust / Chest</span>
-                                            <span class="stat-value"><?php echo esc_html($bust_size); ?></span>
                                         </div>
                                     <?php endif; ?>
                                     <?php if ($hair_color): ?>
@@ -632,12 +658,12 @@ if ($has_access) {
                                         <?php if ($item['is_video']): ?>
                                             <!-- Video Item -->
                                             <div class="portfolio-item video-item" data-index="<?php echo $index; ?>" data-type="video" data-attachment-id="<?php echo esc_attr($item['id']); ?>" data-video-url="<?php echo esc_url($item['url']); ?>" title="Click to play video">
-                                                <video poster="<?php echo esc_url($item['thumbnail_url']); ?>" playsinline muted preload="metadata">
-                                                    <source src="<?php echo esc_url($item['url']); ?>" type="video/mp4">
+                                                <video <?php if (!empty($item['thumbnail_url'])): ?>poster="<?php echo esc_url($item['thumbnail_url']); ?>"<?php endif; ?> playsinline muted preload="auto" src="<?php echo esc_url($item['url']); ?>#t=0.001">
+                                                    <source src="<?php echo esc_url($item['url']); ?>#t=0.001" type="<?php echo esc_attr(!empty($item['mime_type']) ? $item['mime_type'] : 'video/mp4'); ?>">
                                                 </video>
                                                 <div class="portfolio-overlay">
                                                     <span class="play-btn-circle">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                                                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                                                         </svg>
                                                     </span>
@@ -934,6 +960,7 @@ if ($has_access) {
             <div class="portfolio-modal-content">
                 <img id="portfolio-modal-image" src="" alt="Portfolio full preview">
                 <div id="portfolio-modal-video" class="portfolio-modal-video">
+                    <video id="portfolio-modal-player" controls playsinline preload="auto"></video>
                     <iframe id="portfolio-modal-iframe" src="" frameborder="0" allow="autoplay; fullscreen; encrypted-media; accelerometer; gyroscope; picture-in-picture" allowfullscreen loading="eager"></iframe>
                 </div>
                 <div class="portfolio-modal-counter">
