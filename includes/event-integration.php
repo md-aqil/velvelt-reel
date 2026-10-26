@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 // All WordPress functions should be available when this file is properly included
 
 /**
- * Ticketmaster events shortcode
+ * Ticketmaster events shortcode with transient caching and fail-fast timeout
  */
 function ticketmaster_events_shortcode($atts) {
     $atts = shortcode_atts(array(
@@ -22,6 +22,13 @@ function ticketmaster_events_shortcode($atts) {
         'country' => '',       // e.g., IN, US, GB — optional
         'limit' => 20,
     ), $atts);
+
+    // Fast return from cache (12-hour transient)
+    $cache_key = 'vr_tm_events_' . md5( serialize( $atts ) );
+    $cached    = get_transient( $cache_key );
+    if ( false !== $cached ) {
+        return $cached;
+    }
 
     $apikey = 'FkW2xMhFCzGx8uDmMg0eNBzNL5qoHCmk'; // Replace with your key
 
@@ -40,9 +47,21 @@ function ticketmaster_events_shortcode($atts) {
             $url .= "&countryCode={$country}";
         }
 
-        $response = wp_remote_get($url);
-        if (is_wp_error($response))
-            continue;
+        // Strict 2-second timeout to prevent stalling page rendering
+        $response = wp_remote_get($url, array(
+            'timeout'   => 2,
+            'sslverify' => true,
+        ));
+
+        // If connection fails, times out, or error returned, break early to prevent compounding delays
+        if (is_wp_error($response)) {
+            break;
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        if ($code !== 200) {
+            break;
+        }
 
         $data = json_decode(wp_remote_retrieve_body($response), true);
 
@@ -52,7 +71,10 @@ function ticketmaster_events_shortcode($atts) {
     }
 
     if (empty($events)) {
-        return "<p>No events found for given keywords.</p>";
+        $fallback_html = '<div class="vr-no-events" style="text-align:center;padding:24px;color:rgba(255,255,255,0.7);font-size:15px;letter-spacing:0.5px;">Upcoming fashion &amp; casting events will be announced soon.</div>';
+        // Cache fallback for 12 hours so subsequent requests load instantaneously
+        set_transient( $cache_key, $fallback_html, 12 * HOUR_IN_SECONDS );
+        return $fallback_html;
     }
 
     // Deduplicate events by ID
@@ -94,6 +116,9 @@ function ticketmaster_events_shortcode($atts) {
     }
 
     $html .= '</div>';
+
+    // Cache valid HTML for 12 hours
+    set_transient( $cache_key, $html, 12 * HOUR_IN_SECONDS );
 
     return $html;
 }
