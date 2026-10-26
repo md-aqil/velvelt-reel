@@ -16,18 +16,16 @@ if (!defined('ABSPATH')) {
 
 define('HELLO_ELEMENTOR_CHILD_VERSION', '2.4.4');
 
-// Load the Plugin Update Checker library
-require_once get_stylesheet_directory() . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
-
-// Initialize the updater
-$myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-    'https://github.com/md-aqil/velvelt-reel', // The URL of your GitHub repository
-    __FILE__, // Full path to the main theme file or functions.php
-    'hello-elementor-child' // Your theme slug
-);
-
-// Set which branch to use for updates (defaults to master/main)
-$myUpdateChecker->setBranch('main');
+// Load the Plugin Update Checker library on-demand only (prevents slow GitHub API hangs during login/admin load)
+if ( is_admin() && isset( $_GET['check_theme_updates'] ) ) {
+    require_once get_stylesheet_directory() . '/vendor/yahnis-elsts/plugin-update-checker/plugin-update-checker.php';
+    $myUpdateChecker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/md-aqil/velvelt-reel',
+        __FILE__,
+        'hello-elementor-child'
+    );
+    $myUpdateChecker->setBranch('main');
+}
 
 /**
  * SEO Hooks for Talent Single Pages
@@ -223,12 +221,6 @@ require_once get_stylesheet_directory() . '/includes/elementor-integration.php';
 // Talent submission and update forms
 require_once get_stylesheet_directory() . '/includes/talent-forms.php';
 
-// Admin meta boxes for talent posts
-require_once get_stylesheet_directory() . '/includes/talent-meta-boxes.php';
-
-// Admin meta boxes for advertisement posts
-require_once get_stylesheet_directory() . '/includes/advertisement-meta-boxes.php';
-
 // All shortcodes
 require_once get_stylesheet_directory() . '/includes/shortcodes.php';
 
@@ -277,8 +269,40 @@ require_once get_stylesheet_directory() . '/includes/contact-form-handler.php';
 // New-member welcome & staged portfolio/subscription reminders automation
 require_once get_stylesheet_directory() . '/includes/member-onboarding-automation.php';
 
-// Email Automation Sandbox & Live Preview Tool
-require_once get_stylesheet_directory() . '/includes/admin-email-preview.php';
+// Admin-only modules (Conditionally loaded to save RAM on frontend requests)
+if ( is_admin() || wp_doing_ajax() ) {
+    require_once get_stylesheet_directory() . '/includes/talent-meta-boxes.php';
+    require_once get_stylesheet_directory() . '/includes/advertisement-meta-boxes.php';
+    require_once get_stylesheet_directory() . '/includes/admin-email-preview.php';
+}
+
+/**
+ * Memory & Server Performance Optimizations
+ */
+// 1. Disable XML-RPC pingbacks to prevent brute-force memory consumption
+add_filter( 'xmlrpc_enabled', '__return_false' );
+
+// 2. Throttle WP Heartbeat API frequency (reduces idle PHP-FPM wakeups)
+add_filter( 'heartbeat_settings', function( $settings ) {
+    $settings['interval'] = 60; // 60 seconds
+    return $settings;
+} );
+
+// 3. Remove slow/dead dashboard widgets (WordPress Events/News RSS, Nag boxes)
+add_action( 'wp_dashboard_setup', function() {
+    remove_meta_box( 'dashboard_primary', 'dashboard', 'side' );      // WordPress Events and News RSS
+    remove_meta_box( 'dashboard_secondary', 'dashboard', 'side' );    // WordPress News
+    remove_meta_box( 'dashboard_quick_press', 'dashboard', 'side' );  // Quick Draft
+    remove_meta_box( 'dashboard_browser_nag', 'dashboard', 'normal' ); // Browser nag
+    remove_meta_box( 'dashboard_php_nag', 'dashboard', 'normal' );     // PHP nag
+}, 999 );
+
+// 4. Disable synchronous outbound update checks on admin_init (eliminates 20s-30s freeze on wp-admin)
+add_action( 'admin_init', function() {
+    remove_action( 'admin_init', '_maybe_update_core' );
+    remove_action( 'admin_init', '_maybe_update_plugins' );
+    remove_action( 'admin_init', '_maybe_update_themes' );
+}, 1 );
 
 /**
  * Create Advertisement Submission page on theme activation
