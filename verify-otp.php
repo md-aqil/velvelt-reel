@@ -2,8 +2,9 @@
 /**
  * Template Name: Verify Otp
  */
-session_start();
-require_once ABSPATH . 'wp-load.php';
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    session_start();
+}
 
 $errors = [];
 $success = "";
@@ -13,71 +14,86 @@ $remaining_time = 0;
 
 // Check if reset email exists in session
 if (!isset($_SESSION['reset_email'])) {
-    wp_redirect(home_url('/forgot-password'));
+    wp_redirect(home_url('/forgot-password/'));
     exit;
 }
 
-$email = $_SESSION['reset_email'];
+$email = sanitize_email($_SESSION['reset_email']);
 $user = get_user_by('email', $email);
 
 if (!$user) {
-    $errors[] = "No user found with this email.";
+    $errors[] = "No account found matching this email session. Please request a new code.";
 } else {
     $user_id = $user->ID;
 }
 
 // Check if resend is allowed (60 seconds cooldown)
-$last_otp_time = get_user_meta($user_id, 'last_otp_time', true);
-if ($last_otp_time) {
-    $time_diff = time() - strtotime($last_otp_time);
-    if ($time_diff < 60) {
-        $can_resend = false;
-        $remaining_time = 60 - $time_diff;
+if (isset($user_id)) {
+    $last_otp_time = get_user_meta($user_id, 'last_otp_time', true);
+    if ($last_otp_time) {
+        $time_diff = time() - strtotime($last_otp_time);
+        if ($time_diff < 60) {
+            $can_resend = false;
+            $remaining_time = 60 - $time_diff;
+        }
     }
 }
 
 // Handle resend OTP request
-if (isset($_POST['resend_otp']) && $can_resend) {
+if (isset($_POST['resend_otp']) && $can_resend && isset($user_id)) {
     // Generate new OTP
-    $otp = rand(100000, 999999);
+    $otp = (string)random_int(100000, 999999);
     
     // Store OTP and expiry (10 minutes)
     update_user_meta($user_id, 'reset_token', $otp);
     update_user_meta($user_id, 'reset_token_expiry', date('Y-m-d H:i:s', strtotime('+10 minutes')));
-    update_user_meta($user_id, 'last_otp_time', date('Y-m-d H:i:s'));
+    update_user_meta($user_id, 'last_otp_time', current_time('mysql'));
     
-    // Send email with OTP
-    $subject = 'Password Reset OTP';
-    $message = "Your OTP for password reset is: $otp\n\nThis OTP will expire in 10 minutes.";
-    wp_mail($email, $subject, $message);
+    // Send branded email with OTP
+    $mail_sent = false;
+    if (function_exists('velvet_send_otp_email')) {
+        $recipient_name = !empty($user->first_name) ? $user->first_name : $user->display_name;
+        $mail_sent = velvet_send_otp_email($email, $otp, 'reset_password', $recipient_name, 10);
+    } else {
+        $subject = 'Your VelvetReel Password Reset Code: ' . $otp;
+        $message = "Your OTP for password reset is: $otp\n\nThis OTP will expire in 10 minutes.";
+        $mail_sent = wp_mail($email, $subject, $message);
+    }
     
-    $resend_message = "A new OTP has been sent to your email.";
+    if ($mail_sent) {
+        $resend_message = "A new verification code has been sent to your email.";
+    } else {
+        $errors[] = "Could not resend verification code. Please check your email configuration.";
+    }
     $can_resend = false;
     $remaining_time = 60;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['resend_otp'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['resend_otp']) && isset($user_id)) {
     $input_otp = trim($_POST['otp'] ?? '');
 
     if (!$input_otp) {
-        $errors[] = "Please enter the OTP.";
+        $errors[] = "Please enter the 6-digit OTP.";
     } else {
-        $stored_otp = get_user_meta($user_id, 'reset_token', true);
+        $stored_otp = (string)get_user_meta($user_id, 'reset_token', true);
         $expiry     = get_user_meta($user_id, 'reset_token_expiry', true);
 
         if (!$stored_otp || !$expiry) {
-            $errors[] = "No OTP found. Please request again.";
+            $errors[] = "No active OTP request found. Please request a new code.";
         } elseif ($input_otp === $stored_otp && strtotime($expiry) > time()) {
-            // OTP is valid — proceed
+            // OTP is valid — clear temporary OTP tokens and authorize reset step
             delete_user_meta($user_id, 'reset_token');
             delete_user_meta($user_id, 'reset_token_expiry');
             delete_user_meta($user_id, 'last_otp_time');
 
+            $_SESSION['otp_verified'] = true;
+            $_SESSION['reset_user_id'] = $user_id;
+
             // Redirect to reset password page
-            wp_redirect(home_url('/reset-password'));
+            wp_redirect(home_url('/reset-password/'));
             exit;
         } else {
-            $errors[] = "Invalid or expired OTP.";
+            $errors[] = "Invalid or expired OTP. Please check the code or request a new one.";
         }
     }
 }

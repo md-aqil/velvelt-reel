@@ -2169,11 +2169,30 @@ if (!function_exists('get_talent_profile_image_url')) {
 add_filter( 'wp_mail_smtp_providers_gmail_auth_is_client_needed', '__return_false' );
 
 /**
- * Fail-safe for wp_mail: Prevents 60-120s server hangs during login or admin actions
- * when external SMTP/Gmail API connection is unreachable or blackholed on the host.
+ * Safe Session Initialization: Ensure $_SESSION is started cleanly on the 'init' hook
+ * before any page headers or template outputs are rendered.
  */
-add_filter( 'pre_wp_mail', function( $null, $atts ) {
-    return false;
-}, 1, 2 );
+if (!function_exists('velvet_init_session')) {
+    function velvet_init_session() {
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
+    }
+    add_action('init', 'velvet_init_session', 1);
+}
+
+/**
+ * Mail Network Resilience: Protect against long server hangs on outbound mail attempts.
+ * Caps PHPMailer socket timeout at 10 seconds to avoid Apache 504 gateway timeouts.
+ */
+add_action('phpmailer_init', function($phpmailer) {
+    if (isset($phpmailer->Timeout)) {
+        $phpmailer->Timeout = 10;
+    }
+});
+
+add_filter('http_request_timeout', function($timeout) {
+    return min($timeout, 10);
+});
 
 ?>

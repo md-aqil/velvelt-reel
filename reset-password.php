@@ -2,35 +2,43 @@
 /**
  * Template Name: Reset Password
  */
-session_start();
-require_once ABSPATH . 'wp-load.php';
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    session_start();
+}
 
 $errors = [];
 $success = "";
 
-if (!isset($_SESSION['reset_email'])) {
-    wp_redirect(home_url('/forgot-password'));
+// Security check: Must have completed OTP verification step
+if (empty($_SESSION['reset_email']) || empty($_SESSION['otp_verified'])) {
+    wp_redirect(home_url('/forgot-password/'));
     exit;
 }
 
-$email = $_SESSION['reset_email'];
-$user = get_user_by('email', $email);
+$user_id = !empty($_SESSION['reset_user_id']) ? intval($_SESSION['reset_user_id']) : 0;
+$user    = $user_id ? get_user_by('id', $user_id) : get_user_by('email', $_SESSION['reset_email']);
 
 if (!$user) {
-    $errors[] = "User not found.";
+    $errors[] = "User account not found. Please start the password reset process again.";
 } else {
     $user_id = $user->ID;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($user_id) && $user) {
+    if (isset($_POST['velvet_reset_nonce']) && !wp_verify_nonce($_POST['velvet_reset_nonce'], 'velvet_reset_password_action')) {
+        $errors[] = "Security check failed. Please refresh the page and try again.";
+    }
+
     $password = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
 
     // Password validations
     if (!$password) {
         $errors[] = "Password is required.";
+    } elseif (strlen($password) < 6) {
+        $errors[] = "Password must be at least 6 characters long.";
     } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/', $password)) {
-        $errors[] = "Password must be at least 6 characters long and include uppercase, lowercase, a number, and a special character.";
+        $errors[] = "Password must include uppercase, lowercase, a number, and a special character.";
     }
 
     if ($password !== $password_confirm) {
@@ -38,15 +46,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        // Reset password using WordPress function
+        // 1. Reset password in WordPress core
         wp_set_password($password, $user_id);
 
-        // Clear reset token and session
+        // 2. Trigger WordPress password_reset action hook (listened to by plugins)
+        do_action('password_reset', $user, $password);
+
+        // 3. Direct Simple Membership sync to guarantee member login works
+        if (class_exists('SwpmMemberUtils') && class_exists('SwpmUtils')) {
+            $swpm_user = SwpmMemberUtils::get_user_by_user_name($user->user_login);
+            if (!empty($swpm_user) && !empty($swpm_user->member_id)) {
+                global $wpdb;
+                $swpm_hash = SwpmUtils::encrypt_password($password);
+                $wpdb->update(
+                    $wpdb->prefix . "swpm_members_tbl",
+                    array('password' => $swpm_hash),
+                    array('member_id' => $swpm_user->member_id)
+                );
+            }
+        }
+
+        // Clear tokens and verification session
         delete_user_meta($user_id, 'reset_token');
         delete_user_meta($user_id, 'reset_token_expiry');
+        delete_user_meta($user_id, 'last_otp_request_time');
         unset($_SESSION['reset_email']);
+        unset($_SESSION['reset_user_id']);
+        unset($_SESSION['otp_verified']);
 
-        $success = "Password reset successfully. You can now <a href='" . esc_url(home_url('/sign-in')) . "' class='chaitu-link'>login</a>.";
+        $login_url = home_url('/membership-login/');
+        $success = "Password reset successfully! You can now <a href='" . esc_url($login_url) . "' class='chaitu-link' style='color:#CD2838; font-weight:bold; text-decoration:underline;'>Sign In</a> with your new password.";
     }
 }
 ?>
@@ -308,22 +337,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <?php endif; ?>
 
-        <form method="POST" action="<?= esc_url(home_url('/reset-password')) ?>" novalidate>
+        <form method="POST" action="" novalidate>
+            <?php wp_nonce_field('velvet_reset_password_action', 'velvet_reset_nonce'); ?>
             <div class="chaitu-form-group">
                 <label for="password" class="chaitu-label">New Password</label>
                 <input type="password" id="password" name="password" class="chaitu-input"
-                    placeholder="Enter your new password" required />
+                    placeholder="Enter your new password" required autocomplete="new-password" />
             </div>
 
             <div class="chaitu-form-group">
                 <label for="password_confirm" class="chaitu-label">Confirm Password</label>
                 <input type="password" id="password_confirm" name="password_confirm" class="chaitu-input"
-                    placeholder="Confirm your new password" required />
+                    placeholder="Confirm your new password" required autocomplete="new-password" />
             </div>
 
             <button type="submit" class="chaitu-button">Reset Password</button>
         </form>
-        <a href="<?php echo home_url('/forgot-password'); ?>" class="chaitu-back-link">← Back to Forgot Password</a>
+        <a href="<?php echo esc_url(home_url('/forgot-password/')); ?>" class="chaitu-back-link">← Back to Forgot Password</a>
 
         <?php endif; ?>
     </div>

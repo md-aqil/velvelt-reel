@@ -369,32 +369,47 @@ function restrict_classified_ad_posting_plan_access() {
 add_action('template_redirect', 'restrict_classified_ad_posting_plan_access');
 
 /**
- * Redirect default WordPress lost password page to custom forgot password page
+ * Redirect default WordPress, WooCommerce, SWPM, and duplicate /password-reset/ URLs
+ * to the authoritative custom /forgot-password/ page.
  */
 function redirect_lost_password_page() {
-    // Check if we're on the default lost password page
     global $wp;
 
-    // Check for both WooCommerce and WordPress default lost password URLs
+    $request = isset($wp->request) ? trim($wp->request, '/') : '';
+    $uri     = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+
+    // Check for duplicate /password-reset/ slug
+    if ($request === 'password-reset' || strpos($uri, '/password-reset') === 0) {
+        wp_redirect(home_url('/forgot-password/'), 301);
+        exit;
+    }
+
+    // Check for WooCommerce, WordPress, or SWPM lost password requests
     if (
-        isset($wp->request) && (
-            strpos($wp->request, 'my-account/lost-password') !== false ||
-            strpos($wp->request, 'wp-login.php?action=lostpassword') !== false ||
-            (isset($_GET['action']) && $_GET['action'] === 'lostpassword')
-        )
+        strpos($request, 'my-account/lost-password') !== false ||
+        strpos($request, 'wp-login.php?action=lostpassword') !== false ||
+        strpos($uri, 'action=lostpassword') !== false ||
+        (isset($_GET['action']) && in_array($_GET['action'], array('lostpassword', 'swpm-reset-using-link'), true))
     ) {
-        // Redirect to custom forgot password page
-        wp_redirect(home_url('/forgot-password/'));
+        wp_redirect(home_url('/forgot-password/'), 302);
         exit;
     }
 }
 add_action('template_redirect', 'redirect_lost_password_page', 5);
 
-// Also hook into the login URL filter to change the lost password URL
+// Hook into the login URL filter to change the lost password URL
 function custom_lostpassword_url($lostpassword_url) {
     return home_url('/forgot-password/');
 }
 add_filter('lostpassword_url', 'custom_lostpassword_url', 10, 1);
+
+// Hook into Simple Membership reset page URL filters
+add_filter('swpm_reset_password_page_url', function() {
+    return home_url('/forgot-password/');
+});
+add_filter('swpm_password_reset_page_url', function() {
+    return home_url('/forgot-password/');
+});
 
 /**
  * Redirect users to sign-in page after WooCommerce logout

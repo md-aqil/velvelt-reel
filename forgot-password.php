@@ -2,34 +2,53 @@
 /**
  * Template Name: Forgot Password
  */
-session_start();
-require_once ABSPATH . 'wp-load.php';
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    session_start();
+}
 
 $errors = [];
 $success = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = sanitize_email(trim($_POST['email'] ?? ''));
+    // Nonce verification if present
+    if (isset($_POST['velvet_forgot_nonce']) && !wp_verify_nonce($_POST['velvet_forgot_nonce'], 'velvet_forgot_password_action')) {
+        $errors[] = "Security check failed. Please refresh the page and try again.";
+    }
 
-    // Validate email
-    if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Please enter a valid email address.";
+    $login_input = sanitize_text_field(trim($_POST['email'] ?? ''));
+
+    if (empty($login_input)) {
+        $errors[] = "Please enter your email address or username.";
     } else {
-        // Get user by email from WordPress
-        $user = get_user_by('email', $email);
+        // Find user by email or by username
+        $user = is_email($login_input) ? get_user_by('email', $login_input) : get_user_by('login', $login_input);
+
+        // Also check Simple Membership record if user not found in core WP users directly
+        if (!$user && class_exists('SwpmMemberUtils')) {
+            $swpm_user = SwpmMemberUtils::get_user_by_email($login_input);
+            if (!$swpm_user) {
+                $swpm_user = SwpmMemberUtils::get_user_by_user_name($login_input);
+            }
+            if ($swpm_user && !empty($swpm_user->user_name)) {
+                $user = get_user_by('login', $swpm_user->user_name);
+            }
+        }
 
         if ($user) {
             $user_id = $user->ID;
+            $user_email = $user->user_email;
 
-            // Check if OTP has been requested recently
+            // Check if OTP cooldown is active (5 minutes)
             $last_request_time = get_user_meta($user_id, 'last_otp_request_time', true);
-            if ($last_request_time && strtotime($last_request_time) > time() - 600) {
-                $errors[] = "You can only request an OTP once every 10 minutes.";
+            $cooldown_seconds = 300; // 5 minutes
+            if ($last_request_time && (strtotime($last_request_time) > time() - $cooldown_seconds)) {
+                $wait_mins = ceil((strtotime($last_request_time) + $cooldown_seconds - time()) / 60);
+                $errors[] = "An OTP was recently generated. Please wait " . $wait_mins . " minute(s) before requesting a new code.";
             }
 
             if (empty($errors)) {
                 // Generate 6-digit OTP
-                $otp = random_int(100000, 999999);
+                $otp = (string)random_int(100000, 999999);
                 $expiry = date("Y-m-d H:i:s", strtotime("+10 minutes"));
 
                 // Save OTP in user_meta
@@ -37,41 +56,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 update_user_meta($user_id, 'reset_token_expiry', $expiry);
                 update_user_meta($user_id, 'last_otp_request_time', current_time('mysql'));
 
-                // Send OTP via wp_mail()
-                $subject = "Your Password Reset OTP";
-                $message = "Hello,\n\nYour password reset OTP is: $otp\n\nThis OTP will expire in 10 minutes.\n\nIf you didn’t request this, you can safely ignore this email.";
-                $headers = array('Content-Type: text/plain; charset=UTF-8');
+                // Track error message if wp_mail fails
+                $mail_error_msg = '';
+                $mail_failed_handler = function($wp_error) use (&$mail_error_msg) {
+                    if (is_wp_error($wp_error)) {
+                        $mail_error_msg = $wp_error->get_error_message();
+                    }
+                };
+                add_action('wp_mail_failed', $mail_failed_handler);
 
-                // Attempt to send the email
-                $mail_sent = wp_mail($email, $subject, $message, $headers);
+                // Use branded VelvetReel OTP email template
+                $mail_sent = false;
+                if (function_exists('velvet_send_otp_email')) {
+                    $recipient_name = !empty($user->first_name) ? $user->first_name : $user->display_name;
+                    $mail_sent = velvet_send_otp_email($user_email, $otp, 'reset_password', $recipient_name, 10);
+                } else {
+                    $subject = "Your VelvetReel Password Reset Code: " . $otp;
+                    $message = "Hello " . esc_html($user->display_name) . ",\n\nYour password reset code is: " . $otp . "\n\nThis OTP will expire in 10 minutes.\n\nIf you didn't request this, you can safely ignore this email.";
+                    $headers = array('Content-Type: text/plain; charset=UTF-8');
+                    $mail_sent = wp_mail($user_email, $subject, $message, $headers);
+                }
 
-                // Check if the email was sent successfully
+                remove_action('wp_mail_failed', $mail_failed_handler);
+
                 if ($mail_sent) {
-                    $_SESSION['reset_email'] = $email;
-                    wp_redirect(home_url('/verify-otp')); // Redirect to OTP verification page
+                    $_SESSION['reset_email'] = $user_email;
+                    $_SESSION['reset_user_id'] = $user_id;
+                    wp_redirect(home_url('/verify-otp/'));
                     exit;
                 } else {
-                    $errors[] = "Could not send OTP. Please check your email configuration or try again later.";
+                    $err_detail = !empty($mail_error_msg) ? ' (' . esc_html($mail_error_msg) . ')' : '';
+                    $errors[] = "Could not send OTP email" . $err_detail . ". Please check mail configuration or try again shortly.";
                 }
             }
         } else {
-            $errors[] = "No account found with that email address.";
+            $errors[] = "No account found matching that email address or username.";
         }
-    }
-
-    // Store errors in session to display them after redirect
-    if (!empty($errors)) {
-        $_SESSION['forgot_errors'] = $errors;
-        wp_redirect(home_url('/forgot-password')); // Redirect back to the forgot password page
-        exit;
     }
 }
 
-// To display the errors on the forgot-password page
-if (isset($_SESSION['forgot_errors'])) {
-    foreach ($_SESSION['forgot_errors'] as $error) {
-        echo "<p style='color: red;'>$error</p>";
-    }
+// Pull any flash errors from session safely
+if (isset($_SESSION['forgot_errors']) && is_array($_SESSION['forgot_errors'])) {
+    $errors = array_merge($errors, $_SESSION['forgot_errors']);
     unset($_SESSION['forgot_errors']);
 }
 ?>
@@ -270,18 +296,19 @@ if (isset($_SESSION['forgot_errors'])) {
         </div>
         <?php endif; ?>
 
-        <form method="POST" action="<?= esc_url(home_url('/forgot-password')) ?>" novalidate>
+        <form method="POST" action="" novalidate>
+            <?php wp_nonce_field('velvet_forgot_password_action', 'velvet_forgot_nonce'); ?>
 
             <div class="chaitu-form-group">
-                <label for="email" class="chaitu-label">Email Address</label>
-                <input type="email" id="email" name="email" class="chaitu-input" placeholder="Enter your email address"
-                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required />
+                <label for="email" class="chaitu-label">Email Address or Username</label>
+                <input type="text" id="email" name="email" class="chaitu-input" placeholder="Enter your email or username"
+                    value="<?php echo esc_attr($_POST['email'] ?? ''); ?>" required autocomplete="username" />
             </div>
 
             <button type="submit" class="chaitu-button">Send OTP</button>
         </form>
 
-        <a href="<?php echo home_url('/membership-login/'); ?>" class="chaitu-back-link">← Back to Sign In</a>
+        <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="chaitu-back-link">← Back to Sign In</a>
 
     </div>
 </body>
