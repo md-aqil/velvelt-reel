@@ -39,6 +39,10 @@ add_action('wp_enqueue_scripts', 'hello_elementor_child_scripts_styles', 20);
 function velvet_resource_hints() {
     echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
     echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+    if ( is_front_page() || is_home() ) {
+        $poster_url = get_stylesheet_directory_uri() . '/assets/images/hero-poster-1.webp';
+        echo '<link rel="preload" as="image" href="' . esc_url( $poster_url ) . '" type="image/webp" fetchpriority="high">' . "\n";
+    }
 }
 add_action('wp_head', 'velvet_resource_hints', 1);
 

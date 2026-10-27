@@ -68,12 +68,14 @@ function velvet_hero_slider_shortcode() {
 				<div class="velvet-slide <?php echo $index === 0 ? 'active' : ''; ?>" data-slide="<?php echo esc_attr( $index ); ?>">
 					<!-- Video Background & Multi-layer Overlay -->
 					<div class="velvet-video-container">
-						<?php if ( $index === 0 ) : ?>
-							<video class="velvet-slide-video" autoplay loop muted playsinline preload="metadata">
+						<?php 
+						$poster_img = get_stylesheet_directory_uri() . '/assets/images/hero-poster-' . ( $index + 1 ) . '.webp';
+						if ( $index === 0 ) : ?>
+							<video class="velvet-slide-video" autoplay loop muted playsinline preload="metadata" fetchpriority="high" poster="<?php echo esc_url( $poster_img ); ?>">
 								<source src="<?php echo esc_url( $slide['video'] ); ?>" type="video/mp4">
 							</video>
 						<?php else : ?>
-							<video class="velvet-slide-video" loop muted playsinline preload="none" data-src="<?php echo esc_url( $slide['video'] ); ?>">
+							<video class="velvet-slide-video" loop muted playsinline preload="none" data-src="<?php echo esc_url( $slide['video'] ); ?>" poster="<?php echo esc_url( $poster_img ); ?>">
 							</video>
 						<?php endif; ?>
 						<div class="velvet-video-overlay"></div>
