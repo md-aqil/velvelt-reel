@@ -132,7 +132,7 @@ function velvet_testimonials_slider_shortcode( $atts ) {
 								<!-- Author Profile -->
 								<div class="velvet-testi-author">
 									<div class="velvet-testi-avatar-wrap">
-										<img src="<?php echo esc_url( $item['avatar'] ); ?>" alt="<?php echo esc_attr( $item['name'] ); ?>" class="velvet-testi-avatar" />
+										<img src="<?php echo esc_url( $item['avatar'] ); ?>" alt="<?php echo esc_attr( $item['name'] ); ?>" class="velvet-testi-avatar" width="36" height="36" loading="lazy" decoding="async" />
 									</div>
 									<div class="velvet-testi-info">
 										<h4 class="velvet-testi-name"><?php echo esc_html( $item['name'] ); ?></h4>

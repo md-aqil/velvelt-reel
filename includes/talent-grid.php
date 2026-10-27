@@ -165,7 +165,7 @@ function velvet_talent_grid_shortcode( $atts ) {
 						
 						<!-- Lazyloaded Card Image -->
 						<div class="velvet-card-bg">
-							<img loading="lazy" decodings="async" src="<?php echo esc_url( $item['image_url'] ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>" class="velvet-card-img" />
+							<img loading="lazy" decoding="async" width="380" height="480" src="<?php echo esc_url( $item['image_url'] ); ?>" alt="<?php echo esc_attr( $item['title'] ); ?>" class="velvet-card-img" />
 						</div>
 
 						<div class="velvet-card-overlay"></div>

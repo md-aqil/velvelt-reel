@@ -14,10 +14,12 @@ if (!defined('ABSPATH')) {
  * Enqueue custom scripts
  */
 function custom_enqueue_scripts() {
+    $min = ( ! defined( 'SCRIPT_DEBUG' ) || ! SCRIPT_DEBUG ) ? '.min' : '';
+
     // Enqueue the global JS file
     wp_enqueue_script(
         'theme-global-js', // Handle name
-        get_stylesheet_directory_uri() . '/global.js', // File path
+        get_stylesheet_directory_uri() . '/global' . $min . '.js', // File path
         array(), // Dependencies (optional)
         HELLO_ELEMENTOR_CHILD_VERSION, // Version number
         true // Load in footer (true = before </body>)
@@ -75,7 +77,7 @@ function custom_enqueue_scripts() {
 add_action('wp_enqueue_scripts', 'custom_enqueue_scripts');
 
 /**
- * Defer non-critical child theme scripts to eliminate render-blocking JS
+ * Defer non-critical child theme and third-party scripts to eliminate render-blocking JS
  */
 function velvet_defer_scripts( $tag, $handle, $src ) {
     $defer_handles = [
@@ -85,6 +87,7 @@ function velvet_defer_scripts( $tag, $handle, $src ) {
         'velvet-testimonials-slider-js',
         'velvet-rotating-title-js',
         'velvet-footer-js',
+        'cookie-law-info',
     ];
 
     if ( in_array( $handle, $defer_handles, true ) ) {
