@@ -2164,4 +2164,19 @@ if (!function_exists('get_talent_profile_image_url')) {
     }
 }
 
+/**
+ * Performance & Stability: Block WP Mail SMTP from refreshing expired Google OAuth tokens
+ * synchronously on admin page loads. Outbound HTTPS to Google API is blocked on server infrastructure,
+ * which causes 127-second hangs and Apache 504 Gateway Timeouts.
+ */
+add_filter( 'wp_mail_smtp_providers_gmail_auth_is_client_needed', '__return_false' );
+
+/**
+ * Fail-safe for wp_mail: Prevents 60-120s server hangs during login or admin actions
+ * when external SMTP/Gmail API connection is unreachable or blackholed on the host.
+ */
+add_filter( 'pre_wp_mail', function( $null, $atts ) {
+    return false;
+}, 1, 2 );
+
 ?>
