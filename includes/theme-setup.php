@@ -34,6 +34,15 @@ function hello_elementor_child_scripts_styles() {
 add_action('wp_enqueue_scripts', 'hello_elementor_child_scripts_styles', 20);
 
 /**
+ * Resource Hints & Preconnect for Google Fonts & Google Fonts Static
+ */
+function velvet_resource_hints() {
+    echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
+    echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+}
+add_action('wp_head', 'velvet_resource_hints', 1);
+
+/**
  * Create user information table
  */
 function create_userinformation_table() {

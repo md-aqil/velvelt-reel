@@ -75,6 +75,29 @@ function custom_enqueue_scripts() {
 add_action('wp_enqueue_scripts', 'custom_enqueue_scripts');
 
 /**
+ * Defer non-critical child theme scripts to eliminate render-blocking JS
+ */
+function velvet_defer_scripts( $tag, $handle, $src ) {
+    $defer_handles = [
+        'theme-global-js',
+        'velvet-hero-slider-js',
+        'velvet-talent-grid-js',
+        'velvet-testimonials-slider-js',
+        'velvet-rotating-title-js',
+        'velvet-footer-js',
+    ];
+
+    if ( in_array( $handle, $defer_handles, true ) ) {
+        if ( false === strpos( $tag, 'defer' ) ) {
+            return str_replace( ' src', ' defer src', $tag );
+        }
+    }
+
+    return $tag;
+}
+add_filter( 'script_loader_tag', 'velvet_defer_scripts', 10, 3 );
+
+/**
  * Enqueue image protection CSS
  */
 function enqueue_image_protection_styles() {

@@ -21,6 +21,13 @@ function velvet_talent_grid_shortcode( $atts ) {
 		'title'          => 'FIND ALL TALENTS',
 	], $atts, 'velvet_talent_grid' );
 
+	$cache_key = 'vr_talent_grid_' . md5( serialize( $atts ) );
+	$cached    = get_transient( $cache_key );
+
+	if ( false !== $cached && ! is_user_logged_in() ) {
+		return $cached;
+	}
+
 	// Query published talent posts
 	$args = [
 		'post_type'      => 'talent',
@@ -28,6 +35,7 @@ function velvet_talent_grid_shortcode( $atts ) {
 		'posts_per_page' => intval( $atts['posts_per_page'] ),
 		'orderby'        => 'date',
 		'order'          => 'DESC',
+		'no_found_rows'  => true,
 	];
 
 	$talent_query = new WP_Query( $args );
@@ -61,7 +69,7 @@ function velvet_talent_grid_shortcode( $atts ) {
 		$is_verified       = get_post_meta( $post_id, '_talent_verified', true );
 		$badge_text        = get_post_meta( $post_id, '_talent_badge_text', true );
 
-		if ( ! $badge_text ) {
+		if ( empty( $badge_text ) ) {
 			if ( $has_paid_approval ) {
 				$badge_text = 'VR SCOUTED+VERIFIED';
 			} elseif ( $is_verified ) {
@@ -184,6 +192,21 @@ function velvet_talent_grid_shortcode( $atts ) {
 		</div>
 	</section>
 	<?php
-	return ob_get_clean();
+	$html = ob_get_clean();
+
+	// Cache output for 2 hours for non-logged-in visitors
+	set_transient( $cache_key, $html, 2 * HOUR_IN_SECONDS );
+
+	return $html;
 }
 add_shortcode( 'velvet_talent_grid', 'velvet_talent_grid_shortcode' );
+
+// Invalidate talent grid cache on save or delete
+function vr_clear_talent_grid_transients( $post_id ) {
+	if ( get_post_type( $post_id ) === 'talent' ) {
+		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_vr_talent_grid_%' OR option_name LIKE '_transient_timeout_vr_talent_grid_%'" );
+	}
+}
+add_action( 'save_post', 'vr_clear_talent_grid_transients' );
+add_action( 'deleted_post', 'vr_clear_talent_grid_transients' );

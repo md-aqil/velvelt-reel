@@ -68,9 +68,14 @@ function velvet_hero_slider_shortcode() {
 				<div class="velvet-slide <?php echo $index === 0 ? 'active' : ''; ?>" data-slide="<?php echo esc_attr( $index ); ?>">
 					<!-- Video Background & Multi-layer Overlay -->
 					<div class="velvet-video-container">
-						<video class="velvet-slide-video" autoplay loop muted playsinline preload="auto">
-							<source src="<?php echo esc_url( $slide['video'] ); ?>" type="video/mp4">
-						</video>
+						<?php if ( $index === 0 ) : ?>
+							<video class="velvet-slide-video" autoplay loop muted playsinline preload="metadata">
+								<source src="<?php echo esc_url( $slide['video'] ); ?>" type="video/mp4">
+							</video>
+						<?php else : ?>
+							<video class="velvet-slide-video" loop muted playsinline preload="none" data-src="<?php echo esc_url( $slide['video'] ); ?>">
+							</video>
+						<?php endif; ?>
 						<div class="velvet-video-overlay"></div>
 					</div>
 

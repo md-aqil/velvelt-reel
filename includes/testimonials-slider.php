@@ -19,6 +19,13 @@ function velvet_testimonials_slider_shortcode( $atts ) {
 		'title' => 'WHAT OUR TALENTS SAY',
 	], $atts, 'velvet_testimonials_slider' );
 
+	$cache_key = 'vr_testimonials_slider_' . md5( serialize( $atts ) );
+	$cached    = get_transient( $cache_key );
+
+	if ( false !== $cached && ! is_user_logged_in() ) {
+		return $cached;
+	}
+
 	// Query published testimonial CPT items
 	$args = [
 		'post_type'      => 'testimonial',
@@ -26,6 +33,7 @@ function velvet_testimonials_slider_shortcode( $atts ) {
 		'posts_per_page' => -1,
 		'orderby'        => 'menu_order date',
 		'order'          => 'ASC',
+		'no_found_rows'  => true,
 	];
 
 	$cpt_query    = new WP_Query( $args );
@@ -147,6 +155,21 @@ function velvet_testimonials_slider_shortcode( $atts ) {
 		</div>
 	</section>
 	<?php
-	return ob_get_clean();
+	$html = ob_get_clean();
+
+	// Cache output for 2 hours for non-logged-in visitors
+	set_transient( $cache_key, $html, 2 * HOUR_IN_SECONDS );
+
+	return $html;
 }
 add_shortcode( 'velvet_testimonials_slider', 'velvet_testimonials_slider_shortcode' );
+
+// Invalidate testimonials slider cache on save or delete
+function vr_clear_testimonials_transients( $post_id ) {
+	if ( get_post_type( $post_id ) === 'testimonial' ) {
+		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_vr_testimonials_slider_%' OR option_name LIKE '_transient_timeout_vr_testimonials_slider_%'" );
+	}
+}
+add_action( 'save_post', 'vr_clear_testimonials_transients' );
+add_action( 'deleted_post', 'vr_clear_testimonials_transients' );

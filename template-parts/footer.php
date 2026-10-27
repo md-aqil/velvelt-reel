@@ -21,6 +21,7 @@ if (!defined('ABSPATH')) {
 					<a href="<?php echo esc_url(home_url('/')); ?>">
 						<img src="https://www.thevelvetreel.com/wp-content/uploads/2025/10/velvetreel.png"
 							alt="The VelvetReel" class="footer-logo-img"
+							width="220" height="60" loading="lazy" decoding="async"
 							onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
 						<div class="footer-logo-fallback"
 							style="display:none; font-size:22px; font-weight:800; color:#ffffff; letter-spacing:1px;">
@@ -100,7 +101,8 @@ if (!defined('ABSPATH')) {
 						</div>
 						<div class="velvet-contact-details">
 							<span class="contact-label">New York Address</span>
-							<span class="contact-value">14 Penn Plaza, 34th Street, New York 10012</span>
+							<span class="contact-value">14 Penn Plaza, 225 West 34th Street, 9th Floor, New York,
+								Ny</span>
 						</div>
 					</div>
 
@@ -114,7 +116,7 @@ if (!defined('ABSPATH')) {
 						</div>
 						<div class="velvet-contact-details">
 							<span class="contact-label">Call us (Toll Free)</span>
-							<a href="tel:+18885855396" class="contact-value">+1-888-585-5396</a>
+							<a href="tel:+18885855396" class="contact-value">+1-609-436-0759 </a>
 						</div>
 					</div>
 
