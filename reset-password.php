@@ -1,13 +1,18 @@
 <?php
 /**
  * Template Name: Reset Password
+ * 
+ * Luxury VelvetReel Password Creation Step
+ * 
+ * @package HelloElementorChild
  */
+
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
 }
 
 $errors = [];
-$success = "";
+$reset_success = false;
 
 // Security check: Must have completed OTP verification step
 if (empty($_SESSION['reset_email']) || empty($_SESSION['otp_verified'])) {
@@ -29,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($user_id) && $user) {
         $errors[] = "Security check failed. Please refresh the page and try again.";
     }
 
-    $password = $_POST['password'] ?? '';
+    $password         = $_POST['password'] ?? '';
     $password_confirm = $_POST['password_confirm'] ?? '';
 
     // Password validations
@@ -74,289 +79,306 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($user_id) && $user) {
         unset($_SESSION['reset_user_id']);
         unset($_SESSION['otp_verified']);
 
-        $login_url = home_url('/membership-login/');
-        $success = "Password reset successfully! You can now <a href='" . esc_url($login_url) . "' class='chaitu-link' style='color:#CD2838; font-weight:bold; text-decoration:underline;'>Sign In</a> with your new password.";
+        $reset_success = true;
     }
 }
+
+get_header();
 ?>
 
+<!-- Google Fonts Outfit & Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password - The VelvetReel</title>
-    <style>
-    .chaitu-reset {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+<style>
+.velvet-auth-section {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+.velvet-auth-section .auth-title {
+    font-family: 'Outfit', 'Inter', -apple-system, sans-serif !important;
+    letter-spacing: -0.5px;
+}
+.velvet-auth-section .auth-subtitle {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+.velvet-auth-section .auth-field-label,
+.velvet-auth-section .auth-badge,
+.velvet-auth-section .btn-auth-submit,
+.velvet-auth-section .auth-footer-text,
+.velvet-auth-section .auth-signup-link {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+.pwd-req-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    padding: 0;
+    list-style: none;
+}
+.pwd-req-item {
+    font-size: 11.5px;
+    color: #8888a4;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+}
+.pwd-req-item svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+.pwd-req-item.valid {
+    color: #4ade80;
+}
+.auth-success-state {
+    padding: 10px 0 20px 0;
+    text-align: center;
+}
+.success-icon-badge {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.2), rgba(34, 197, 94, 0.1));
+    border: 1.5px solid rgba(74, 222, 128, 0.5);
+    color: #4ade80;
+    box-shadow: 0 10px 30px rgba(74, 222, 128, 0.25);
+}
+.success-icon-badge svg {
+    width: 36px;
+    height: 36px;
+}
+@media (max-width: 480px) {
+    .pwd-req-list {
+        grid-template-columns: 1fr;
     }
+}
+</style>
 
-    .chaitu-body {
-                background-image: linear-gradient(rgb(107, 15, 15), rgb(45, 45, 45)) !important;
+<main id="content" class="site-main velvet-auth-section" role="main">
+    <!-- Ambient Background Glow Elements -->
+    <div class="auth-bg-glow glow-1"></div>
+    <div class="auth-bg-glow glow-2"></div>
+    <div class="auth-bg-glow glow-3"></div>
 
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
+    <div class="velvet-auth-container">
+        <div class="velvet-auth-card">
 
-    .chaitu-container {
-      
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        width: 100%;
-        max-width: 420px;
-        text-align: center;
-    }
+            <?php if ($reset_success) : ?>
+                <!-- Success State -->
+                <div class="auth-success-state">
+                    <div class="success-icon-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
 
-    .chaitu-title {
-        font-size: 2.5rem;
-        font-weight: 300;
-        color: #ffffff;
-        margin-bottom: 10px;
-        letter-spacing: 2px;
-    }
+                    <h1 class="auth-title"><?php esc_html_e('Password Updated!', 'hello-elementor-child'); ?></h1>
+                    <p class="auth-subtitle"><?php esc_html_e('Your password has been successfully reset. You can now sign in with your new credentials.', 'hello-elementor-child'); ?></p>
 
-    .chaitu-subtitle {
-        color: #b0b0b0;
-        margin-bottom: 20px;
-        font-size: 1rem;
-    }
+                    <div class="auth-submit-group" style="margin-top: 26px;">
+                        <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="btn-auth-submit" style="text-decoration: none;">
+                            <span><?php esc_html_e('Proceed to Member Sign In', 'hello-elementor-child'); ?></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
 
-    .chaitu-heading {
-        font-size: 1.5rem;
-        color: #ffffff;
-        margin-bottom: 30px;
-        font-weight: 400;
-    }
+            <?php else : ?>
+                <!-- Password Reset Form -->
+                <div class="auth-badge-wrapper">
+                    <span class="auth-badge">
+                        <i class="fas fa-lock" aria-hidden="true"></i>
+                        <?php esc_html_e('STEP 3 OF 3 • NEW PASSWORD', 'hello-elementor-child'); ?>
+                    </span>
+                </div>
 
-    .chaitu-form-group {
-        margin-bottom: 20px;
-        text-align: left;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+                <h1 class="auth-title"><?php esc_html_e('Create New Password', 'hello-elementor-child'); ?></h1>
+                <p class="auth-subtitle"><?php esc_html_e('Choose a strong, unique password to secure your VelvetReel account.', 'hello-elementor-child'); ?></p>
 
-    .chaitu-label {
-        color: white;
-        width: 100%;
-        max-width: 360px;
-    }
+                <?php if (!empty($errors)) : ?>
+                    <div class="auth-alert-banner" role="alert" aria-live="polite">
+                        <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <div class="alert-content">
+                            <?php foreach ($errors as $error) : ?>
+                                <p><?php echo esc_html($error); ?></p>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
-    .chaitu-input {
-        width: 100%;
-        max-width: 360px;
-        padding: 15px 20px;
-        background: rgba(60, 60, 60, 0.8);
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        color: #ffffff;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        outline: none;
-    }
+                <form id="velvetResetForm" class="velvet-auth-form" method="post" action="" novalidate>
+                    <?php wp_nonce_field('velvet_reset_password_action', 'velvet_reset_nonce'); ?>
 
+                    <!-- New Password Field -->
+                    <div class="auth-field-group">
+                        <label for="password" class="auth-field-label"><?php esc_html_e('New Password', 'hello-elementor-child'); ?></label>
+                        <div class="auth-input-wrapper">
+                            <svg class="auth-input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <input type="password" 
+                                   name="password" 
+                                   id="password" 
+                                   class="auth-input-field" 
+                                   placeholder="<?php esc_attr_e('At least 6 characters', 'hello-elementor-child'); ?>" 
+                                   required 
+                                   autocomplete="new-password" 
+                                   autofocus />
+                            <button type="button" class="auth-toggle-pwd" data-target="password" aria-label="<?php esc_attr_e('Toggle password visibility', 'hello-elementor-child'); ?>">
+                                <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
+                    </div>
 
-    .chaitu-input::placeholder {
-        color: #888;
-    }
+                    <!-- Password Requirement Checklist -->
+                    <ul class="pwd-req-list" aria-live="polite">
+                        <li class="pwd-req-item" id="req-len">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                            <span>At least 6 characters</span>
+                        </li>
+                        <li class="pwd-req-item" id="req-case">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                            <span>Upper & lower case</span>
+                        </li>
+                        <li class="pwd-req-item" id="req-num">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                            <span>At least 1 number</span>
+                        </li>
+                        <li class="pwd-req-item" id="req-sym">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                            <span>Special character</span>
+                        </li>
+                    </ul>
 
-    .chaitu-input:focus {
-        border-color: #e74c3c;
-        background: rgba(70, 70, 70, 0.9);
-        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-    }
+                    <!-- Confirm Password Field -->
+                    <div class="auth-field-group">
+                        <label for="password_confirm" class="auth-field-label"><?php esc_html_e('Confirm New Password', 'hello-elementor-child'); ?></label>
+                        <div class="auth-input-wrapper">
+                            <svg class="auth-input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <input type="password" 
+                                   name="password_confirm" 
+                                   id="password_confirm" 
+                                   class="auth-input-field" 
+                                   placeholder="<?php esc_attr_e('Re-enter new password', 'hello-elementor-child'); ?>" 
+                                   required 
+                                   autocomplete="new-password" />
+                            <button type="button" class="auth-toggle-pwd" data-target="password_confirm" aria-label="<?php esc_attr_e('Toggle password visibility', 'hello-elementor-child'); ?>">
+                                <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
+                    </div>
 
-    .chaitu-button {
-        width: 100%;
-        padding: 15px;
-        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 10px;
-    }
+                    <!-- Submit Button -->
+                    <div class="auth-submit-group">
+                        <button type="submit" class="btn-auth-submit" id="btnResetSubmit">
+                            <span><?php esc_html_e('Update Password & Sign In', 'hello-elementor-child'); ?></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
 
-    .chaitu-button:hover {
-        background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(231, 76, 60, 0.3);
-    }
+                <div class="auth-card-footer">
+                    <p class="auth-footer-text">
+                        <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="auth-signup-link">
+                            &larr; <?php esc_html_e('Cancel and back to Sign In', 'hello-elementor-child'); ?>
+                        </a>
+                    </p>
+                </div>
+            <?php endif; ?>
 
-    .chaitu-button:active {
-        transform: translateY(0);
-    }
-
-    .chaitu-error {
-        background: rgba(231, 76, 60, 0.1);
-        border: 1px solid #e74c3c;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
-        color: #ff6b6b;
-    }
-
-    .chaitu-error ul {
-        margin: 0;
-        padding-left: 20px;
-    }
-
-    .chaitu-error li {
-        margin-bottom: 5px;
-    }
-
-    .chaitu-success {
-        background: rgba(46, 204, 113, 0.1);
-        border: 1px solid #2ecc71;
-        border-radius: 8px;
-        padding: 20px;
-        color: #2ecc71;
-        font-size: 1.1rem;
-        line-height: 1.5;
-    }
-
-    .chaitu-link {
-        color: #e74c3c;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .chaitu-link:hover {
-        color: #c0392b;
-        text-decoration: underline;
-    }
-
-    .chaitu-back-link {
-        display: inline-block;
-        color: #b0b0b0;
-        text-decoration: none;
-        margin-top: 20px;
-        font-size: 0.9rem;
-        transition: color 0.3s ease;
-    }
-
-    .chaitu-back-link:hover {
-        color: #e74c3c;
-    }
-
-    .chaitu-icon {
-        font-size: 3rem;
-        color: #e74c3c;
-        margin-bottom: 20px;
-    }
-
-    .chaitu-success-icon {
-        font-size: 4rem;
-        color: #2ecc71;
-        margin-bottom: 20px;
-    }
-
-    .chaitu-password-requirements {
-        background: rgba(52, 152, 219, 0.1);
-        border: 1px solid #3498db;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
-        font-size: 0.9rem;
-        color: #74b9ff;
-        text-align: left;
-    }
-
-    .chaitu-password-requirements ul {
-        margin: 0;
-        padding-left: 20px;
-    }
-
-    .chaitu-password-requirements li {
-        margin-bottom: 3px;
-    }
-
-    @media (max-width: 480px) {
-        .chaitu-container {
-            padding: 30px 20px;
-            margin: 10px;
-        }
-
-        .chaitu-title {
-            font-size: 2rem;
-        }
-
-        .chaitu-heading {
-            font-size: 1.3rem;
-        }
-    }
-    </style>
-</head>
-
-<body class="chaitu-body">
-    <div class="chaitu-container">
-        <?php if ($success): ?>
-        <div class="chaitu-success-icon">✅</div>
-        <h1 class="chaitu-title">The VelvetReel</h1>
-        <p class="chaitu-subtitle">Password reset complete</p>
-        <div class="chaitu-success"><?= $success ?></div>
-        <?php else: ?>
-        <div class="chaitu-icon">🔑</div>
-        <h1 class="chaitu-title">The VelvetReel</h1>
-        <p class="chaitu-subtitle">Create your new password</p>
-
-        <h2 class="chaitu-heading">Reset Your Password</h2>
-
-        <div class="chaitu-password-requirements">
-            <strong>Password Requirements:</strong>
-            <ul>
-                <li>At least 6 characters long</li>
-                <li>Include uppercase and lowercase letters</li>
-                <li>Include at least one number</li>
-                <li>Include at least one special character</li>
-            </ul>
         </div>
-
-        <?php if ($errors): ?>
-        <div class="chaitu-error">
-            <ul>
-                <?php foreach ($errors as $e) echo "<li>" . htmlspecialchars($e) . "</li>"; ?>
-            </ul>
-        </div>
-        <?php endif; ?>
-
-        <form method="POST" action="" novalidate>
-            <?php wp_nonce_field('velvet_reset_password_action', 'velvet_reset_nonce'); ?>
-            <div class="chaitu-form-group">
-                <label for="password" class="chaitu-label">New Password</label>
-                <input type="password" id="password" name="password" class="chaitu-input"
-                    placeholder="Enter your new password" required autocomplete="new-password" />
-            </div>
-
-            <div class="chaitu-form-group">
-                <label for="password_confirm" class="chaitu-label">Confirm Password</label>
-                <input type="password" id="password_confirm" name="password_confirm" class="chaitu-input"
-                    placeholder="Confirm your new password" required autocomplete="new-password" />
-            </div>
-
-            <button type="submit" class="chaitu-button">Reset Password</button>
-        </form>
-        <a href="<?php echo esc_url(home_url('/forgot-password/')); ?>" class="chaitu-back-link">← Back to Forgot Password</a>
-
-        <?php endif; ?>
     </div>
-</body>
+</main>
 
-</html>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password toggles
+    var toggleButtons = document.querySelectorAll('.auth-toggle-pwd');
+    toggleButtons.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var targetId = btn.getAttribute('data-target');
+            var input = document.getElementById(targetId);
+            if (!input) return;
+            var eyeOpen = btn.querySelector('.eye-open');
+            var eyeClosed = btn.querySelector('.eye-closed');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (eyeOpen) eyeOpen.style.display = 'none';
+                if (eyeClosed) eyeClosed.style.display = 'block';
+            } else {
+                input.type = 'password';
+                if (eyeOpen) eyeOpen.style.display = 'block';
+                if (eyeClosed) eyeClosed.style.display = 'none';
+            }
+        });
+    });
+
+    // Real-time password requirement tracker
+    var pwdInput = document.getElementById('password');
+    var reqLen = document.getElementById('req-len');
+    var reqCase = document.getElementById('req-case');
+    var reqNum = document.getElementById('req-num');
+    var reqSym = document.getElementById('req-sym');
+
+    function updateReq(el, isValid) {
+        if (!el) return;
+        if (isValid) {
+            el.classList.add('valid');
+            el.classList.remove('invalid');
+            el.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+        } else {
+            el.classList.remove('valid');
+            el.classList.add('invalid');
+            el.querySelector('svg').innerHTML = '<circle cx="12" cy="12" r="10"></circle>';
+        }
+    }
+
+    if (pwdInput) {
+        pwdInput.addEventListener('input', function() {
+            var val = this.value;
+            updateReq(reqLen, val.length >= 6);
+            updateReq(reqCase, /[a-z]/.test(val) && /[A-Z]/.test(val));
+            updateReq(reqNum, /[0-9]/.test(val));
+            updateReq(reqSym, /[\W_]/.test(val));
+        });
+    }
+
+    var form = document.getElementById('velvetResetForm');
+    var btn = document.getElementById('btnResetSubmit');
+    if (form && btn) {
+        form.addEventListener('submit', function() {
+            btn.style.opacity = '0.75';
+            btn.style.pointerEvents = 'none';
+            btn.querySelector('span').textContent = '<?php esc_attr_e('Updating...', 'hello-elementor-child'); ?>';
+        });
+    }
+});
+</script>
+
+<?php
+get_footer();

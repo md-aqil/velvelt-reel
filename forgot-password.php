@@ -1,7 +1,12 @@
 <?php
 /**
  * Template Name: Forgot Password
+ * 
+ * Luxury VelvetReel Account Recovery
+ * 
+ * @package HelloElementorChild
  */
+
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
 }
@@ -10,7 +15,7 @@ $errors = [];
 $success = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Nonce verification if present
+    // Nonce verification
     if (isset($_POST['velvet_forgot_nonce']) && !wp_verify_nonce($_POST['velvet_forgot_nonce'], 'velvet_forgot_password_action')) {
         $errors[] = "Security check failed. Please refresh the page and try again.";
     }
@@ -100,217 +105,139 @@ if (isset($_SESSION['forgot_errors']) && is_array($_SESSION['forgot_errors'])) {
     $errors = array_merge($errors, $_SESSION['forgot_errors']);
     unset($_SESSION['forgot_errors']);
 }
+
+get_header();
 ?>
 
+<!-- Google Fonts Outfit & Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+<style>
+.velvet-auth-section {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+.velvet-auth-section .auth-title {
+    font-family: 'Outfit', 'Inter', -apple-system, sans-serif !important;
+    letter-spacing: -0.5px;
+}
+.velvet-auth-section .auth-subtitle {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+.velvet-auth-section .auth-field-label,
+.velvet-auth-section .auth-badge,
+.velvet-auth-section .btn-auth-submit,
+.velvet-auth-section .auth-footer-text,
+.velvet-auth-section .auth-signup-link {
+    font-family: 'Inter', -apple-system, sans-serif !important;
+}
+.velvet-auth-card {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.velvet-auth-card:hover {
+    transform: translateY(-2px);
+}
+</style>
 
+<main id="content" class="site-main velvet-auth-section" role="main">
+    <!-- Ambient Background Glow Elements -->
+    <div class="auth-bg-glow glow-1"></div>
+    <div class="auth-bg-glow glow-2"></div>
+    <div class="auth-bg-glow glow-3"></div>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forgot Password - The VelvetReel</title>
-    <style>
-    .chaitu-reset {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    .chaitu-body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-image: linear-gradient(rgb(107, 15, 15), rgb(45, 45, 45)) !important;
-
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
-
-    .chaitu-container {
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        width: 100%;
-        max-width: 420px;
-        text-align: center;
-    }
-
-    .chaitu-title {
-        font-size: 2.5rem;
-        font-weight: 300;
-        color: #ffffff;
-        margin-bottom: 10px;
-        letter-spacing: 2px;
-    }
-
-    .chaitu-subtitle {
-        color: #b0b0b0;
-        margin-bottom: 20px;
-        font-size: 1rem;
-    }
-
-    .chaitu-heading {
-        font-size: 1.5rem;
-        color: #ffffff;
-        margin-bottom: 30px;
-        font-weight: 400;
-    }
-
-    .chaitu-form-group {
-        margin-bottom: 20px;
-        text-align: left;
-    }
-
-    .chaitu-label {
-        display: block;
-        color: #ffffff;
-        margin-bottom: 8px;
-        font-weight: 500;
-        font-size: 0.95rem;
-    }
-
-    .chaitu-input {
-        width: 95%;
-        padding: 15px 5px;
-        background: rgba(60, 60, 60, 0.8);
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        color: #ffffff;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        outline: none;
-    }
-
-    .chaitu-input::placeholder {
-        color: #888;
-    }
-
-    .chaitu-input:focus {
-        border-color: #CD2838;
-        background: rgba(70, 70, 70, 0.9);
-        box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-    }
-
-    .chaitu-button {
-        width: 100%;
-        padding: 15px;
-        background: #CD2838;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 10px;
-    }
-
-    .chaitu-button:hover {
-        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
-        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        transform: translateY(-2px);
-
-    }
-
-    .chaitu-button:active {
-        transform: translateY(0);
-    }
-
-    .chaitu-error {
-        background: rgba(231, 76, 60, 0.1);
-        border: 1px solid #CD2838;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
-        color: #CD2838;
-    }
-
-    .chaitu-error ul {
-        margin: 0;
-        padding-left: 20px;
-    }
-
-    .chaitu-error li {
-        margin-bottom: 5px;
-    }
-
-    .chaitu-back-link {
-        display: inline-block;
-        color: #b0b0b0;
-        text-decoration: none;
-        margin-top: 20px;
-        font-size: 0.9rem;
-        transition: color 0.3s ease;
-
-    }
-
-    .chaitu-back-link:hover {
-        color: #dc3545;
-        text-decoration: underline;
-    }
-
-    .chaitu-icon {
-        font-size: 3rem;
-        color: #CD2838;
-        margin-bottom: 20px;
-    }
-
-    @media (max-width: 480px) {
-        .chaitu-container {
-            padding: 30px 20px;
-            margin: 10px;
-        }
-
-        .chaitu-title {
-            font-size: 2rem;
-        }
-
-        .chaitu-heading {
-            font-size: 1.3rem;
-        }
-    }
-    </style>
-</head>
-
-<body class="chaitu-body">
-    <div class="chaitu-container">
-        <div class="chaitu-icon">🔐</div>
-        <h1 class="chaitu-title">The VelvetReel</h1>
-        <p class="chaitu-subtitle">Reset your password securely</p>
-
-        <h2 class="chaitu-heading">Forgot Your Password?</h2>
-
-        <?php if ($errors): ?>
-        <div class="chaitu-error">
-            <ul>
-                <?php foreach ($errors as $e) echo "<li>" . htmlspecialchars($e) . "</li>"; ?>
-            </ul>
-        </div>
-        <?php endif; ?>
-
-        <form method="POST" action="" novalidate>
-            <?php wp_nonce_field('velvet_forgot_password_action', 'velvet_forgot_nonce'); ?>
-
-            <div class="chaitu-form-group">
-                <label for="email" class="chaitu-label">Email Address or Username</label>
-                <input type="text" id="email" name="email" class="chaitu-input" placeholder="Enter your email or username"
-                    value="<?php echo esc_attr($_POST['email'] ?? ''); ?>" required autocomplete="username" />
+    <div class="velvet-auth-container">
+        <div class="velvet-auth-card">
+            <!-- Security Badge -->
+            <div class="auth-badge-wrapper">
+                <span class="auth-badge">
+                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                    <?php esc_html_e('SECURE RECOVERY', 'hello-elementor-child'); ?>
+                </span>
             </div>
 
-            <button type="submit" class="chaitu-button">Send OTP</button>
-        </form>
+            <h1 class="auth-title"><?php esc_html_e('Forgot Password?', 'hello-elementor-child'); ?></h1>
+            <p class="auth-subtitle"><?php esc_html_e('Enter your registered email address or username and we will send a 6-digit verification code to reset your password.', 'hello-elementor-child'); ?></p>
 
-        <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="chaitu-back-link">← Back to Sign In</a>
+            <?php if (!empty($errors)) : ?>
+                <div class="auth-alert-banner" role="alert" aria-live="polite">
+                    <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <div class="alert-content">
+                        <?php foreach ($errors as $error) : ?>
+                            <p><?php echo esc_html($error); ?></p>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
 
+            <form id="velvetForgotForm" class="velvet-auth-form" method="post" action="" novalidate>
+                <?php wp_nonce_field('velvet_forgot_password_action', 'velvet_forgot_nonce'); ?>
+
+                <!-- Email / Username Field -->
+                <div class="auth-field-group">
+                    <label for="forgot_email" class="auth-field-label"><?php esc_html_e('Email Address or Username', 'hello-elementor-child'); ?></label>
+                    <div class="auth-input-wrapper">
+                        <svg class="auth-input-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                            <polyline points="22,6 12,13 2,6"></polyline>
+                        </svg>
+                        <input type="text" 
+                               name="email" 
+                               id="forgot_email" 
+                               class="auth-input-field" 
+                               placeholder="<?php esc_attr_e('e.g. alex@example.com or username', 'hello-elementor-child'); ?>" 
+                               value="<?php echo esc_attr($_POST['email'] ?? ''); ?>" 
+                               required 
+                               autocomplete="username" 
+                               autofocus />
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="auth-submit-group">
+                    <button type="submit" class="btn-auth-submit" id="btnForgotSubmit">
+                        <span><?php esc_html_e('Send Verification Code', 'hello-elementor-child'); ?></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Back to Sign In Link -->
+            <div class="auth-card-footer">
+                <p class="auth-footer-text">
+                    <?php esc_html_e('Remembered your password?', 'hello-elementor-child'); ?>
+                    <a href="<?php echo esc_url(home_url('/membership-login/')); ?>" class="auth-signup-link">
+                        <?php esc_html_e('Back to Sign In', 'hello-elementor-child'); ?>
+                    </a>
+                </p>
+            </div>
+        </div>
     </div>
-</body>
+</main>
 
-</html>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('velvetForgotForm');
+    var btn = document.getElementById('btnForgotSubmit');
+    if (form && btn) {
+        form.addEventListener('submit', function() {
+            var input = document.getElementById('forgot_email');
+            if (input && input.value.trim() !== '') {
+                btn.style.opacity = '0.75';
+                btn.style.pointerEvents = 'none';
+                btn.querySelector('span').textContent = '<?php esc_attr_e('Sending Code...', 'hello-elementor-child'); ?>';
+            }
+        });
+    }
+});
+</script>
+
+<?php
+get_footer();
