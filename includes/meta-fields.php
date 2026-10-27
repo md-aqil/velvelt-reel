@@ -200,3 +200,31 @@ function get_user_draft_profile($user_id = null) {
     $posts = get_posts($args);
     return !empty($posts) ? $posts[0] : null;
 }
+
+/**
+ * Tracks profile views for talent posts.
+ *
+ * Increments '_talent_profile_clicks' meta field for a talent post
+ * each time it is viewed on the front-end (counted once per user session).
+ */
+function velvetreel_track_profile_views() {
+    // Only run on single 'talent' post pages
+    if (!is_singular('talent')) {
+        return;
+    }
+
+    $post_id = get_the_ID();
+
+    // Start a session if not already started
+    if (!session_id()) {
+        session_start();
+    }
+
+    // Check if this post has already been viewed in this session
+    if (!isset($_SESSION['viewed_talent_' . $post_id])) {
+        $count = (int) get_post_meta($post_id, '_talent_profile_clicks', true);
+        update_post_meta($post_id, '_talent_profile_clicks', $count + 1);
+        $_SESSION['viewed_talent_' . $post_id] = true;
+    }
+}
+add_action('wp_head', 'velvetreel_track_profile_views');

@@ -233,9 +233,6 @@ require_once get_stylesheet_directory() . '/includes/access-control.php';
 // AJAX request handlers
 require_once get_stylesheet_directory() . '/includes/ajax-handlers.php';
 
-// Third-party event integration
-require_once get_stylesheet_directory() . '/includes/event-integration.php';
-
 // Draft views functionality
 require_once get_stylesheet_directory() . '/includes/draft-views.php';
 
